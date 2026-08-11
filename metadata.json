@@ -1,0 +1,6 @@
+{
+  "name": "DigiWorku",
+  "description": "India's Digital Workforce Platform for Startups, Businesses & Creators. Access and manage your dedicated engineering, design, and marketing teams in a premium workspace.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,15 @@
+# Allow all web crawlers to access public pages
+User-agent: *
+Allow: /
+
+# Disallow private API endpoints
+Disallow: /api/
+
+# Disallow Admin Panel routes and query parameters
+Disallow: /admin
+Disallow: /admin/
+Disallow: /*?mode=admin
+Disallow: /*?panel=admin
+
+# Sitemap reference
+Sitemap: https://digiworku.com/sitemap.xml

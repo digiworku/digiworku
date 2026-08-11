@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-brand-green: #00c853;
+  --color-brand-dark-green: #00963b;
+  --color-brand-light-green: #e8fcf0;
+  
+  --animate-fade-in: fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@layer utilities {
+  /* Subtle mesh grid background matches the DigiWorku Chat and Workspace screens */
+  .grid-mesh {
+    background-size: 24px 24px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  }
+  
+  .dark .grid-mesh {
+    background-size: 24px 24px;
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  }
+
+  /* Custom card backface settings */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+}
+
+html, body {
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(150, 150, 150, 0.2);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(150, 150, 150, 0.4);
+}
+
+/* ==========================================
+   CUSTOM LIGHT MODE THEME: BEIGE & PINE OVERRIDES
+   ========================================== */
+#digiworku-root:not(.dark) {
+  background-color: #FFF7E6 !important;
+  color: #00311F;
+}
+
+#digiworku-root:not(.dark) aside,
+#digiworku-root:not(.dark) .bg-white,
+#digiworku-root:not(.dark) .bg-slate-50,
+#digiworku-root:not(.dark) .bg-slate-100,
+#digiworku-root:not(.dark) .bg-\[\#fafafc\] {
+  background-color: #FFFDF0 !important; /* Lighter warm beige cream for panel cards */
+}
+
+#digiworku-root:not(.dark) .bg-slate-100\/90,
+#digiworku-root:not(.dark) .bg-slate-50\/90,
+#digiworku-root:not(.dark) .bg-slate-200,
+#digiworku-root:not(.dark) .bg-slate-200\/90,
+#digiworku-root:not(.dark) .bg-slate-200\/80,
+#digiworku-root:not(.dark) .bg-slate-200\/85 {
+  background-color: #FFF3D6 !important; /* Slightly deeper warm beige for active selections/hover pads */
+}
+
+/* Base text color overrides to Pine Green */
+#digiworku-root:not(.dark) h1,
+#digiworku-root:not(.dark) h2,
+#digiworku-root:not(.dark) h3,
+#digiworku-root:not(.dark) h4,
+#digiworku-root:not(.dark) p,
+#digiworku-root:not(.dark) tr,
+#digiworku-root:not(.dark) td,
+#digiworku-root:not(.dark) th,
+#digiworku-root:not(.dark) input,
+#digiworku-root:not(.dark) textarea {
+  color: #00311F;
+}
+
+/* Ensure secondary grays / slate text look distinct and styled with Pine shade */
+#digiworku-root:not(.dark) .text-slate-400,
+#digiworku-root:not(.dark) .text-slate-404,
+#digiworku-root:not(.dark) .text-slate-450,
+#digiworku-root:not(.dark) .text-slate-500,
+#digiworku-root:not(.dark) .text-slate-600,
+#digiworku-root:not(.dark) .text-slate-700 {
+  color: rgba(0, 49, 31, 0.7) !important;
+}
+
+#digiworku-root:not(.dark) .text-slate-800,
+#digiworku-root:not(.dark) .text-slate-900,
+#digiworku-root:not(.dark) .text-\[\#1f2937\] {
+  color: #00311F !important;
+}
+
+/* Border overrides to subtle Pine opacity */
+#digiworku-root:not(.dark) .border,
+#digiworku-root:not(.dark) .border-t,
+#digiworku-root:not(.dark) .border-b,
+#digiworku-root:not(.dark) .border-r,
+#digiworku-root:not(.dark) .border-l,
+#digiworku-root:not(.dark) .border-slate-100,
+#digiworku-root:not(.dark) .border-slate-200,
+#digiworku-root:not(.dark) .border-slate-205,
+#digiworku-root:not(.dark) .border-slate-300 {
+  border-color: rgba(0, 49, 31, 0.15) !important;
+}
+
+/* Accent colors in light mode (replacing light green badges & tags) */
+#digiworku-root:not(.dark) .bg-emerald-50,
+#digiworku-root:not(.dark) .bg-\[\#e8fcf0\],
+#digiworku-root:not(.dark) .bg-emerald-500\/10 {
+  background-color: rgba(0, 49, 31, 0.08) !important;
+}
+
+#digiworku-root:not(.dark) .text-\[\#00c853\],
+#digiworku-root:not(.dark) .text-emerald-500 {
+  color: #00311F !important;
+}
+
+/* Core Buttons / CTA buttons using Pine with Beige text */
+#digiworku-root:not(.dark) .bg-\[\#00c853\],
+#digiworku-root:not(.dark) .bg-emerald-500 {
+  background-color: #00311F !important;
+  color: #FFF7E6 !important;
+}
+
+#digiworku-root:not(.dark) .bg-\[\#00c853\]:hover,
+#digiworku-root:not(.dark) .bg-emerald-500:hover,
+#digiworku-root:not(.dark) .hover\:bg-\[\#00b047\]:hover,
+#digiworku-root:not(.dark) .hover\:bg-emerald-600:hover {
+  background-color: #004d31 !important; /* Slightly lighter pine hover */
+}
+
+/* Ensure text, spans, icons, and everything inside primary dark green areas or white text classes are styled as light beige */
+#digiworku-root:not(.dark) .text-white,
+#digiworku-root:not(.dark) .text-white *,
+#digiworku-root:not(.dark) button[class*="bg-[#00c853]"] *,
+#digiworku-root:not(.dark) button[class*="bg-[#00311F]"] *,
+#digiworku-root:not(.dark) div[class*="bg-[#00c853]"] *,
+#digiworku-root:not(.dark) .bg-emerald-500 *,
+#digiworku-root:not(.dark) .bg-\[\#00c853\] *,
+#digiworku-root:not(.dark) .bg-\[\#00311F\] *,
+#digiworku-root:not(.dark) .text-white span,
+#digiworku-root:not(.dark) button.text-white span,
+#digiworku-root:not(.dark) button.text-white p,
+#digiworku-root:not(.dark) .bg-[#00c853] *,
+#digiworku-root:not(.dark) .bg-[#00311F] * {
+  color: #FFF7E6 !important;
+}
+
+#digiworku-root:not(.dark) .text-white svg,
+#digiworku-root:not(.dark) .text-white svg *,
+#digiworku-root:not(.dark) .bg-\[\#00c853\] svg,
+#digiworku-root:not(.dark) .bg-\[\#00c853\] svg *,
+#digiworku-root:not(.dark) .bg-emerald-500 svg,
+#digiworku-root:not(.dark) .bg-emerald-500 svg *,
+#digiworku-root:not(.dark) .bg-[#00c853] svg,
+#digiworku-root:not(.dark) .bg-[#00c853] svg *,
+#digiworku-root:not(.dark) .bg-[#00311F] svg,
+#digiworku-root:not(.dark) .bg-[#00311F] svg * {
+  stroke: #FFF7E6 !important;
+}
+
+#digiworku-root:not(.dark) .shadow-lg,
+#digiworku-root:not(.dark) .shadow-xl {
+  box-shadow: 0 10px 15px -3px rgba(0, 49, 31, 0.05), 0 4px 6px -4px rgba(0, 49, 31, 0.05) !important;
+}
+
+#digiworku-root:not(.dark) input,
+#digiworku-root:not(.dark) textarea,
+#digiworku-root:not(.dark) select {
+  background-color: #FFFDF0 !important;
+  border-color: rgba(0, 49, 31, 0.2) !important;
+  color: #00311F !important;
+}
+
+#digiworku-root:not(.dark) input::placeholder,
+#digiworku-root:not(.dark) textarea::placeholder {
+  color: rgba(0, 49, 31, 0.4) !important;
+}
+
