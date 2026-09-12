@@ -1296,22 +1296,27 @@ export default function App() {
             {/* Bottom Input Box Area Form */}
             <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161616] shrink-0">
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
                   if (!adminMessageInput.trim()) return;
 
-                  const text = adminMessageInput;
+                  const text = adminMessageInput.trim();
                   const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
+                  const newMsgId = `msg_admin_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
                   const newMsg = {
-                    id: `adm-${Date.now()}`,
+                    id: newMsgId,
                     role: 'assistant' as const,
                     content: text,
                     timestamp: time
                   };
 
+                  setAdminMessageInput('');
+
+                  // 1. Update state locally
+                  setChatHistory(prev => [...prev, newMsg]);
                   setChatThreadsList(prev => prev.map(t => {
-                    if (t.id === activeThreadId) {
+                    if (t.id === activeThreadId || t.id === 'alex') {
                       return {
                         ...t,
                         lastMessageText: text,
@@ -1322,41 +1327,16 @@ export default function App() {
                     return t;
                   }));
 
-                  if (activeThreadId === 'alex') {
-                    setChatHistory(prev => [...prev, newMsg]);
-                  }
-
-                  setAdminMessageInput('');
-
-                  if (activeThreadId !== 'alex') {
-                    setIsChatLoading(true);
-                    // Mock live client response simulation
-                    setTimeout(() => {
-                      setIsChatLoading(false);
-                      const clientTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-                      const clientMsg = {
-                        id: `cli-${Date.now()}`,
-                        role: 'user' as const,
-                        content: `Received! That is absolutely excellent work. Our senior management reviewed the designs you completed earlier and we are fully satisfied. Let us schedule a kickoff review for next Tuesday.`,
-                        timestamp: clientTime
-                      };
-
-                      setChatThreadsList(prev => prev.map(t => {
-                        if (t.id === activeThreadId) {
-                          return {
-                            ...t,
-                            lastMessageText: clientMsg.content,
-                            lastMessageTime: clientTime,
-                            messages: [...t.messages, clientMsg]
-                          };
-                        }
-                        return t;
-                      }));
-
-                      triggerToast(`New message reply from ${activeThread.name}`);
-                    }, 1500);
-                  } else {
-                    setIsChatLoading(false);
+                  // 2. Write Admin message to Supabase DB 'messages' table
+                  try {
+                    await supabase.from('messages').insert([{
+                      id: newMsgId,
+                      role: 'admin',
+                      content: text,
+                      created_at: new Date().toISOString()
+                    }]);
+                  } catch (err: any) {
+                    console.warn("Failed saving admin message to Supabase:", err?.message || err);
                   }
                 }}
                 className="flex items-center gap-3"
@@ -2020,12 +2000,61 @@ export default function App() {
     }
   };
 
-  // Validate Supabase Connection on Component Mount
+  // Fetch live chat messages from Supabase DB and sync with state
+  const fetchMessagesFromDB = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.warn('fetchMessagesFromDB error:', error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const dbMessages: ChatMessage[] = data.map((row: any) => ({
+          id: row.id,
+          role: (row.role === 'admin' || row.role === 'assistant') ? 'assistant' : 'user',
+          content: row.content || '',
+          timestamp: new Date(row.created_at || Date.now()).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+        }));
+
+        setChatHistory(dbMessages);
+
+        // Also update chatThreadsList so Admin panel shows live messages
+        const lastMsg = dbMessages[dbMessages.length - 1];
+        if (lastMsg) {
+          setChatThreadsList(prev => prev.map(thread => {
+            if (thread.id === 'alex' || thread.id === activeThreadId) {
+              const threadMsgList = dbMessages.map(m => ({
+                id: m.id,
+                role: m.role as 'user' | 'assistant',
+                content: m.content,
+                timestamp: m.timestamp
+              }));
+              return {
+                ...thread,
+                lastMessageText: lastMsg.content,
+                lastMessageTime: lastMsg.timestamp,
+                messages: threadMsgList
+              };
+            }
+            return thread;
+          }));
+        }
+      }
+    } catch (err: any) {
+      console.warn('fetchMessagesFromDB catch:', err.message);
+    }
+  };
+
+  // Validate Supabase Connection on Component Mount & start Chat Polling
   useEffect(() => {
     async function checkSupabase() {
       try {
         setSupabaseStatus('checking');
-        // Use a real table ping instead of auth.getSession (more reliable)
         const { error } = await supabase.from('inquiries').select('count').limit(1);
         if (error) {
           setSupabaseStatus('error');
@@ -2033,8 +2062,8 @@ export default function App() {
         } else {
           setSupabaseStatus('connected');
           setSupabaseMessage('Securely linked to Supabase project rjxbdjgagizjmjwnlbxx ✅');
-          // Fetch real inquiries from DB on successful connect
           await fetchInquiriesFromDB();
+          await fetchMessagesFromDB();
         }
       } catch (err: any) {
         setSupabaseStatus('error');
@@ -2042,6 +2071,12 @@ export default function App() {
       }
     }
     checkSupabase();
+
+    // Live Chat polling interval every 2.5 seconds
+    const interval = setInterval(() => {
+      fetchMessagesFromDB();
+    }, 2500);
+    return () => clearInterval(interval);
   }, []);
 
   // Manual Supabase connection check trigger
@@ -2181,11 +2216,11 @@ export default function App() {
     if (e) e.preventDefault();
     if (!inputMessage.trim() || isChatLoading) return;
 
-    const userText = inputMessage;
+    const userText = inputMessage.trim();
     const timeFormatted = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
     const newUserMsg: ChatMessage = {
-      id: `msg-user-${Date.now()}`,
+      id: `msg_user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       role: 'user',
       content: userText,
       timestamp: timeFormatted
@@ -2194,6 +2229,32 @@ export default function App() {
     const updatedHistory = [...chatHistory, newUserMsg];
     setChatHistory(updatedHistory);
     setInputMessage('');
+
+    // Save message to Supabase DB 'messages' table
+    try {
+      await supabase.from('messages').insert([{
+        id: newUserMsg.id,
+        role: 'user',
+        content: userText,
+        created_at: new Date().toISOString()
+      }]);
+    } catch (err: any) {
+      console.warn("Failed saving user message to Supabase:", err?.message || err);
+    }
+
+    // Update Admin thread list state
+    setChatThreadsList(prev => prev.map(t => {
+      if (t.id === 'alex' || t.id === activeThreadId) {
+        return {
+          ...t,
+          lastMessageText: userText,
+          lastMessageTime: timeFormatted,
+          messages: [...t.messages, newUserMsg],
+          unreadCount: t.unreadCount + 1
+        };
+      }
+      return t;
+    }));
 
     // First-time Admin auto-reply trigger if enabled
     if (autoReplyEnabled && !hasAutoReplied) {
@@ -2541,7 +2602,7 @@ export default function App() {
   });
 
   return (
-    <div id="digiworku-root" className={`${activeTab === 'chat' ? 'h-screen max-h-screen overflow-hidden' : 'min-h-screen'} font-sans flex text-[#1f2937] transition-colors duration-200 ${darkMode ? 'dark bg-[#111111] text-[#f1f5f9]' : 'bg-[#fafafc] text-[#1f2937]'} relative overflow-hidden`}>
+    <div id="digiworku-root" className={`${activeTab === 'chat' ? 'h-screen max-h-screen overflow-hidden' : 'min-h-screen'} font-sans flex text-[#1f2937] transition-colors duration-200 ${darkMode ? 'dark bg-[#111111] text-[#f1f5f9]' : 'bg-[#fafafc] text-[#1f2937]'} relative overflow-x-hidden w-full max-w-full min-w-0`}>
       <AnimatedGridBackground darkMode={darkMode} />
 
       {/* Toast popup */}
@@ -2942,171 +3003,138 @@ export default function App() {
       {/* Main Content Pane */}
       <main
         id="main-content-canvas"
-        className={`flex-1 flex flex-col relative z-10 ${activeTab === 'chat'
+        className={`flex-1 flex flex-col relative z-10 w-full max-w-full min-w-0 overflow-x-hidden ${activeTab === 'chat'
           ? 'h-screen max-h-screen overflow-hidden'
           : 'min-h-screen overflow-y-auto'
           }`}
       >
 
         {/* Top Navbar Header */}
-        <header className={`relative z-20 px-4 md:px-8 py-2.5 md:py-3 border-b flex items-center justify-between gap-4 shrink-0 transition-colors ${darkMode ? 'bg-[#111111] border-slate-800/80' : 'bg-[#FFF7E6] border-slate-200/80'}`}>
+        <header className={`relative z-20 px-3 sm:px-4 md:px-8 py-2 md:py-3 border-b flex items-center justify-between gap-2 sm:gap-4 shrink-0 transition-colors w-full max-w-full overflow-hidden ${darkMode ? 'bg-[#111111] border-slate-800/80' : 'bg-[#FFF7E6] border-slate-200/80'}`}>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
             {/* Hamburger / Three-line Menu Button */}
             <button
               id="header-sidebar-toggle"
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 -ml-1 rounded-xl text-slate-500 hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer flex items-center justify-center"
+              className="p-1.5 sm:p-2 -ml-1 rounded-xl text-slate-500 hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer flex items-center justify-center shrink-0"
               title="Open Navigation Menu"
             >
-              <Menu className="w-5.5 h-5.5" />
+              <Menu className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
             </button>
 
             {/* Logo Brand with click action to return Home */}
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setActiveTab('home'); setIsSidebarOpen(false); }}>
+            <div className="flex items-center gap-2 sm:gap-2.5 cursor-pointer shrink-0" onClick={() => { setActiveTab('home'); setIsSidebarOpen(false); }}>
               <img
                 src="https://i.ibb.co/8nvv02ZL/Digi-Worku-logo.jpg"
                 alt="DigiWorku Logo"
                 referrerPolicy="no-referrer"
-                className="w-12 h-12 md:w-13 md:h-13 rounded-xl object-cover shadow-lg border border-slate-200/40 dark:border-slate-800/40 hover:scale-105 transition-transform duration-200"
+                className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl object-cover shadow-md border border-slate-200/40 dark:border-slate-800/40 hover:scale-105 transition-transform duration-200 shrink-0"
               />
-              <span className="font-black text-slate-900 dark:text-white text-xl md:text-2xl tracking-tight">
+              <span className="font-black text-slate-900 dark:text-white text-lg sm:text-xl md:text-2xl tracking-tight shrink-0 whitespace-nowrap">
                 Digi<span className="text-[#00c853]">Worku</span>
               </span>
             </div>
           </div>
 
-          {/* Center-Top Search or Navigation links for responsive mobile workspace */}
-          <div className="flex items-center gap-1 md:gap-3">
+          {/* Header Right Interactive Tools */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            {/* Notification badge */}
+            <button
+              id="header-notification-bell"
+              onClick={() => {
+                setIsNotificationsOpen(true);
+              }}
+              className="p-2 sm:p-2.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer relative shrink-0"
+              title="Notifications"
+            >
+              {notifications.some(n => !n.read) && (
+                <span className="absolute -top-1 -right-1 flex h-4.5 min-w-4.5 px-1 items-center justify-center rounded-full bg-red-500 text-[9px] font-black text-white border-2 border-white dark:border-slate-900 animate-pulse">
+                  {notifications.filter(n => !n.read).length}
+                </span>
+              )}
+              <Bell className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+            </button>
 
-            {/* Nav button shortcuts for mobile / quick access */}
-            <div className="flex md:hidden items-center bg-slate-100 dark:bg-slate-800/80 rounded-xl p-1 gap-1">
-              <button
-                onClick={() => setActiveTab('home')}
-                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold ${activeTab === 'home' ? 'bg-[#00c853] text-white' : 'text-slate-500'}`}
-              >
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('chat')}
-                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold ${activeTab === 'chat' ? 'bg-[#00c853] text-white' : 'text-slate-500'}`}
-              >
-                Chat
-              </button>
-              <button
-                onClick={() => setActiveTab('portfolio')}
-                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold ${activeTab === 'portfolio' ? 'bg-[#00c853] text-white' : 'text-slate-500'}`}
-              >
-                Works
-              </button>
-              <button
-                onClick={() => setActiveTab('services')}
-                className={`px-2 py-1.5 rounded-lg text-[10px] font-bold ${activeTab === 'services' ? 'bg-[#00c853] text-white' : 'text-slate-500'}`}
-              >
-                Service
-              </button>
-            </div>
+            {/* Theme Toggle Button */}
+            <button
+              id="header-theme-toggle"
+              onClick={toggleDarkMode}
+              className="p-2 sm:p-2.5 rounded-xl text-slate-400 hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shrink-0"
+              title="Toggle visual style"
+            >
+              {darkMode ? <Sun className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-400" /> : <Moon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />}
+            </button>
 
-            {/* Header Interactive Tools */}
-            <div className="flex items-center gap-2 md:gap-3">
-              {/* Notification badge */}
-              <button
-                id="header-notification-bell"
-                onClick={() => {
-                  setIsNotificationsOpen(true);
-                }}
-                className="p-2.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer relative"
-                title="Notifications"
-              >
-                {notifications.some(n => !n.read) && (
-                  <span className="absolute -top-1 -right-1 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white border-2 border-white dark:border-slate-900 animate-pulse">
-                    {notifications.filter(n => !n.read).length}
-                  </span>
-                )}
-                <Bell className="w-4.5 h-4.5" />
-              </button>
-
-              {/* Theme Toggle Button */}
-              <button
-                id="header-theme-toggle"
-                onClick={toggleDarkMode}
-                className="p-2.5 rounded-xl text-slate-400 hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
-                title="Toggle visual style"
-              >
-                {darkMode ? <Sun className="w-4.5 h-4.5 text-amber-400" /> : <Moon className="w-4.5 h-4.5" />}
-              </button>
-
-              {/* Context-Sensitive Profile Widget */}
-              <button
-                id="header-profile-widget"
-                onClick={() => {
-                  setIsProfileOpen(true);
-                }}
-                className="flex items-center gap-2 border-l border-slate-200 dark:border-slate-800 pl-3 hover:opacity-90 active:scale-98 transition-all text-left cursor-pointer focus:outline-none"
-                title="Profile Details"
-              >
-                {panelMode === 'admin' ? (
-                  isAdmin ? (
-                    <>
-                      <img
-                        src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                        alt="Ananya Sharma"
-                        className="w-8 h-8 rounded-full object-cover border border-[#00c853] shrink-0"
-                      />
-                      <div className="hidden xl:block min-w-0">
-                        <span className="block text-xs font-black text-slate-900 dark:text-slate-100 leading-none">Ananya Sharma</span>
-                        <span className="block text-[9.5px] text-[#00c853] font-bold uppercase tracking-tight mt-0.5">Console Operator</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0 border border-red-500/30">
-                        <Lock className="w-3.5 h-3.5 text-red-400" />
-                      </div>
-                      <div className="hidden xl:block min-w-0">
-                        <span className="block text-xs font-black text-slate-400 leading-none">Unauthorized</span>
-                        <span className="block text-[9.5px] text-red-400 font-bold uppercase tracking-tight mt-0.5">Secure Gated</span>
-                      </div>
-                    </>
-                  )
+            {/* Context-Sensitive Profile Widget */}
+            <button
+              id="header-profile-widget"
+              onClick={() => {
+                setIsProfileOpen(true);
+              }}
+              className="flex items-center gap-2 border-l border-slate-200 dark:border-slate-800 pl-2 sm:pl-3 hover:opacity-90 active:scale-98 transition-all text-left cursor-pointer focus:outline-none shrink-0"
+              title="Profile Details"
+            >
+              {panelMode === 'admin' ? (
+                isAdmin ? (
+                  <>
+                    <img
+                      src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                      alt="Ananya Sharma"
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-[#00c853] shrink-0"
+                    />
+                    <div className="hidden xl:block min-w-0">
+                      <span className="block text-xs font-black text-slate-900 dark:text-slate-100 leading-none">Ananya Sharma</span>
+                      <span className="block text-[9.5px] text-[#00c853] font-bold uppercase tracking-tight mt-0.5">Console Operator</span>
+                    </div>
+                  </>
                 ) : (
-                  currentUser ? (
-                    <>
-                      <img
-                        src={currentUser.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=00c853&color=fff&bold=true`}
-                        alt={currentUser.name}
-                        className="w-8 h-8 rounded-full object-cover border border-[#00c853]/45 shrink-0"
-                      />
-                      <div className="hidden xl:block min-w-0">
-                        <span className="block text-sm font-black text-slate-900 dark:text-slate-100 leading-none truncate max-w-[100px]">{currentUser.name}</span>
-                        <span className="block text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight mt-0.5">Active Client</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <img
-                        src="https://ui-avatars.com/api/?name=Alex+Rivera&background=00c853&color=fff&bold=true"
-                        alt="Alex Rivera"
-                        className="w-8 h-8 rounded-full object-cover border border-[#00c853]/45 shrink-0"
-                      />
-                      <div className="hidden xl:block min-w-0">
-                        <span className="block text-xs font-bold text-slate-900 dark:text-slate-200 leading-none truncate max-w-[100px]">Alex Rivera</span>
-                        <span className="block text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight text-left mt-0.5">
-                          User
-                        </span>
-                      </div>
-                    </>
-                  )
-                )}
-              </button>
-            </div>
-
+                  <>
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center shrink-0 border border-red-500/30">
+                      <Lock className="w-3.5 h-3.5 text-red-400" />
+                    </div>
+                    <div className="hidden xl:block min-w-0">
+                      <span className="block text-xs font-black text-slate-400 leading-none">Unauthorized</span>
+                      <span className="block text-[9.5px] text-red-400 font-bold uppercase tracking-tight mt-0.5">Secure Gated</span>
+                    </div>
+                  </>
+                )
+              ) : (
+                currentUser ? (
+                  <>
+                    <img
+                      src={currentUser.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=00c853&color=fff&bold=true`}
+                      alt={currentUser.name}
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-[#00c853]/45 shrink-0"
+                    />
+                    <div className="hidden xl:block min-w-0">
+                      <span className="block text-sm font-black text-slate-900 dark:text-slate-100 leading-none truncate max-w-[100px]">{currentUser.name}</span>
+                      <span className="block text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight mt-0.5">Active Client</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <img
+                      src="https://ui-avatars.com/api/?name=Alex+Rivera&background=00c853&color=fff&bold=true"
+                      alt="Alex Rivera"
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-[#00c853]/45 shrink-0"
+                    />
+                    <div className="hidden xl:block min-w-0">
+                      <span className="block text-xs font-bold text-slate-900 dark:text-slate-200 leading-none truncate max-w-[100px]">Alex Rivera</span>
+                      <span className="block text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight text-left mt-0.5">
+                        User
+                      </span>
+                    </div>
+                  </>
+                )
+              )}
+            </button>
           </div>
 
         </header>
 
         {/* Tab Selection Frame */}
-        <div id="active-viewport-area" className="flex-1 flex flex-col min-h-0 relative">
+        <div id="active-viewport-area" className="flex-1 flex flex-col min-h-0 relative w-full max-w-full min-w-0 overflow-x-hidden">
 
           <AnimatePresence mode="wait">
 
