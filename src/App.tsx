@@ -77,6 +77,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { AuthForm } from './components/AuthForm';
 import { AnimatedGridBackground } from './components/AnimatedGridBackground';
 import { ChatDoodleBackground } from './components/ChatDoodleBackground';
+import { ServiceDetailPage } from './components/ServiceDetailPage';
 import { supabase } from './supabase';
 
 // Structured Types
@@ -305,6 +306,9 @@ export interface CRMInquiry {
   unread: boolean;
   budget?: string;
   status: 'new' | 'reviewed' | 'converted';
+  // DB-mapped fields (from Supabase inquiries table)
+  email?: string;
+  mobile?: string;
 }
 
 export interface ChatThread {
@@ -371,11 +375,142 @@ const INITIAL_TEAM_MEMBERS: TeamMember[] = [
   }
 ];
 
-const INITIAL_CRM_PROJECTS: CRMProject[] = [];
+const INITIAL_CRM_PROJECTS: CRMProject[] = [
+  {
+    id: 'proj-1',
+    name: 'EliteCommerce UI Revamp',
+    leadName: 'Neha Gupta',
+    leadAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+    status: 'ON TRACK',
+    healthScore: 98,
+    budget: '₹4,50,000',
+    description: 'Complete UI/UX redesign and Next.js frontend rebuild.',
+    progress: 75
+  },
+  {
+    id: 'proj-2',
+    name: 'FinTrust Mobile App Security',
+    leadName: 'Kabir Rao',
+    leadAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+    status: 'STABLE',
+    healthScore: 95,
+    budget: '₹2,80,000',
+    description: 'Biometric MFA & End-to-end encrypted transaction gateway.',
+    progress: 90
+  },
+  {
+    id: 'proj-3',
+    name: 'Nexus Cloud Infrastructure',
+    leadName: 'Aarav Kapoor',
+    leadAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+    status: 'IN REVIEW',
+    healthScore: 88,
+    budget: '₹6,00,000',
+    description: 'Kubernetes orchestration and Supabase backend sync.',
+    progress: 60
+  }
+];
 
-const INITIAL_CRM_INQUIRIES: CRMInquiry[] = [];
+const INITIAL_CRM_INQUIRIES: CRMInquiry[] = [
+  {
+    id: 'inq-1',
+    clientName: 'Rahul Verma (VermaTech Solutions)',
+    projectName: 'Custom AI Chatbot & Customer Portal',
+    timeAgo: '10 mins ago',
+    summary: 'Need a custom AI Assistant integrated into our customer portal to handle tier-1 support queries automatically.',
+    unread: true,
+    budget: '₹1,50,000 - ₹3,00,000',
+    status: 'new'
+  },
+  {
+    id: 'inq-2',
+    clientName: 'Siddharth Mehta (GrowthSpark)',
+    projectName: 'E-commerce Mobile App Development',
+    timeAgo: '2 hours ago',
+    summary: 'Looking for a dedicated React Native engineering squad to build a cross-platform mobile app in 6 weeks.',
+    unread: false,
+    budget: '₹3,50,000',
+    status: 'reviewed'
+  },
+  {
+    id: 'inq-3',
+    clientName: 'Kavita Sundaram (Bloom Studio)',
+    projectName: 'Brand Identity & Corporate Design Suite',
+    timeAgo: '1 day ago',
+    summary: 'Full brand guidelines, vector logo package, and animated social media kit for our new product launch.',
+    unread: false,
+    budget: '₹85,000',
+    status: 'converted'
+  }
+];
 
-const INITIAL_CHAT_THREADS: ChatThread[] = [];
+const INITIAL_CHAT_THREADS: ChatThread[] = [
+  {
+    id: 'alex',
+    name: 'Alex Rivera',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+    companyName: 'Rivera Tech',
+    status: 'online',
+    lastMessageText: "Checking the new feature build right now. Give me 5 minutes.",
+    lastMessageTime: '12:32 PM',
+    tag: 'WORKFLOW AUTOMATION',
+    unreadCount: 0,
+    email: 'alex.rivera@riveratech.com',
+    phone: '+1 555-0199',
+    activeProjectName: 'Workflow Automation',
+    activeProjectBudget: '₹3,50,000',
+    activeProjectProgress: 80,
+    adminNotes: 'Alex is evaluating workflow features.',
+    messages: [
+      {
+        id: 'msg-1',
+        role: 'assistant',
+        content: 'Welcome to DigiWorku! How can our engineering and design teams assist your project today?',
+        timestamp: '12:00 PM'
+      }
+    ]
+  }
+];
+
+export interface ReviewItem {
+  id: string;
+  name: string;
+  role: string;
+  rating: number;
+  text: string;
+  avatarInitials: string;
+  createdAt: string;
+}
+
+const INITIAL_REVIEWS: ReviewItem[] = [
+  {
+    id: 'rev-1',
+    name: 'Aditya Sen',
+    role: 'Chief Architect, TechPulse',
+    rating: 5,
+    text: "Primacy in delivery parameters. The Indian development unit scaled our backend with extreme efficiency. Zero-mock pipelines built elegantly!",
+    avatarInitials: 'AS',
+    createdAt: '2 days ago'
+  },
+  {
+    id: 'rev-2',
+    name: 'Priya Kothari',
+    role: 'Product Lead, Elevate Commerce',
+    rating: 5,
+    text: "Highly polished custom UI results. They did exactly what was described! Very communicative and responsive to our needs.",
+    avatarInitials: 'PK',
+    createdAt: '4 days ago'
+  },
+  {
+    id: 'rev-3',
+    name: 'Rohan Deshmukh',
+    role: 'CTO, FinEdge Systems',
+    rating: 5,
+    text: "Outstanding turnaround time and code cleanliness. The Supabase integration and AI chat automation exceeded our expectations.",
+    avatarInitials: 'RD',
+    createdAt: '1 week ago'
+  }
+];
 
 export default function App() {
   // Navigation & Screen Control
@@ -383,7 +518,8 @@ export default function App() {
   // 'chat' represents Image 2 (Dedicated Chat Workspace)
   // 'portfolio' represents Image 3 (Portfolio Showcase Panel)
   // 'services' represents Image 4 (Service Categories Matrix)
-  const [activeTab, setActiveTab] = useState<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail'>('home');
+  const [activeServiceSlug, setActiveServiceSlug] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   // Supabase Backend Integration States
@@ -400,10 +536,10 @@ export default function App() {
   const [editProfileMobile, setEditProfileMobile] = useState<string>('');
   const [editProfileAvatar, setEditProfileAvatar] = useState<string>('');
 
-  // Auto-Reply Management States (10 Seconds delay & Admin editable / removable)
+  // Auto-Reply Management States (Disabled by default as requested)
   const [autoReplyEnabled, setAutoReplyEnabled] = useState<boolean>(() => {
     const saved = localStorage.getItem('digiworku-auto-reply-enabled');
-    return saved !== null ? saved === 'true' : true;
+    return saved !== null ? saved === 'true' : false;
   });
 
   const [autoReplyText, setAutoReplyText] = useState<string>(() => {
@@ -515,13 +651,23 @@ export default function App() {
         return;
       }
 
-      const validTabs: Array<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services'> = [
-        'home', 'clients', 'projects', 'inquiries', 'chat', 'portfolio', 'reviews', 'team', 'analytics', 'settings', 'services'
+      const validTabs: Array<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail'> = [
+        'home', 'clients', 'projects', 'inquiries', 'chat', 'portfolio', 'reviews', 'team', 'analytics', 'settings', 'services', 'serviceDetail'
       ];
+
+      if (pathname.startsWith('/services/') && pathname !== '/services' && pathname !== '/services/') {
+        const slug = pathname.replace('/services/', '');
+        setActiveTab('serviceDetail');
+        setActiveServiceSlug(slug);
+        return;
+      }
 
       const targetTab = validTabs.find(tab => pathname === `/${tab}` || hash === tab);
       if (targetTab) {
         setActiveTab(targetTab);
+        if (targetTab !== 'serviceDetail') {
+          setActiveServiceSlug(null);
+        }
       }
     };
 
@@ -631,6 +777,107 @@ export default function App() {
   const [serviceFormIcon, setServiceFormIcon] = useState<string>('Globe');
   const [serviceFormContent, setServiceFormContent] = useState<string>('');
   const [selectedServiceDetail, setSelectedServiceDetail] = useState<ServiceItem | null>(null);
+
+  // Client Reviews List State
+  const [reviewsList, setReviewsList] = useState<ReviewItem[]>(() => {
+    const saved = localStorage.getItem('digiworku-reviews-v1');
+    return saved ? JSON.parse(saved) : INITIAL_REVIEWS;
+  });
+
+  // Service Booking / Request Modal States
+  const [isServiceRequestModalOpen, setIsServiceRequestModalOpen] = useState<boolean>(false);
+  const [selectedRequestServiceTitle, setSelectedRequestServiceTitle] = useState<string>('Website Development');
+  const [requestFormClientName, setRequestFormClientName] = useState<string>('');
+  const [requestFormEmail, setRequestFormEmail] = useState<string>('');
+  const [requestFormPhone, setRequestFormPhone] = useState<string>('');
+  const [requestFormBudget, setRequestFormBudget] = useState<string>('₹45,000');
+  const [requestFormDescription, setRequestFormDescription] = useState<string>('');
+  const [isSubmittingServiceRequest, setIsSubmittingServiceRequest] = useState<boolean>(false);
+
+  const handleOpenServiceRequestModal = (serviceTitle?: string) => {
+    if (serviceTitle) {
+      setSelectedRequestServiceTitle(serviceTitle);
+      const found = servicesList.find(s => s.title === serviceTitle);
+      if (found) setRequestFormBudget(found.price);
+    }
+    const savedUser = localStorage.getItem('digiworku-user-session');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.name) setRequestFormClientName(parsed.name);
+        if (parsed.email) setRequestFormEmail(parsed.email);
+        if (parsed.mobile) setRequestFormPhone(parsed.mobile);
+      } catch (e) {}
+    }
+    setIsServiceRequestModalOpen(true);
+  };
+
+  const handleServiceRequestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!requestFormClientName.trim() || !requestFormEmail.trim()) {
+      triggerToast("⚠️ Please fill in your name and corporate email address.");
+      return;
+    }
+
+    setIsSubmittingServiceRequest(true);
+
+    const inquiryId = `inq-${Date.now()}`;
+    const summaryText = requestFormDescription.trim() || `Inquiry for ${selectedRequestServiceTitle}. Contact: ${requestFormEmail.trim()}, Phone: ${requestFormPhone.trim()}`;
+
+    // Build local CRMInquiry object
+    const newInquiry: CRMInquiry = {
+      id: inquiryId,
+      clientName: `${requestFormClientName.trim()}`,
+      projectName: selectedRequestServiceTitle,
+      timeAgo: 'Just now',
+      summary: summaryText,
+      unread: true,
+      budget: requestFormBudget || '₹45,000',
+      status: 'new',
+      email: requestFormEmail.trim(),
+      mobile: requestFormPhone.trim()
+    };
+
+    // Save to local state immediately (optimistic)
+    setCrmInquiriesList(prev => [newInquiry, ...prev]);
+
+    // Push notification
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        title: `📩 New Service Inquiry: ${selectedRequestServiceTitle}`,
+        description: `Submitted by ${requestFormClientName.trim()} (${requestFormEmail.trim()})`,
+        time: 'Just now',
+        type: 'info',
+        read: false,
+        category: 'Inquiries'
+      },
+      ...prev
+    ]);
+
+    // Persist to Supabase (map to DB schema: id, name, email, mobile, message, status)
+    try {
+      const dbRecord = {
+        id: inquiryId,
+        name: requestFormClientName.trim(),
+        email: requestFormEmail.trim(),
+        mobile: requestFormPhone.trim() || null,
+        message: `${selectedRequestServiceTitle}: ${summaryText} (Budget: ${requestFormBudget || '₹45,000'})`,
+        status: 'new'
+      };
+      const { error: dbError } = await supabase.from('inquiries').insert(dbRecord);
+      if (dbError) {
+        console.warn('Supabase inquiry insert failed:', dbError.message);
+      }
+    } catch (dbErr: any) {
+      console.warn('Supabase inquiry push error:', dbErr.message);
+    }
+
+    setIsSubmittingServiceRequest(false);
+    setIsServiceRequestModalOpen(false);
+    setRequestFormDescription('');
+    triggerToast(`🎉 Service Request for "${selectedRequestServiceTitle}" submitted! Our leads will contact you.`);
+  };
 
   const [chatThreadsList, setChatThreadsList] = useState<ChatThread[]>(() => {
     const saved = localStorage.getItem('digiworku-crm-threads-v2');
@@ -793,10 +1040,10 @@ export default function App() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex-1 flex min-h-0 bg-slate-50 dark:bg-[#070e1b] overflow-hidden"
+        className="flex-1 flex min-h-0 bg-slate-50 dark:bg-[#0d0d0d] overflow-hidden"
       >
         {/* Left Column: Messages List Sidebar */}
-        <div className="w-80 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-[#0b1329]/90 shrink-0">
+        <div className="w-80 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-[#161616]/90 shrink-0">
           <div className="p-4.5 border-b border-slate-205 dark:border-slate-800 flex flex-col gap-3.5">
             <h2 className="text-xl font-bold text-slate-800 dark:text-white">Messages</h2>
 
@@ -841,12 +1088,11 @@ export default function App() {
                   key={thread.id}
                   onClick={() => {
                     setActiveThreadId(thread.id);
-                    // Reset unread status
                     if (thread.unreadCount > 0) {
                       setChatThreadsList(prev => prev.map(t => t.id === thread.id ? { ...t, unreadCount: 0 } : t));
                     }
                   }}
-                  className={`w-full text-left p-4 flex items-start gap-3 transition-colors relative hover:bg-slate-50 dark:hover:bg-slate-800/20 cursor-pointer ${isActive ? 'bg-[#e8fcf0]/50 dark:bg-[#00c853]/5 border-l-4 border-[#00c853]' : ''
+                  className={`w-full text-left p-4 flex items-start gap-3 transition-colors relative hover:bg-slate-100/70 dark:hover:bg-slate-800/30 cursor-pointer ${isActive ? 'bg-[#FFF3D6] dark:bg-[#00c853]/15 border-l-4 border-[#00c853]' : ''
                     }`}
                 >
                   <span className="relative inline-block shrink-0">
@@ -856,27 +1102,27 @@ export default function App() {
                       className="w-11 h-11 rounded-full object-cover border border-slate-200 dark:border-slate-800"
                     />
                     {thread.status === 'online' && (
-                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-[#0b1329] animate-pulse" />
+                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-[#161616] animate-pulse" />
                     )}
                   </span>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block truncate">
+                      <span className="text-xs font-extrabold text-[#00311F] dark:text-slate-100 block truncate">
                         {thread.name}
                       </span>
-                      <span className="text-[10px] text-slate-400 block shrink-0 font-medium ml-1">
+                      <span className="text-[10px] text-[#00311F]/70 dark:text-slate-400 block shrink-0 font-bold ml-1">
                         {thread.lastMessageTime}
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-slate-550 dark:text-slate-400 truncate mt-0.5 font-medium leading-normal">
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">{thread.companyName}</span> • {thread.lastMessageText}
+                    <p className="text-[11px] text-[#00311F]/80 dark:text-slate-300 truncate mt-0.5 font-medium leading-normal">
+                      <span className="font-bold text-[#00311F] dark:text-slate-200">{thread.companyName}</span> • {thread.lastMessageText}
                     </p>
 
                     <div className="flex items-center justify-between mt-2.5">
                       {thread.tag ? (
-                        <span className="p-1 px-2.5 rounded-md text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-tight block">
+                        <span className="p-1 px-2.5 rounded-md text-[10px] bg-[#00311F]/10 dark:bg-slate-800 text-[#00311F] dark:text-slate-300 font-extrabold uppercase tracking-tight block">
                           {thread.tag}
                         </span>
                       ) : (
@@ -904,9 +1150,9 @@ export default function App() {
 
         {/* Center Column: Chat Messages Viewport Panel */}
         {activeThread ? (
-          <div className="flex-1 flex flex-col bg-slate-50 dark:bg-[#070e1b]/40 min-w-0 h-full relative border-r border-slate-200 dark:border-slate-800">
+          <div className="flex-1 flex flex-col bg-slate-50 dark:bg-[#0d0d0d]/40 min-w-0 h-full relative border-r border-slate-200 dark:border-slate-800">
             {/* Sub-Header info client */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#0b1329] shadow-xs shrink-0">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#161616] shadow-xs shrink-0">
               <div className="flex items-center gap-3">
                 <span className="relative">
                   <img
@@ -915,7 +1161,7 @@ export default function App() {
                     className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-800"
                   />
                   {activeThread.status === 'online' && (
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#0b1329]" />
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#161616]" />
                   )}
                 </span>
                 <div>
@@ -984,8 +1230,8 @@ export default function App() {
                     <div className="max-w-[75%] flex flex-col gap-0.5">
                       <div
                         className={`p-3.5 rounded-2xl text-xs sm:text-sm whitespace-pre-wrap leading-relaxed shadow-xs transition-all ${isUser
-                          ? 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-150/40 dark:border-slate-750/30'
-                          : 'bg-[#e8fcf0] text-slate-900 border border-emerald-100/80 dark:bg-[#00c853]/10 dark:text-slate-100 dark:border-emerald-500/20 rounded-tr-none'
+                          ? 'bg-white text-[#00311F] dark:bg-slate-800 dark:text-slate-100 rounded-tl-none border border-slate-200 dark:border-slate-700 font-medium'
+                          : 'bg-[#00311F] text-[#FFF7E6] dark:bg-[#00c853] dark:text-slate-950 rounded-tr-none border border-[#00311F] dark:border-emerald-500 font-medium'
                           }`}
                       >
                         {msg.attachment && (
@@ -1007,8 +1253,8 @@ export default function App() {
                         )}
                         <div className="break-words font-semibold">{msg.content}</div>
 
-                        <div className="text-[9px] font-bold text-slate-400 text-right mt-1.5 select-none block leading-none">
-                          {msg.timestamp} {!isUser && <span className="text-[#00c853] ml-1">✓✓ Read</span>}
+                        <div className={`text-[9px] font-bold text-right mt-1.5 select-none block leading-none ${isUser ? 'text-[#00311F]/60 dark:text-slate-400' : 'text-[#FFF7E6]/70 dark:text-slate-900/70'}`}>
+                          {msg.timestamp} {!isUser && <span className="text-[#FFF7E6] dark:text-slate-900 font-extrabold ml-1">✓✓ Read</span>}
                         </div>
                       </div>
                     </div>
@@ -1048,7 +1294,7 @@ export default function App() {
             </div>
 
             {/* Bottom Input Box Area Form */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0b1329] shrink-0">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#161616] shrink-0">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -1158,12 +1404,12 @@ export default function App() {
 
         {/* Right Column: Contact Detailed Profile Dossier card */}
         {activeThread && (
-          <div className="w-80 overflow-y-auto bg-white dark:bg-[#0b1329] p-5 space-y-6 shrink-0 hidden lg:block">
+          <div className="w-80 overflow-y-auto bg-white dark:bg-[#161616] p-5 space-y-6 shrink-0 hidden lg:block">
 
             {/* Large Profile Picture with double active green ring spacer */}
             <div className="text-center space-y-3.5 pt-2">
               <div className="relative inline-block">
-                <div className="w-24 h-24 rounded-full p-1 border-2 border-emerald-500 bg-white ring-4 ring-offset-2 ring-[#00c853]/20 dark:ring-offset-[#0b1329] dark:bg-slate-900 overflow-hidden">
+                <div className="w-24 h-24 rounded-full p-1 border-2 border-emerald-500 bg-white ring-4 ring-offset-2 ring-[#00c853]/20 dark:ring-offset-[#161616] dark:bg-slate-900 overflow-hidden">
                   <img
                     src={activeThread.avatarUrl}
                     alt={activeThread.name}
@@ -1171,7 +1417,7 @@ export default function App() {
                   />
                 </div>
                 {activeThread.status === 'online' && (
-                  <span className="absolute bottom-1 right-1 w-4.5 h-4.5 bg-emerald-500 rounded-full border-3 border-white dark:border-[#0b1329]" />
+                  <span className="absolute bottom-1 right-1 w-4.5 h-4.5 bg-emerald-500 rounded-full border-3 border-white dark:border-[#161616]" />
                 )}
               </div>
 
@@ -1339,30 +1585,30 @@ export default function App() {
             </div>
 
             {/* AUTO-REPLY CONTROL CARD (10 Seconds delay & Admin editable / removable) */}
-            <div className="p-4 bg-[#e8fcf0]/60 dark:bg-emerald-950/20 rounded-2xl border border-[#00c853]/25 space-y-3">
+            <div className="p-4 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-xs">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-[#00c853]" />
-                  <h4 className="text-xs font-black text-slate-800 dark:text-white">Auto-Reply (10s Delay)</h4>
+                  <h4 className="text-xs font-extrabold text-[#00311F] dark:text-white">Auto-Reply (10s Delay)</h4>
                 </div>
                 <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${autoReplyEnabled ? 'bg-emerald-500/20 text-[#00c853]' : 'bg-red-500/20 text-red-500'}`}>
                   {autoReplyEnabled ? 'ACTIVE (10s)' : 'DISABLED'}
                 </span>
               </div>
 
-              <p className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+              <p className="text-[10.5px] text-[#00311F]/80 dark:text-slate-300 font-medium leading-relaxed">
                 Jab user msg karta hai to auto reply <strong>10 second</strong> baad receive hota hai. Aap yahan se text edit/remove kar sakte hain.
               </p>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Auto-Reply Message</label>
+                <label className="text-[9px] font-bold text-[#00311F]/70 dark:text-slate-400 uppercase tracking-widest block">Auto-Reply Message</label>
                 <textarea
                   rows={3}
                   value={autoReplyText}
                   onChange={(e) => setAutoReplyText(e.target.value)}
                   placeholder="Enter auto reply text..."
                   disabled={!autoReplyEnabled}
-                  className="w-full p-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:outline-none focus:border-[#00c853] text-slate-800 dark:text-white disabled:opacity-50"
+                  className="w-full p-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-800 bg-[#FFFDF0] dark:bg-slate-950 focus:outline-none focus:border-[#00c853] text-[#00311F] dark:text-white disabled:opacity-50"
                 />
               </div>
 
@@ -1492,6 +1738,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('digiworku-team-members-v1', JSON.stringify(teamMembers));
   }, [teamMembers]);
+
+  useEffect(() => {
+    localStorage.setItem('digiworku-reviews-v1', JSON.stringify(reviewsList));
+  }, [reviewsList]);
 
   // Theme state (Dark Mode / Light Mode)
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -1703,19 +1953,88 @@ export default function App() {
     // Disabled as requested: no toast popups should show up anywhere on clicking any button or icon
   };
 
+  // Fetch inquiries from Supabase DB and merge with local state
+  const fetchInquiriesFromDB = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('inquiries')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('fetchInquiriesFromDB error:', error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        // Map DB rows to CRMInquiry format
+        const dbInquiries: CRMInquiry[] = data.map((row: any) => {
+          // Parse message field: format is "ProjectName: Summary (Budget: X)"
+          const msgParts = (row.message || '').split(': ');
+          const projectName = msgParts.length > 1 ? msgParts[0] : 'Service Inquiry';
+          const summaryRaw = msgParts.slice(1).join(': ');
+          const budgetMatch = summaryRaw.match(/\(Budget: (.+?)\)/);
+          const budget = budgetMatch ? budgetMatch[1] : undefined;
+          const summary = summaryRaw.replace(/\s*\(Budget: .+?\)/, '').trim() || summaryRaw;
+
+          // Calculate timeAgo from created_at
+          const createdAt = new Date(row.created_at);
+          const now = new Date();
+          const diffMs = now.getTime() - createdAt.getTime();
+          const diffMins = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMins / 60);
+          const diffDays = Math.floor(diffHours / 24);
+          const timeAgo = diffDays > 0 ? `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
+            : diffHours > 0 ? `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+            : diffMins > 1 ? `${diffMins} mins ago` : 'Just now';
+
+          const statusMap: Record<string, CRMInquiry['status']> = {
+            'new': 'new', 'New': 'new',
+            'reviewed': 'reviewed', 'Reviewed': 'reviewed',
+            'converted': 'converted', 'Converted': 'converted'
+          };
+
+          return {
+            id: row.id,
+            clientName: row.name || 'Unknown Client',
+            projectName,
+            timeAgo,
+            summary: summary || 'No summary provided.',
+            unread: row.status === 'new' || row.status === 'New',
+            budget: budget !== 'N/A' ? budget : undefined,
+            status: statusMap[row.status] || 'new',
+            email: row.email || '',
+            mobile: row.mobile || ''
+          };
+        });
+
+        // Merge DB inquiries with any local-only ones (avoid duplicates)
+        setCrmInquiriesList(prev => {
+          const dbIds = new Set(dbInquiries.map(i => i.id));
+          const localOnly = prev.filter(i => !dbIds.has(i.id));
+          return [...dbInquiries, ...localOnly];
+        });
+      }
+    } catch (err: any) {
+      console.warn('fetchInquiriesFromDB catch:', err.message);
+    }
+  };
+
   // Validate Supabase Connection on Component Mount
   useEffect(() => {
     async function checkSupabase() {
       try {
         setSupabaseStatus('checking');
-        // Simple authentication session look up to verify API access
-        const { error } = await supabase.auth.getSession();
+        // Use a real table ping instead of auth.getSession (more reliable)
+        const { error } = await supabase.from('inquiries').select('count').limit(1);
         if (error) {
           setSupabaseStatus('error');
           setSupabaseMessage(`Connection failed: ${error.message}`);
         } else {
           setSupabaseStatus('connected');
           setSupabaseMessage('Securely linked to Supabase project rjxbdjgagizjmjwnlbxx ✅');
+          // Fetch real inquiries from DB on successful connect
+          await fetchInquiriesFromDB();
         }
       } catch (err: any) {
         setSupabaseStatus('error');
@@ -1762,11 +2081,11 @@ export default function App() {
         try {
           const formattedInquiries = crmInquiriesList.map(inq => ({
             id: inq.id,
-            name: inq.name,
-            email: inq.email,
-            mobile: inq.mobile || '',
-            message: inq.message || '',
-            status: inq.status || 'New',
+            name: inq.clientName || 'Anonymous Client',
+            email: inq.clientName.includes('@') ? inq.clientName : '',
+            mobile: '',
+            message: `${inq.projectName}: ${inq.summary} (Budget: ${inq.budget || 'N/A'})`,
+            status: inq.status || 'new',
             created_at: new Date().toISOString()
           }));
 
@@ -1857,7 +2176,7 @@ export default function App() {
     }
   };
 
-  // Live Chat PM handling: 10-second auto-reply delay using exact Admin-configured message on FIRST user message only
+  // Live Chat PM handling with AI API integration & intelligent fallbacks
   const handleSendChatMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputMessage.trim() || isChatLoading) return;
@@ -1872,35 +2191,78 @@ export default function App() {
       timestamp: timeFormatted
     };
 
-    setChatHistory(prev => [...prev, newUserMsg]);
+    const updatedHistory = [...chatHistory, newUserMsg];
+    setChatHistory(updatedHistory);
     setInputMessage('');
 
-    // Check if Auto-Reply is enabled AND if user has NOT received the first-time auto reply yet
-    if (!autoReplyEnabled || hasAutoReplied) {
+    // First-time Admin auto-reply trigger if enabled
+    if (autoReplyEnabled && !hasAutoReplied) {
+      setHasAutoReplied(true);
+      localStorage.setItem('digiworku-has-auto-replied', 'true');
+      setIsChatLoading(true);
+
+      setTimeout(() => {
+        const replyText = autoReplyText || "Thank you for reaching out to DigiWorku! Our team has received your message and will update your project details shortly.";
+        const newBotMsg: ChatMessage = {
+          id: `msg-bot-${Date.now()}`,
+          role: 'assistant',
+          content: replyText,
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+        };
+        setChatHistory(prev => [...prev, newBotMsg]);
+        setIsChatLoading(false);
+      }, 1500);
       return;
     }
 
-    // Mark that first-time auto-reply has been triggered for this user session
-    setHasAutoReplied(true);
-    localStorage.setItem('digiworku-has-auto-replied', 'true');
-
-    // Start 10-second delay for the FIRST user message auto reply
+    // AI Response generation via /api/chat or fallback engine
     setIsChatLoading(true);
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userText,
+          history: updatedHistory.slice(-6).map(m => ({ role: m.role, content: m.content })),
+          systemInstruction: "You are the DigiWorku Lead Client Partner and AI Assistant. Provide helpful, concise, professional answers about engineering, design, video editing, branding, and digital workforce services."
+        })
+      });
 
-    setTimeout(() => {
-      // Use the exact autoReplyText saved by Admin in Admin Panel!
-      const replyText = autoReplyText || "Thank you for reaching out to DigiWorku! Our team has received your message and will update your project details shortly.";
+      if (response.ok) {
+        const data = await response.json();
+        const botReply = data.text || "Thank you for your message! Our engineering leads have updated your request context.";
+        const newBotMsg: ChatMessage = {
+          id: `msg-bot-${Date.now()}`,
+          role: 'assistant',
+          content: botReply,
+          timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+        };
+        setChatHistory(prev => [...prev, newBotMsg]);
+      } else {
+        throw new Error('API request failed');
+      }
+    } catch (err) {
+      // Intelligent local fallback response
+      let fallbackText = "Understood! I have logged this requirement in your DigiWorku project workspace. Our team lead will review and respond shortly.";
+      const lower = userText.toLowerCase();
+      if (lower.includes('price') || lower.includes('cost') || lower.includes('budget') || lower.includes('pricing')) {
+        fallbackText = "Our core packages start at ₹8,000 for Graphic Design, ₹12,500 for Video Editing, ₹30,000 for Branding, and ₹45,000 for Web Application Development. We also offer custom enterprise billing!";
+      } else if (lower.includes('team') || lower.includes('engineer') || lower.includes('developer') || lower.includes('who')) {
+        fallbackText = "DigiWorku pairs you with dedicated senior developers, UI/UX designers, and project managers operating in a high-speed agile sprint pipeline.";
+      } else if (lower.includes('service') || lower.includes('web') || lower.includes('app') || lower.includes('design')) {
+        fallbackText = "We specialize in Web Development (React/Next.js), UI/UX Graphic Design, Video Production, Branding, and AI Automation Systems. You can explore complete specs under the Services tab!";
+      }
 
       const newBotMsg: ChatMessage = {
         id: `msg-bot-${Date.now()}`,
         role: 'assistant',
-        content: replyText,
+        content: fallbackText,
         timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
       };
-
       setChatHistory(prev => [...prev, newBotMsg]);
+    } finally {
       setIsChatLoading(false);
-    }, 10000); // 10 SECOND DELAY
+    }
   };
 
   // Attachment upload and Drive Selectors
@@ -2037,21 +2399,53 @@ export default function App() {
     }, 1800);
   };
 
-  // Request Service Directly without configure wizard steps
-  const handleRequestServiceDirectly = (service: ServiceItem) => {
-    setActiveWorkflowsCount(prev => prev + 1);
+  // Request Service Directly by opening Chat Workspace & initiating conversation
+  const handleRequestServiceDirectly = (serviceInput: ServiceItem | string) => {
+    const title = typeof serviceInput === 'string' ? serviceInput : serviceInput.title;
+    const priceStr = typeof serviceInput === 'string' ? '' : ` (Starting from ${serviceInput.price})`;
 
-    // Add a receipt notification conversation into active chat workspace
-    const alertMsg: ChatMessage = {
-      id: `msg-sys-${Date.now()}`,
-      role: 'assistant',
-      content: `📦 **[New Service Request Received]**\n\nYou have initiated a request for the **${service.title}** digital work unit.\n\nOur service delivery and engineering teams have been assigned. We will update your project channel or update your workspace shortly!`,
-      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    // 1. Append User Service Request message
+    const userMsg: ChatMessage = {
+      id: `msg-user-req-${Date.now()}`,
+      role: 'user',
+      content: `Hello DigiWorku Team, I want to request the **${title}** service${priceStr}. Please guide me on project onboarding and scope execution.`,
+      timestamp: time
     };
 
-    setChatHistory(prev => [...prev, alertMsg]);
-    triggerToast(`✨ Request for ${service.title} submitted successfully!`);
+    setChatHistory(prev => [...prev, userMsg]);
+    setActiveWorkflowsCount(prev => prev + 1);
+
+    // 2. Register Inquiry in CRM
+    const newInquiry: CRMInquiry = {
+      id: `inq-${Date.now()}`,
+      clientName: currentUser?.name ? `${currentUser.name} (${title})` : `Client (${title})`,
+      projectName: title,
+      timeAgo: 'Just now',
+      summary: `Requested service: ${title}${priceStr}. Initial chat channel established.`,
+      unread: true,
+      budget: typeof serviceInput === 'string' ? '₹45,000' : serviceInput.price,
+      status: 'new'
+    };
+    setCrmInquiriesList(prev => [newInquiry, ...prev]);
+
+    // 3. Switch active tab to 'chat' and inform user
     setActiveTab('chat');
+    triggerToast(`💬 Opening Chat Workspace for "${title}" request...`);
+
+    // 4. Automated PM Lead Confirmation reply in Chat
+    setIsChatLoading(true);
+    setTimeout(() => {
+      const confirmMsg: ChatMessage = {
+        id: `msg-bot-req-${Date.now()}`,
+        role: 'assistant',
+        content: `👋 **Welcome to your Dedicated Project Workspace!**\n\nWe have registered your request for **${title}**${priceStr}.\n\nAnanya Sharma (Lead PM) and our engineering squad have been assigned to your project. Feel free to describe your project goals, share attachments, or ask any questions below!`,
+        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+      };
+      setChatHistory(prev => [...prev, confirmMsg]);
+      setIsChatLoading(false);
+    }, 1000);
   };
 
   // Service Management actions
@@ -2147,7 +2541,7 @@ export default function App() {
   });
 
   return (
-    <div id="digiworku-root" className={`${activeTab === 'chat' ? 'h-screen max-h-screen overflow-hidden' : 'min-h-screen'} font-sans flex text-[#1f2937] transition-colors duration-200 ${darkMode ? 'dark bg-[#0f172a] text-[#f1f5f9]' : 'bg-[#fafafc] text-[#1f2937]'} relative overflow-hidden`}>
+    <div id="digiworku-root" className={`${activeTab === 'chat' ? 'h-screen max-h-screen overflow-hidden' : 'min-h-screen'} font-sans flex text-[#1f2937] transition-colors duration-200 ${darkMode ? 'dark bg-[#111111] text-[#f1f5f9]' : 'bg-[#fafafc] text-[#1f2937]'} relative overflow-hidden`}>
       <AnimatedGridBackground darkMode={darkMode} />
 
       {/* Toast popup */}
@@ -2182,7 +2576,7 @@ export default function App() {
       {/* Left Sidebar Drawer - Toggled by Hamburger Menu Button on all screen widths */}
       <aside
         id="side-bar-navigation"
-        className={`fixed inset-y-0 left-0 z-50 w-66 flex flex-col shrink-0 justify-between border-r transition-all duration-300 ease-out p-0 bg-slate-50 dark:bg-[#111c2e] text-slate-700 dark:text-[#94a3b8] border-slate-200/80 dark:border-slate-800 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-50 w-66 flex flex-col shrink-0 justify-between border-r transition-all duration-300 ease-out p-0 bg-slate-50 dark:bg-[#1a1a1a] text-slate-700 dark:text-[#94a3b8] border-slate-200/80 dark:border-slate-800 ${isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
           }`}
       >
         <div className="flex flex-col p-5 space-y-6">
@@ -2555,7 +2949,7 @@ export default function App() {
       >
 
         {/* Top Navbar Header */}
-        <header className={`relative z-20 px-4 md:px-8 py-2.5 md:py-3 border-b flex items-center justify-between gap-4 shrink-0 transition-colors ${darkMode ? 'bg-[#0f172a] border-slate-800/80' : 'bg-[#FFF7E6] border-slate-200/80'}`}>
+        <header className={`relative z-20 px-4 md:px-8 py-2.5 md:py-3 border-b flex items-center justify-between gap-4 shrink-0 transition-colors ${darkMode ? 'bg-[#111111] border-slate-800/80' : 'bg-[#FFF7E6] border-slate-200/80'}`}>
 
           <div className="flex items-center gap-3">
             {/* Hamburger / Three-line Menu Button */}
@@ -2723,9 +3117,9 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.25 }}
-                className="flex-1 flex items-center justify-center p-4 md:p-8 bg-slate-50/50 dark:bg-[#0b1329]/20 backdrop-blur-xs"
+                className="flex-1 flex items-center justify-center p-4 md:p-8 bg-slate-50/50 dark:bg-[#161616]/20 backdrop-blur-xs"
               >
-                <div className="w-full max-w-md p-6 md:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#111c2e] shadow-2xl relative overflow-hidden">
+                <div className="w-full max-w-md p-6 md:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-[#1a1a1a] shadow-2xl relative overflow-hidden">
                   {/* Visual Glow Ornament */}
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
 
@@ -2757,7 +3151,7 @@ export default function App() {
                           placeholder="digiworku55@gmail.com"
                           value={adminEmailInput}
                           onChange={(e) => setAdminEmailInput(e.target.value)}
-                          className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-850 bg-slate-55 dark:bg-[#1e293b]/40 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition-all font-semibold"
+                          className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-850 bg-slate-55 dark:bg-[#202020]/40 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition-all font-semibold"
                         />
                       </div>
                     </div>
@@ -2772,7 +3166,7 @@ export default function App() {
                           placeholder="••••••••••••"
                           value={adminPasswordInput}
                           onChange={(e) => setAdminPasswordInput(e.target.value)}
-                          className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-850 bg-slate-55 dark:bg-[#1e293b]/40 text-sm focus:border-[#00c853] focus:ring-1 focus:ring-[#00c853] focus:outline-none transition-all font-semibold"
+                          className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-850 bg-slate-55 dark:bg-[#202020]/40 text-sm focus:border-[#00c853] focus:ring-1 focus:ring-[#00c853] focus:outline-none transition-all font-semibold"
                         />
                       </div>
                     </div>
@@ -2853,12 +3247,12 @@ export default function App() {
                         </div>
 
                         {/* Massive Bold Header matching Image 1 */}
-                        <h1 className="text-4xl md:text-5xl lg:text-5.5xl font-black tracking-tight leading-[1.08] text-slate-900 dark:text-white font-display">
+                        <h1 className={`text-4xl md:text-5xl lg:text-5.5xl font-black tracking-tight leading-[1.08] font-display ${darkMode ? 'text-white' : 'text-[#00311F]'}`}>
                           Build Your Business Faster With <span className="text-[#00c853] underline decoration-[#00c853]/20 decoration-wavy">DigiWorku</span>
                         </h1>
 
                         {/* Paragraph */}
-                        <p className="text-sm md:text-md text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl font-medium">
+                        <p className={`text-sm md:text-md leading-relaxed max-w-xl font-medium ${darkMode ? 'text-slate-400' : 'text-[#00311F]/75'}`}>
                           India's Digital Workforce Platform for Startups, Businesses & Creators. Scale your operations with specialized teams built for speed and engineered for outstanding growth.
                         </p>
 
@@ -2866,10 +3260,7 @@ export default function App() {
                         <div className="flex flex-wrap items-center gap-4 pt-1.5">
                           <button
                             id="start-project-hero-btn"
-                            onClick={() => {
-                              setActiveTab('services');
-                              triggerToast("📦 Configure your service parameters or explore starting values!");
-                            }}
+                            onClick={() => handleRequestServiceDirectly('Custom Project Build')}
                             className="bg-[#00c853] hover:bg-[#00b047] active:scale-98 text-white px-7 py-3.5 rounded-xl font-extrabold text-sm transition-all shadow-xl shadow-[#00c853]/20 cursor-pointer flex items-center gap-2"
                           >
                             <span>Start a Project</span>
@@ -2898,7 +3289,7 @@ export default function App() {
 
                         <div className="absolute -inset-1.5 bg-[#00c853] rounded-3xl opacity-[0.06] blur-xl"></div>
 
-                        <div className={`p-6 rounded-2xl border transition-all shadow-xl relative ${darkMode ? 'bg-[#1e293b]/90 border-slate-700/80' : 'bg-white border-slate-200'}`}>
+                        <div className={`p-6 rounded-2xl border transition-all shadow-xl relative ${darkMode ? 'bg-[#202020]/90 border-slate-700/80' : 'bg-white border-slate-200'}`}>
 
                           {/* Premium Tech Agency Branding Hero Image */}
                           <div className="mb-5 rounded-xl overflow-hidden h-40 relative group border border-slate-100 dark:border-slate-800">
@@ -2983,7 +3374,7 @@ export default function App() {
                         {/* CARD 1: ACTIVE PROJECTS WITH PROGRESS BAR */}
                         <div
                           onClick={() => triggerToast("⚡ Interactive Dashboard Active: Adjust your operational range instantly!")}
-                          className={`p-5 rounded-2xl border cursor-pointer hover:border-[#00c853] transition-all group ${darkMode ? 'bg-[#1e293b]/70 border-slate-800' : 'bg-white border-slate-200/90 shadow-xs'}`}
+                          className={`p-5 rounded-2xl border cursor-pointer hover:border-[#00c853] transition-all group ${darkMode ? 'bg-[#202020]/70 border-slate-800' : 'bg-white border-slate-200/90 shadow-xs'}`}
                         >
                           <div className="flex items-center justify-between text-slate-400 dark:text-slate-500 mb-4">
                             <div className="p-2 rounded-lg bg-[#e8fcf0] dark:bg-emerald-950/50 text-[#00c853]">
@@ -3015,7 +3406,7 @@ export default function App() {
 
                         {/* CARD 2: COMPLETED PROJECTS */}
                         <div
-                          className={`p-5 rounded-2xl border transition-all ${darkMode ? 'bg-[#1e293b]/70 border-slate-800' : 'bg-white border-slate-200/90 shadow-xs'}`}
+                          className={`p-5 rounded-2xl border transition-all ${darkMode ? 'bg-[#202020]/70 border-slate-800' : 'bg-white border-slate-200/90 shadow-xs'}`}
                         >
                           <div className="flex items-center justify-between text-slate-400 dark:text-slate-500 mb-4">
                             <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-500">
@@ -3033,7 +3424,7 @@ export default function App() {
 
                         {/* CARD 3: PENDING TASKS WITH ACTIVE INDICATORS */}
                         <div
-                          className={`p-5 rounded-2xl border transition-all ${darkMode ? 'bg-[#1e293b]/70 border-slate-800' : 'bg-white border-slate-200/90 shadow-xs'}`}
+                          className={`p-5 rounded-2xl border transition-all ${darkMode ? 'bg-[#202020]/70 border-slate-800' : 'bg-white border-slate-200/90 shadow-xs'}`}
                         >
                           <div className="flex items-center justify-between text-slate-400 dark:text-slate-500 mb-4">
                             <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-500">
@@ -3054,7 +3445,7 @@ export default function App() {
 
                         {/* CARD 4: TOTAL CLIENTS WITH AVATARS */}
                         <div
-                          className={`p-5 rounded-2xl border transition-all ${darkMode ? 'bg-[#1e293b]/70 border-slate-800' : 'bg-white border-slate-200/90 shadow-xs'}`}
+                          className={`p-5 rounded-2xl border transition-all ${darkMode ? 'bg-[#202020]/70 border-slate-800' : 'bg-white border-slate-200/90 shadow-xs'}`}
                         >
                           <div className="flex items-center justify-between text-slate-400 dark:text-slate-500 mb-4">
                             <div className="p-2 rounded-lg bg-pink-50 dark:bg-pink-950/50 text-pink-500">
@@ -3084,7 +3475,7 @@ export default function App() {
                       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full mx-auto pt-2">
 
                         {/* Left: Active Projects Table Component */}
-                        <div className={`lg:col-span-8 p-5 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}>
+                        <div className={`lg:col-span-8 p-5 rounded-2xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}>
                           <div className="flex flex-wrap items-center justify-between gap-3 pb-2">
                             <div>
                               <h3 className="text-md font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -3213,7 +3604,7 @@ export default function App() {
                         </div>
 
                         {/* Right: Live Inquiries Widget */}
-                        <div className={`lg:col-span-4 p-5 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}>
+                        <div className={`lg:col-span-4 p-5 rounded-2xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}>
                           <div>
                             <h3 className="text-md font-extrabold text-slate-900 dark:text-slate-100 flex items-center justify-between gap-2">
                               <span className="flex items-center gap-2">
@@ -3362,7 +3753,7 @@ export default function App() {
                         .map((client) => (
                           <div
                             key={client.id}
-                            className={`p-5 rounded-2xl border transition-all ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}
+                            className={`p-5 rounded-2xl border transition-all ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'}`}
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-center gap-3">
@@ -3500,7 +3891,7 @@ export default function App() {
                             {crmProjectsList.filter(p => p.status === 'ON TRACK').map((project) => (
                               <div
                                 key={project.id}
-                                className={`p-4.5 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200 shadow-xs'}`}
+                                className={`p-4.5 rounded-2xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200 shadow-xs'}`}
                               >
                                 <div className="flex justify-between items-start mb-2.5">
                                   <span className="text-[10px] font-mono text-slate-400 font-extrabold">{project.id}</span>
@@ -3569,7 +3960,7 @@ export default function App() {
                             {crmProjectsList.filter(p => p.status === 'IN REVIEW').map((project) => (
                               <div
                                 key={project.id}
-                                className={`p-4.5 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-205 shadow-xs'}`}
+                                className={`p-4.5 rounded-2xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-205 shadow-xs'}`}
                               >
                                 <div className="flex justify-between items-start mb-2.5">
                                   <span className="text-[10px] font-mono text-slate-400 font-extrabold">{project.id}</span>
@@ -3645,7 +4036,7 @@ export default function App() {
                             {crmProjectsList.filter(p => p.status === 'STABLE').map((project) => (
                               <div
                                 key={project.id}
-                                className={`p-4.5 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-250 shadow-xs'}`}
+                                className={`p-4.5 rounded-2xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-250 shadow-xs'}`}
                               >
                                 <div className="flex justify-between items-start mb-2.5">
                                   <span className="text-[10px] font-mono text-slate-400 font-extrabold">{project.id}</span>
@@ -3721,7 +4112,7 @@ export default function App() {
                             {crmProjectsList.filter(p => p.status === 'OFF TRACK').map((project) => (
                               <div
                                 key={project.id}
-                                className={`p-4.5 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200 shadow-xs'}`}
+                                className={`p-4.5 rounded-2xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200 shadow-xs'}`}
                               >
                                 <div className="flex justify-between items-start mb-2.5">
                                   <span className="text-[10px] font-mono text-slate-400 font-extrabold">{project.id}</span>
@@ -3780,7 +4171,7 @@ export default function App() {
                       /* Visual Timeline View of Project Milestones */
                       <div className="space-y-6">
                         {/* Visual Search Filter for Timeline view */}
-                        <div className={`p-4 rounded-xl border ${darkMode ? 'bg-[#1e293b]/30 border-slate-800' : 'bg-slate-100/50 border-slate-200'} flex flex-wrap items-center justify-between gap-4`}>
+                        <div className={`p-4 rounded-xl border ${darkMode ? 'bg-[#202020]/30 border-slate-800' : 'bg-slate-100/50 border-slate-200'} flex flex-wrap items-center justify-between gap-4`}>
                           <div className="space-y-0.5">
                             <span className="text-xs font-bold text-slate-850 dark:text-slate-200">Active Delivery Timelines</span>
                             <p className="text-[11px] text-slate-400">Track key milestones, adjust target progress levels, and set execution status instantly.</p>
@@ -3823,7 +4214,7 @@ export default function App() {
                                 <div
                                   key={project.id}
                                   className={`p-6 rounded-2xl border transition-all ${darkMode
-                                    ? 'bg-[#1e293b]/45 border-slate-800/80 hover:bg-[#1e293b]/60 hover:border-slate-700'
+                                    ? 'bg-[#202020]/45 border-slate-800/80 hover:bg-[#202020]/60 hover:border-slate-700'
                                     : 'bg-white border-slate-200/90 shadow-xs hover:shadow-sm hover:border-slate-300'
                                     } space-y-6`}
                                 >
@@ -4011,28 +4402,92 @@ export default function App() {
                           <Phone className="w-5 h-5 text-emerald-500" />
                           <span>Inbound Leads Inquiries Feed</span>
                         </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Accept corporate proposals to immediately allocate system resources.</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Accept corporate proposals to immediately allocate system resources. Data synced live from Supabase.</p>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-400 dark:text-slate-500 font-bold">Total En-route:</span>
-                        <span className="p-1 px-3 bg-red-500 text-white rounded-full text-xs font-black">{crmInquiriesList.length} leads</span>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => fetchInquiriesFromDB()}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#00c853] bg-[#00c853]/10 hover:bg-[#00c853]/20 border border-[#00c853]/30 rounded-lg transition-all cursor-pointer"
+                          title="Refresh from Supabase DB"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                          Refresh DB
+                        </button>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-400 dark:text-slate-500 font-bold">Total En-route:</span>
+                          <span className="p-1 px-3 bg-red-500 text-white rounded-full text-xs font-black">{crmInquiriesList.length} leads</span>
+                        </div>
                       </div>
                     </div>
 
+                    {/* DB Status indicator */}
+                    <div className={`flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg w-fit ${
+                      supabaseStatus === 'connected'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                        : supabaseStatus === 'checking'
+                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                          : 'bg-red-500/10 text-red-600 dark:text-red-400'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${
+                        supabaseStatus === 'connected' ? 'bg-emerald-500 animate-pulse' :
+                        supabaseStatus === 'checking' ? 'bg-amber-400 animate-pulse' : 'bg-red-500'
+                      }`} />
+                      {supabaseStatus === 'connected' ? '🟢 Live — Connected to Supabase DB (inquiries table)' :
+                       supabaseStatus === 'checking' ? '🟡 Connecting to database...' :
+                       '🔴 DB Disconnected — showing local data only'}
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {crmInquiriesList.length === 0 && (
+                        <div className="col-span-2 flex flex-col items-center justify-center py-20 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
+                          <div className="w-16 h-16 bg-[#00c853]/10 rounded-2xl flex items-center justify-center mb-4">
+                            <Phone className="w-8 h-8 text-[#00c853]" />
+                          </div>
+                          <h3 className="font-extrabold text-slate-800 dark:text-white text-lg">No Inbound Leads Yet</h3>
+                          <p className="text-xs text-slate-400 mt-2 max-w-xs leading-relaxed">
+                            When clients submit service requests on the public-facing site, their inquiries will appear here in real-time from the Supabase database.
+                          </p>
+                          <button
+                            onClick={() => fetchInquiriesFromDB()}
+                            className="mt-5 px-4 py-2 bg-[#00c853]/10 hover:bg-[#00c853]/20 text-[#00c853] font-bold text-xs rounded-lg transition-all cursor-pointer border border-[#00c853]/30"
+                          >
+                            🔄 Refresh from DB
+                          </button>
+                        </div>
+                      )}
                       {crmInquiriesList.map((inq) => (
                         <div
                           key={inq.id}
-                          className={`p-6 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800/80' : 'bg-white border-slate-200 shadow-sm'} space-y-4`}
+                          className={`p-6 rounded-2xl border ${
+                            inq.unread
+                              ? darkMode ? 'bg-[#1a2a1e] border-[#00c853]/30' : 'bg-[#f0fff6] border-[#00c853]/25 shadow-sm'
+                              : darkMode ? 'bg-[#202020]/50 border-slate-800/80' : 'bg-white border-slate-200 shadow-sm'
+                          } space-y-4 relative overflow-hidden`}
                         >
+                          {/* Unread indicator stripe */}
+                          {inq.unread && (
+                            <div className="absolute top-0 left-0 w-1 h-full bg-[#00c853] rounded-l-2xl" />
+                          )}
+                          
                           <div className="flex justify-between items-start gap-3">
                             <div>
-                              <span className="text-[10px] font-mono text-slate-400 font-black">{inq.id}</span>
-                              <h3 className="font-extrabold text-slate-900 dark:text-white mt-0.5">{inq.clientName}</h3>
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] font-mono text-slate-400 font-black">{inq.id.slice(0, 18)}</span>
+                                <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                  inq.status === 'new'
+                                    ? 'bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400'
+                                    : inq.status === 'reviewed'
+                                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400'
+                                    : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                }`}>
+                                  {inq.status === 'new' ? '🔴 New' : inq.status === 'reviewed' ? '🟡 Reviewed' : '🟢 Converted'}
+                                </span>
+                              </div>
+                              <h3 className="font-extrabold text-slate-900 dark:text-white">{inq.clientName}</h3>
                               <span className="text-[11px] text-[#00c853] font-bold tracking-tight">{inq.projectName}</span>
                             </div>
-                            <span className="text-xs text-slate-400 font-medium">{inq.timeAgo}</span>
+                            <span className="text-xs text-slate-400 font-medium whitespace-nowrap">{inq.timeAgo}</span>
                           </div>
 
                           <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-xl border border-slate-100 dark:border-slate-700">
@@ -4042,13 +4497,39 @@ export default function App() {
                             </p>
                           </div>
 
+                          {/* Contact info from DB */}
+                          {(inq.email || inq.mobile) && (
+                            <div className="flex flex-wrap gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                              {inq.email && (
+                                <span className="flex items-center gap-1">
+                                  <Mail className="w-3 h-3 text-[#00c853]" />
+                                  {inq.email}
+                                </span>
+                              )}
+                              {inq.mobile && (
+                                <span className="flex items-center gap-1">
+                                  <Phone className="w-3 h-3 text-[#00c853]" />
+                                  {inq.mobile}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
                           <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                            <span className="text-xs font-black text-slate-800 dark:text-slate-200">Budget Limit: {inq.budget || "₹3,50,000"}</span>
+                            <span className="text-xs font-black text-slate-800 dark:text-slate-200">Budget: {inq.budget || "₹3,50,000"}</span>
 
                             <div className="flex gap-2">
                               <button
-                                onClick={() => {
+                                onClick={async () => {
+                                  // Remove from local state immediately
                                   setCrmInquiriesList(prev => prev.filter(i => i.id !== inq.id));
+                                  // Delete from Supabase DB
+                                  try {
+                                    const { error } = await supabase.from('inquiries').delete().eq('id', inq.id);
+                                    if (error) console.warn('Dismiss DB delete error:', error.message);
+                                  } catch (err: any) {
+                                    console.warn('Dismiss DB delete catch:', err.message);
+                                  }
                                   triggerToast("🗑️ Dismissed inquiry successfully.");
                                 }}
                                 className="px-3 py-1.5 text-xs font-extrabold text-slate-500 hover:text-red-500 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer transition-colors"
@@ -4057,7 +4538,7 @@ export default function App() {
                               </button>
 
                               <button
-                                onClick={() => {
+                                onClick={async () => {
                                   const keyId = `#PJ-${Math.floor(4000 + Math.random() * 999)}`;
                                   const newProj: CRMProject = {
                                     id: keyId,
@@ -4070,9 +4551,29 @@ export default function App() {
                                     description: inq.summary,
                                     progress: 5
                                   };
+                                  // Update local state
                                   setCrmProjectsList(prev => [newProj, ...prev]);
                                   setCrmInquiriesList(prev => prev.filter(i => i.id !== inq.id));
                                   setActiveProjectsCount(prev => prev + 1);
+                                  // Update DB: mark inquiry as 'converted' then insert into projects
+                                  try {
+                                    await supabase.from('inquiries').update({ status: 'converted' }).eq('id', inq.id);
+                                    await supabase.from('projects').insert({
+                                      id: keyId,
+                                      title: inq.projectName,
+                                      description: inq.summary,
+                                      category: 'Consulting',
+                                      tags: ['LEAD', 'CONVERTED'],
+                                      image_url: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=80',
+                                      client_name: inq.clientName,
+                                      budget: inq.budget || '₹3,00,000',
+                                      status: 'ON TRACK',
+                                      progress: 5,
+                                      health_score: 95
+                                    });
+                                  } catch (dbErr: any) {
+                                    console.warn('Activate Contract DB error:', dbErr.message);
+                                  }
                                   triggerToast(`🎉 Converted leads: Appended active pipeline project ${keyId}!`);
                                 }}
                                 className="px-3 py-1.5 text-xs font-black text-white bg-[#00c853] hover:bg-[#00af48] rounded-lg shadow-sm cursor-pointer transition-all uppercase"
@@ -4086,6 +4587,7 @@ export default function App() {
                     </div>
                   </motion.div>
                 )}
+
 
                 {/* VIEW 1.4: REVIEWS & PRAISES FEEDBACK TAB */}
                 {activeTab === 'reviews' && (
@@ -4120,44 +4622,32 @@ export default function App() {
                         </div>
 
                         <div className="space-y-4">
-                          <div className={`p-5 rounded-xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200/90 shadow-sm'}`}>
-                            <div className="flex items-center gap-1 text-amber-500 mb-2">
-                              <Star className="w-4 h-4 fill-current" />
-                              <Star className="w-4 h-4 fill-current" />
-                              <Star className="w-4 h-4 fill-current" />
-                              <Star className="w-4 h-4 fill-current" />
-                              <Star className="w-4 h-4 fill-current" />
+                          {reviewsList.map((rev) => (
+                            <div key={rev.id} className={`p-5 rounded-xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200/90 shadow-sm'}`}>
+                              <div className="flex items-center gap-1 text-amber-500 mb-2">
+                                {Array.from({ length: rev.rating || 5 }).map((_, idx) => (
+                                  <Star key={idx} className="w-4 h-4 fill-current" />
+                                ))}
+                              </div>
+                              <p className="text-xs font-semibold text-slate-705 dark:text-slate-205 italic leading-relaxed">
+                                "{rev.text}"
+                              </p>
+                              <div className="flex items-center justify-between mt-4">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-6 h-6 rounded-full bg-[#00c853]/15 text-[#00c853] font-black text-[10px] flex items-center justify-center">
+                                    {rev.avatarInitials}
+                                  </span>
+                                  <span className="text-[11px] font-bold text-[#00c853]">{rev.name} <span className="text-slate-400 font-normal">({rev.role})</span></span>
+                                </div>
+                                <span className="text-[10px] text-slate-400">{rev.createdAt}</span>
+                              </div>
                             </div>
-                            <p className="text-xs font-semibold text-slate-705 dark:text-slate-205 italic leading-relaxed">
-                              "Primacy in delivery parameters. The Indian development unit scaled our backend with extreme efficiency. Zero-mock pipelines built elegantly!"
-                            </p>
-                            <div className="flex items-center gap-2 mt-4">
-                              <span className="w-5 h-5 rounded-full bg-slate-300 dark:bg-slate-700 font-black text-[9px] flex items-center justify-center">AS</span>
-                              <span className="text-[11px] font-bold text-[#00c853]">Aditya Sen, Chief Architect</span>
-                            </div>
-                          </div>
-
-                          <div className={`p-5 rounded-xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200/90 shadow-sm'}`}>
-                            <div className="flex items-center gap-1 text-amber-500 mb-2">
-                              <Star className="w-4 h-4 fill-current" />
-                              <Star className="w-4 h-4 fill-current" />
-                              <Star className="w-4 h-4 fill-current" />
-                              <Star className="w-4 h-4 fill-current" />
-                              <Star className="w-4 h-4 fill-current" />
-                            </div>
-                            <p className="text-xs font-semibold text-slate-705 dark:text-slate-205 italic leading-relaxed">
-                              "Highly polished custom UI results. They did exactly what was described! Very communicative and responsive to our needs."
-                            </p>
-                            <div className="flex items-center gap-2 mt-4">
-                              <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 font-black text-[9px] flex items-center justify-center">PK</span>
-                              <span className="text-[11px] font-bold text-[#00c853]">Priya Kothari, Product Lead</span>
-                            </div>
-                          </div>
+                          ))}
                         </div>
                       </div>
 
                       {/* Submission Form */}
-                      <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4 h-fit`}>
+                      <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-4 h-fit`}>
                         <div>
                           <h3 className="font-extrabold text-slate-900 dark:text-white text-sm">Submit New Praise Log</h3>
                           <p className="text-[11px] text-slate-400 mt-0.5">Simulate partner feedback inputs live on console dashboard.</p>
@@ -4186,6 +4676,17 @@ export default function App() {
                               const starEl = document.getElementById('review-partner-stars') as HTMLSelectElement;
                               const textEl = document.getElementById('review-partner-text') as HTMLTextAreaElement;
                               if (nameEl && textEl && nameEl.value && textEl.value) {
+                                const initials = nameEl.value.split(' ').map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2) || 'PR';
+                                const newReview: ReviewItem = {
+                                  id: `rev-${Date.now()}`,
+                                  name: nameEl.value.trim(),
+                                  role: 'Partner Client',
+                                  rating: Number(starEl ? starEl.value : 5),
+                                  text: textEl.value.trim(),
+                                  avatarInitials: initials,
+                                  createdAt: 'Just now'
+                                };
+                                setReviewsList(prev => [newReview, ...prev]);
                                 triggerToast(`🌟 Feedback Log Approved: Thank you ${nameEl.value}!`);
                                 nameEl.value = '';
                                 textEl.value = '';
@@ -4241,7 +4742,7 @@ export default function App() {
                             className={`relative p-5 rounded-2xl border text-center transition-all duration-300 group ${isBlocked
                               ? 'bg-red-500/5 dark:bg-red-950/10 border-red-500/20'
                               : darkMode
-                                ? 'bg-[#1e293b]/50 border-slate-800 hover:border-slate-700 hover:shadow-lg'
+                                ? 'bg-[#202020]/50 border-slate-800 hover:border-slate-700 hover:shadow-lg'
                                 : 'bg-white border-slate-200 shadow-sm hover:shadow-lg'
                               } space-y-3 overflow-hidden`}
                           >
@@ -4902,7 +5403,7 @@ export default function App() {
                                       cx={pt.x}
                                       cy={pt.y}
                                       r={analyticsHoveredPoint === idx ? 7 : 4.5}
-                                      fill={darkMode ? "#0f172a" : "#ffffff"}
+                                      fill={darkMode ? "#111111" : "#ffffff"}
                                       stroke="#00c853"
                                       strokeWidth={analyticsHoveredPoint === idx ? 3.5 : 2}
                                       className="transition-all duration-150"
@@ -5108,7 +5609,7 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className={`p-6 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-6`}>
+                    <div className={`p-6 rounded-2xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-6`}>
 
                       {/* Parameter Fields */}
                       <div className="space-y-4 text-xs font-semibold">
@@ -5167,7 +5668,7 @@ export default function App() {
                     </div>
 
                     {/* Supabase Backend Integration Card */}
-                    <div className={`p-6 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-6 mt-6`}>
+                    <div className={`p-6 rounded-2xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200 shadow-sm'} space-y-6 mt-6`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-emerald-500/10 dark:bg-emerald-500/20 text-[#00c853] rounded-xl">
@@ -5806,7 +6307,7 @@ create table if not exists public.inquiries (
                               }
                             }}
                             className={`group border rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-[#00c853] transition-all hover:-translate-y-1.5 hover:shadow-2xl cursor-pointer ${isLargeCard ? 'lg:col-span-8' : 'lg:col-span-4'
-                              } ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200 shadow-xs'}`}
+                              } ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200 shadow-xs'}`}
                           >
 
                             {/* Image banner block */}
@@ -6078,7 +6579,11 @@ create table if not exists public.inquiries (
                                     </span>
                                   </div>
 
-                                  <div className="space-y-1.5 cursor-pointer group" onClick={() => setSelectedServiceDetail(service)}>
+                                  <div className="space-y-1.5 cursor-pointer group" onClick={() => {
+                                      const slug = service.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and');
+                                      window.history.pushState({}, '', '/services/' + slug);
+                                      window.dispatchEvent(new PopStateEvent('popstate'));
+                                  }}>
                                     <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white group-hover:text-[#00c853] transition-colors flex items-center justify-between">
                                       <span>{service.title}</span>
                                       <span className="text-[10px] font-bold text-[#00c853] bg-emerald-500/10 px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">Read Blog ➔</span>
@@ -6170,7 +6675,7 @@ create table if not exists public.inquiries (
                           <div className="lg:col-span-4 space-y-6">
 
                             {/* Checkbox controls block */}
-                            <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-[#1e293b]/50 border-slate-800' : 'bg-white border-slate-200/95 shadow-md'}`}>
+                            <div className={`p-5 rounded-2xl border ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200/95 shadow-md'}`}>
                               <h3 className="text-xs font-black uppercase text-slate-400 tracking-wider mb-4">Service Categories</h3>
 
                               <div className="space-y-3">
@@ -6242,10 +6747,14 @@ create table if not exists public.inquiries (
                                 return (
                                   <div
                                     key={service.id}
-                                    className={`p-5 rounded-2xl border flex flex-col justify-between transition-all hover:border-[#00c853] hover:shadow-lg group ${darkMode ? 'bg-[#1e293b]/65 border-slate-800' : 'bg-white border-slate-200'
+                                    className={`p-5 rounded-2xl border flex flex-col justify-between transition-all hover:border-[#00c853] hover:shadow-lg group ${darkMode ? 'bg-[#202020]/65 border-slate-800' : 'bg-white border-slate-200'
                                       }`}
                                   >
-                                    <div className="space-y-3.5 cursor-pointer" onClick={() => setSelectedServiceDetail(service)}>
+                                    <div className="space-y-3.5 cursor-pointer" onClick={() => {
+                                      const slug = service.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and');
+                                      window.history.pushState({}, '', '/services/' + slug);
+                                      window.dispatchEvent(new PopStateEvent('popstate'));
+                                    }}>
 
                                       <div className="flex items-center justify-between">
                                         <div className="p-2 rounded-lg bg-[#e8fcf0] dark:bg-emerald-950/60 text-[#00c853] shrink-0">
@@ -6269,14 +6778,22 @@ create table if not exists public.inquiries (
 
                                     <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between mt-4">
 
-                                      <div className="space-y-0.5 cursor-pointer" onClick={() => setSelectedServiceDetail(service)}>
+                                      <div className="space-y-0.5 cursor-pointer" onClick={() => {
+                                        const slug = service.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and');
+                                        window.history.pushState({}, '', '/services/' + slug);
+                                        window.dispatchEvent(new PopStateEvent('popstate'));
+                                      }}>
                                         <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">Starting from</span>
                                         <strong className="block text-sm text-[#00c853]">{service.price}</strong>
                                       </div>
 
                                       <div className="flex items-center gap-2">
                                         <button
-                                          onClick={() => setSelectedServiceDetail(service)}
+                                          onClick={() => {
+                                            const slug = service.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and');
+                                            window.history.pushState({}, '', '/services/' + slug);
+                                            window.dispatchEvent(new PopStateEvent('popstate'));
+                                          }}
                                           className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer"
                                         >
                                           View Details
@@ -6313,6 +6830,31 @@ create table if not exists public.inquiries (
                   </motion.div>
                 )}
 
+                {/* Render Full Page Service Detail Route */}
+                {activeTab === 'serviceDetail' && activeServiceSlug && (
+                  <motion.div
+                    key="tab-service-detail"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-[#0d0d0d] z-50 pb-20"
+                  >
+                    <ServiceDetailPage 
+                      slug={activeServiceSlug} 
+                      darkMode={darkMode} 
+                      onBack={() => {
+                        window.history.pushState({}, '', '/services');
+                        window.dispatchEvent(new PopStateEvent('popstate'));
+                      }}
+                      onRequestService={() => {
+                        const found = servicesList.find(s => s.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and') === activeServiceSlug);
+                        handleRequestServiceDirectly(found ? found : (activeServiceSlug || 'Website Development'));
+                      }}
+                    />
+                  </motion.div>
+                )}
+
               </>
             )}
           </AnimatePresence>
@@ -6328,7 +6870,7 @@ create table if not exists public.inquiries (
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 15 }}
                 transition={{ duration: 0.25 }}
-                className={`w-full max-w-3xl rounded-3xl border shadow-2xl overflow-hidden my-auto ${darkMode ? 'bg-[#0f172a] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
+                className={`w-full max-w-3xl rounded-3xl border shadow-2xl overflow-hidden my-auto ${darkMode ? 'bg-[#111111] border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
                   }`}
               >
                 {/* Banner Header */}
@@ -6598,7 +7140,7 @@ create table if not exists public.inquiries (
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.96, opacity: 0, y: 10 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-                className={`w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border relative z-10 p-1 ${darkMode ? 'bg-[#0f172a] border-slate-850 text-white' : 'bg-white border-slate-100 text-slate-800'
+                className={`w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl border relative z-10 p-1 ${darkMode ? 'bg-[#111111] border-slate-850 text-white' : 'bg-white border-slate-100 text-slate-800'
                   }`}
               >
 
@@ -7533,6 +8075,152 @@ create table if not exists public.inquiries (
                     Save Changes
                   </button>
                 </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Interactive Service Request / Booking Modal */}
+        <AnimatePresence>
+          {isServiceRequestModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className={`w-full max-w-lg p-6 sm:p-8 rounded-3xl border shadow-2xl relative ${darkMode ? 'bg-[#181818] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}
+              >
+                <button
+                  onClick={() => setIsServiceRequestModalOpen(false)}
+                  className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-[#e8fcf0] dark:bg-emerald-950/80 text-[#00c853] rounded-2xl">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-extrabold tracking-tight font-display">Request Project Service</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Submit project requirements to launch a sprint with DigiWorku.</p>
+                  </div>
+                </div>
+
+                <form onSubmit={handleServiceRequestSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                      Select Service Category
+                    </label>
+                    <select
+                      value={selectedRequestServiceTitle}
+                      onChange={(e) => {
+                        setSelectedRequestServiceTitle(e.target.value);
+                        const found = servicesList.find(s => s.title === e.target.value);
+                        if (found) setRequestFormBudget(found.price);
+                      }}
+                      className={`w-full p-3 rounded-xl border text-xs font-bold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'}`}
+                    >
+                      {servicesList.map(s => (
+                        <option key={s.id} value={s.title}>{s.title} ({s.price})</option>
+                      ))}
+                      <option value="Custom Software & AI Architecture">Custom Software & AI Architecture (Custom Quote)</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                        Your Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Ramesh Singh"
+                        value={requestFormClientName}
+                        onChange={(e) => setRequestFormClientName(e.target.value)}
+                        className={`w-full p-3 rounded-xl border text-xs font-semibold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                        Corporate Email *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="ramesh@company.com"
+                        value={requestFormEmail}
+                        onChange={(e) => setRequestFormEmail(e.target.value)}
+                        className={`w-full p-3 rounded-xl border text-xs font-semibold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                        Phone / WhatsApp Number
+                      </label>
+                      <input
+                        type="tel"
+                        placeholder="+91 98765 43210"
+                        value={requestFormPhone}
+                        onChange={(e) => setRequestFormPhone(e.target.value)}
+                        className={`w-full p-3 rounded-xl border text-xs font-semibold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                        Estimated Budget
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. ₹45,000"
+                        value={requestFormBudget}
+                        onChange={(e) => setRequestFormBudget(e.target.value)}
+                        className={`w-full p-3 rounded-xl border text-xs font-semibold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                      Project Goals & Requirements
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Describe your goals, tech preferences, or desired launch timeline..."
+                      value={requestFormDescription}
+                      onChange={(e) => setRequestFormDescription(e.target.value)}
+                      className={`w-full p-3 rounded-xl border text-xs font-semibold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
+                    />
+                  </div>
+
+                  <div className="pt-2 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsServiceRequestModalOpen(false)}
+                      className={`flex-1 py-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${darkMode ? 'border-slate-800 hover:bg-slate-800 text-slate-300' : 'border-slate-200 hover:bg-slate-100 text-slate-600'}`}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingServiceRequest}
+                      className="flex-1 py-3.5 rounded-xl text-xs font-extrabold tracking-wider uppercase text-white bg-[#00c853] hover:bg-[#00b047] active:scale-98 transition-all shadow-lg shadow-[#00c853]/20 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      {isSubmittingServiceRequest ? (
+                        <span>Submitting...</span>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          <span>Submit Inquiry</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
               </motion.div>
             </div>
           )}

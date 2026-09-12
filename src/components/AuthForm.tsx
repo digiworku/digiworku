@@ -36,7 +36,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ authMode, darkMode, onSucces
       return;
     }
 
-    if (!mobileNumber.trim()) {
+    if (authMode === 'signup' && !mobileNumber.trim()) {
       setErrorMessage('Please provide a valid mobile number for secure MFA notifications.');
       return;
     }
@@ -169,8 +169,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ authMode, darkMode, onSucces
               <Phone className="w-4 h-4 text-slate-400/80 absolute left-3.5 top-3" />
               <input
                 type="tel"
-                required
-                placeholder="+91 98765 43210"
+                required={authMode === 'signup'}
+                placeholder={authMode === 'signup' ? "+91 98765 43210" : "+91 98765 43210 (Optional)"}
                 value={mobileNumber}
                 onChange={(e) => setMobileNumber(e.target.value)}
                 className={`w-full text-xs font-semibold pl-10 pr-4 py-3 rounded-xl border focus:outline-none focus:border-slate-800 dark:focus:border-slate-100 transition-all ${
