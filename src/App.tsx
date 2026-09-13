@@ -71,7 +71,9 @@ import {
   DollarSign,
   Camera,
   Ban,
-  UserMinus
+  UserMinus,
+  Edit3,
+  ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AuthForm } from './components/AuthForm';
@@ -92,6 +94,28 @@ interface ProjectItem {
   impactResult?: string;
 }
 
+export interface OfferingItem {
+  title: string;
+  desc: string;
+  icon?: string;
+}
+
+export interface ProcessStep {
+  step: number;
+  title: string;
+  desc: string;
+}
+
+export interface FeatureItem {
+  title: string;
+  desc: string;
+}
+
+export interface FaqItem {
+  q: string;
+  a: string;
+}
+
 interface ServiceItem {
   id: string;
   title: string;
@@ -100,7 +124,16 @@ interface ServiceItem {
   price: string;
   icon: string;
   content?: string;
+  intro?: string;
+  overview?: string;
+  offerings?: OfferingItem[];
+  process?: ProcessStep[];
+  features?: FeatureItem[];
+  whyUs?: string[];
+  deliverables?: string[];
+  faqs?: FaqItem[];
 }
+
 
 // Map string icon names to React Element components
 const getIconComponent = (iconName: string): React.ElementType => {
@@ -517,8 +550,81 @@ export default function App() {
   // 'home' represents Image 1 (Landing Page / Main view)
   // 'chat' represents Image 2 (Dedicated Chat Workspace)
   // 'portfolio' represents Image 3 (Portfolio Showcase Panel)
-  // 'services' represents Image 4 (Service Categories Matrix)
-  const [activeTab, setActiveTab] = useState<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail'>('home');
+  // Tab Navigation with Browser History Stack Support (Back Button)
+  const tabToPath = (tab: string): string => {
+    switch (tab) {
+      case 'home': return '/';
+      case 'services': return '/services';
+      case 'portfolio': return '/portfolio';
+      case 'projects': return '/projects';
+      case 'team': return '/team';
+      case 'inquiries': return '/inquiries';
+      case 'reviews': return '/reviews';
+      case 'chat': return '/chat';
+      case 'settings': return '/settings';
+      case 'analytics': return '/analytics';
+      default: return '/' + tab;
+    }
+  };
+
+  const pathToTab = (path: string) => {
+    const cleanPath = path.replace(/\/$/, '') || '/';
+    switch (cleanPath) {
+      case '/': case '/home': return 'home' as const;
+      case '/services': return 'services' as const;
+      case '/portfolio': return 'portfolio' as const;
+      case '/projects': return 'projects' as const;
+      case '/team': return 'team' as const;
+      case '/inquiries': return 'inquiries' as const;
+      case '/reviews': return 'reviews' as const;
+      case '/chat': return 'chat' as const;
+      case '/settings': return 'settings' as const;
+      case '/analytics': return 'analytics' as const;
+      default: return 'home' as const;
+    }
+  };
+
+  const [activeTabState, setActiveTabState] = useState<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail'>(() => {
+    return pathToTab(window.location.pathname);
+  });
+
+  const setActiveTab = (tab: 'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail') => {
+    setActiveTabState(tab);
+    const targetPath = tabToPath(tab);
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ tab }, '', targetPath);
+    }
+  };
+
+  const activeTab = activeTabState;
+
+  // Listen to browser Back / Forward buttons (popstate event)
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.tab) {
+        setActiveTabState(event.state.tab);
+      } else {
+        setActiveTabState(pathToTab(window.location.pathname));
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Home Page Metrics State (Editable by user/admin)
+  const [homeMetrics, setHomeMetrics] = useState<{ active: string; completed: string; pending: string }>(() => {
+    const saved = localStorage.getItem('digiworku-home-metrics');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return { active: '12+', completed: '500+', pending: '4' };
+  });
+
+  const [isEditingHomeMetrics, setIsEditingHomeMetrics] = useState<boolean>(false);
+  const [editActiveVal, setEditActiveVal] = useState<string>(homeMetrics.active);
+  const [editCompletedVal, setEditCompletedVal] = useState<string>(homeMetrics.completed);
+  const [editPendingVal, setEditPendingVal] = useState<string>(homeMetrics.pending);
+
   const [activeServiceSlug, setActiveServiceSlug] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
@@ -776,7 +882,17 @@ export default function App() {
   const [serviceFormPrice, setServiceFormPrice] = useState<string>('');
   const [serviceFormIcon, setServiceFormIcon] = useState<string>('Globe');
   const [serviceFormContent, setServiceFormContent] = useState<string>('');
+
+  // Extended Detailed Page Section States
+  const [serviceFormOverview, setServiceFormOverview] = useState<string>('');
+  const [serviceFormOfferings, setServiceFormOfferings] = useState<OfferingItem[]>([]);
+  const [serviceFormProcess, setServiceFormProcess] = useState<ProcessStep[]>([]);
+  const [serviceFormFeatures, setServiceFormFeatures] = useState<FeatureItem[]>([]);
+  const [serviceFormWhyUs, setServiceFormWhyUs] = useState<string>('');
+  const [serviceFormDeliverables, setServiceFormDeliverables] = useState<string>('');
+  const [serviceFormFaqs, setServiceFormFaqs] = useState<FaqItem[]>([]);
   const [selectedServiceDetail, setSelectedServiceDetail] = useState<ServiceItem | null>(null);
+
 
   // Client Reviews List State
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>(() => {
@@ -879,6 +995,91 @@ export default function App() {
     triggerToast(`🎉 Service Request for "${selectedRequestServiceTitle}" submitted! Our leads will contact you.`);
   };
 
+  // Freelancer Join Modal States
+  const [isFreelancerModalOpen, setIsFreelancerModalOpen] = useState<boolean>(false);
+  const [freelancerFormName, setFreelancerFormName] = useState<string>('');
+  const [freelancerFormEmail, setFreelancerFormEmail] = useState<string>('');
+  const [freelancerFormPhone, setFreelancerFormPhone] = useState<string>('');
+  const [freelancerFormSkill, setFreelancerFormSkill] = useState<string>('Full Stack Developer (React / Node / Next.js)');
+  const [freelancerFormPortfolio, setFreelancerFormPortfolio] = useState<string>('');
+  const [freelancerFormBio, setFreelancerFormBio] = useState<string>('');
+  const [isSubmittingFreelancer, setIsSubmittingFreelancer] = useState<boolean>(false);
+
+  const handleFreelancerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!freelancerFormName.trim() || !freelancerFormEmail.trim() || !freelancerFormPhone.trim()) {
+      triggerToast('⚠️ Please complete all required contact details.');
+      return;
+    }
+
+    setIsSubmittingFreelancer(true);
+
+    const inquiryId = `inq-free-${Date.now()}`;
+    const portfolioStr = freelancerFormPortfolio.trim() ? (freelancerFormPortfolio.trim().startsWith('http') ? freelancerFormPortfolio.trim() : `https://${freelancerFormPortfolio.trim()}`) : 'N/A';
+    const summaryText = `Primary Skill: ${freelancerFormSkill} | Portfolio: ${portfolioStr} | Bio: ${freelancerFormBio.trim() || 'No bio provided'}`;
+
+    const newInquiry: CRMInquiry = {
+      id: inquiryId,
+      clientName: `${freelancerFormName.trim()} (Freelancer Candidate)`,
+      projectName: `👨‍💻 Freelancer Application (${freelancerFormSkill})`,
+      timeAgo: 'Just now',
+      summary: summaryText,
+      unread: true,
+      budget: 'Talent Network / Freelancer',
+      status: 'new',
+      email: freelancerFormEmail.trim(),
+      mobile: freelancerFormPhone.trim()
+    };
+
+    // Save to local state
+    setCrmInquiriesList(prev => [newInquiry, ...prev]);
+
+    // Push notification
+    setNotifications(prev => [
+      {
+        id: `notif-${Date.now()}`,
+        title: `👨‍💻 New Freelancer Application`,
+        description: `${freelancerFormName.trim()} applied for ${freelancerFormSkill}`,
+        time: 'Just now',
+        type: 'info',
+        read: false,
+        category: 'Inquiries'
+      },
+      ...prev
+    ]);
+
+    // Save to Supabase DB inquiries table
+    try {
+      const dbRecord = {
+        id: inquiryId,
+        name: `${freelancerFormName.trim()} (Freelancer Candidate)`,
+        email: freelancerFormEmail.trim(),
+        mobile: freelancerFormPhone.trim() || null,
+        message: `👨‍💻 Freelancer Application (${freelancerFormSkill}): ${summaryText} (Budget: Talent Network)`,
+        status: 'new'
+      };
+      const { error: dbError } = await supabase.from('inquiries').insert(dbRecord);
+      if (dbError) {
+        console.warn('Supabase freelancer inquiry insert failed:', dbError.message);
+      }
+    } catch (dbErr: any) {
+      console.warn('Supabase freelancer inquiry push error:', dbErr.message);
+    }
+
+    setIsSubmittingFreelancer(false);
+    setIsFreelancerModalOpen(false);
+
+    // Reset form
+    setFreelancerFormName('');
+    setFreelancerFormEmail('');
+    setFreelancerFormPhone('');
+    setFreelancerFormSkill('Full Stack Developer (React / Node / Next.js)');
+    setFreelancerFormPortfolio('');
+    setFreelancerFormBio('');
+
+    triggerToast('🎉 Freelancer application submitted successfully! Our team will review your application.');
+  };
+
   const [chatThreadsList, setChatThreadsList] = useState<ChatThread[]>(() => {
     const saved = localStorage.getItem('digiworku-crm-threads-v2');
     let threads: ChatThread[] = saved ? JSON.parse(saved) : [...INITIAL_CHAT_THREADS];
@@ -886,33 +1087,48 @@ export default function App() {
     // Hard remove specific users
     threads = threads.filter(t => !['aditya', 'priya', 'rajiv'].includes(t.id));
 
-    const hasAlex = threads.some((t: ChatThread) => t.id === 'alex');
-    if (!hasAlex) {
-      const savedUser = localStorage.getItem('digiworku-user-session');
-      const user = savedUser ? JSON.parse(savedUser) : null;
+    const savedUser = localStorage.getItem('digiworku-user-session');
+    const user = savedUser ? JSON.parse(savedUser) : null;
+
+    const userId = user?.email || 'alex';
+    const hasThread = threads.some((t: ChatThread) => t.id === userId);
+    if (!hasThread) {
       threads.unshift({
-        id: 'alex',
-        name: user?.name || 'Alex Rivera',
+        id: userId,
+        name: user?.name || 'Guest User',
         avatarUrl: user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        companyName: 'Rivera Tech',
+        companyName: user?.companyName || 'DigiWorku Client',
         status: 'online',
-        lastMessageText: "Checking them right now. Give me 5 minutes.",
-        lastMessageTime: '12:32 PM',
-        tag: 'WORKFLOW AUTOMATION',
+        lastMessageText: 'No messages yet',
+        lastMessageTime: '',
+        tag: 'CLIENT',
         unreadCount: 0,
-        email: user?.email || 'alex.rivera@riveratech.com',
-        phone: user?.mobile || '+1 555-0199',
-        activeProjectName: 'Workflow Automation',
-        activeProjectBudget: '₹3,50,000',
-        activeProjectProgress: 80,
-        adminNotes: 'Alex is evaluating workflow features.',
+        email: user?.email || '',
+        phone: user?.mobile || '',
+        activeProjectName: 'New Engagement',
+        activeProjectBudget: '₹0',
+        activeProjectProgress: 0,
+        adminNotes: '',
         messages: []
       });
+    } else {
+      // Update existing thread with latest user info
+      threads = threads.map(t => t.id === userId ? {
+        ...t,
+        name: user?.name || t.name,
+        email: user?.email || t.email,
+        phone: user?.mobile || t.phone,
+        avatarUrl: user?.avatarUrl || t.avatarUrl,
+      } : t);
     }
     return threads;
   });
 
-  const [activeThreadId, setActiveThreadId] = useState<string>('alex');
+  const [activeThreadId, setActiveThreadId] = useState<string>(() => {
+    const savedUser = localStorage.getItem('digiworku-user-session');
+    const user = savedUser ? JSON.parse(savedUser) : null;
+    return user?.email || 'guest';
+  });
   const [projectsViewMode, setProjectsViewMode] = useState<'kanban' | 'timeline'>('kanban');
   const [searchCrmProjectQuery, setSearchCrmProjectQuery] = useState<string>('');
   const [searchCrmInquiryQuery, setSearchCrmInquiryQuery] = useState<string>('');
@@ -1313,10 +1529,9 @@ export default function App() {
 
                   setAdminMessageInput('');
 
-                  // 1. Update state locally
-                  setChatHistory(prev => [...prev, newMsg]);
+                  // 1. Update state locally for the active thread only
                   setChatThreadsList(prev => prev.map(t => {
-                    if (t.id === activeThreadId || t.id === 'alex') {
+                    if (t.id === activeThreadId) {
                       return {
                         ...t,
                         lastMessageText: text,
@@ -1327,12 +1542,20 @@ export default function App() {
                     return t;
                   }));
 
-                  // 2. Write Admin message to Supabase DB 'messages' table
+                  // Also update chatHistory if the active thread is the currently logged-in user
+                  const userId = currentUser?.email || 'guest';
+                  if (activeThreadId === userId) {
+                    setChatHistory(prev => [...prev, newMsg]);
+                  }
+
+                  // 2. Write Admin reply to Supabase DB with user_id of active thread
                   try {
+                    const threadUserId = activeThread?.email || activeThreadId;
                     await supabase.from('messages').insert([{
                       id: newMsgId,
                       role: 'admin',
                       content: text,
+                      user_id: threadUserId,
                       created_at: new Date().toISOString()
                     }]);
                   } catch (err: any) {
@@ -1875,29 +2098,52 @@ export default function App() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // Synchronize User Chat to Admin Chat Thread (alex) - One-way from User view to Admin view
+  // Synchronize User Chat to their thread — keyed by current user's email
   useEffect(() => {
+    const userId = currentUser?.email || 'guest';
     setChatThreadsList(prev => {
-      const alex = prev.find(t => t.id === 'alex');
-      if (alex) {
-        const isDifferent = alex.messages.length !== chatHistory.length ||
-          alex.messages.some((m, idx) => m.id !== chatHistory[idx]?.id || m.content !== chatHistory[idx]?.content) ||
-          alex.name !== (currentUser?.name || 'Alex Rivera') ||
-          alex.email !== (currentUser?.email || 'alex.rivera@riveratech.com') ||
-          alex.phone !== (currentUser?.mobile || '+1 555-0199');
+      const thread = prev.find(t => t.id === userId);
+      if (thread) {
+        const isDifferent = thread.messages.length !== chatHistory.length ||
+          thread.messages.some((m, idx) => m.id !== chatHistory[idx]?.id || m.content !== chatHistory[idx]?.content) ||
+          thread.name !== (currentUser?.name || 'Guest User') ||
+          thread.email !== (currentUser?.email || '') ||
+          thread.phone !== (currentUser?.mobile || '');
         if (isDifferent) {
           const lastMsg = chatHistory[chatHistory.length - 1];
-          return prev.map(t => t.id === 'alex' ? {
+          return prev.map(t => t.id === userId ? {
             ...t,
             messages: chatHistory,
             lastMessageText: lastMsg ? lastMsg.content : t.lastMessageText,
             lastMessageTime: lastMsg ? lastMsg.timestamp : t.lastMessageTime,
-            name: currentUser?.name || 'Alex Rivera',
-            email: currentUser?.email || 'alex.rivera@riveratech.com',
-            phone: currentUser?.mobile || '+1 555-0199',
-            avatarUrl: currentUser?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+            name: currentUser?.name || t.name,
+            email: currentUser?.email || t.email,
+            phone: currentUser?.mobile || t.phone,
+            avatarUrl: currentUser?.avatarUrl || t.avatarUrl
           } : t);
         }
+      } else if (currentUser) {
+        // Create new thread for this user if it doesn't exist
+        const lastMsg = chatHistory[chatHistory.length - 1];
+        const newThread: ChatThread = {
+          id: userId,
+          name: currentUser.name || 'Guest User',
+          avatarUrl: currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+          companyName: 'DigiWorku Client',
+          status: 'online',
+          lastMessageText: lastMsg ? lastMsg.content : 'No messages yet',
+          lastMessageTime: lastMsg ? lastMsg.timestamp : '',
+          tag: 'CLIENT',
+          unreadCount: chatHistory.filter(m => m.role === 'user').length,
+          email: currentUser.email || '',
+          phone: currentUser.mobile || '',
+          activeProjectName: 'New Engagement',
+          activeProjectBudget: '₹0',
+          activeProjectProgress: 0,
+          adminNotes: '',
+          messages: chatHistory
+        };
+        return [newThread, ...prev.filter(t => t.id !== userId)];
       }
       return prev;
     });
@@ -2000,53 +2246,110 @@ export default function App() {
     }
   };
 
-  // Fetch live chat messages from Supabase DB and sync with state
+  // Fetch live chat messages from Supabase DB (Client isolated history + Admin multi-thread sync)
   const fetchMessagesFromDB = async () => {
+    const userId = currentUser?.email || 'guest';
+
+    // 1. Fetch current logged in user's chat messages for client workspace
     try {
-      const { data, error } = await supabase
+      const { data: userData, error: userError } = await supabase
         .from('messages')
         .select('*')
+        .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
-      if (error) {
-        console.warn('fetchMessagesFromDB error:', error.message);
-        return;
-      }
-
-      if (data && data.length > 0) {
-        const dbMessages: ChatMessage[] = data.map((row: any) => ({
+      if (!userError && userData && userData.length > 0) {
+        const dbUserMessages: ChatMessage[] = userData.map((row: any) => ({
           id: row.id,
           role: (row.role === 'admin' || row.role === 'assistant') ? 'assistant' : 'user',
           content: row.content || '',
           timestamp: new Date(row.created_at || Date.now()).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
         }));
-
-        setChatHistory(dbMessages);
-
-        // Also update chatThreadsList so Admin panel shows live messages
-        const lastMsg = dbMessages[dbMessages.length - 1];
-        if (lastMsg) {
-          setChatThreadsList(prev => prev.map(thread => {
-            if (thread.id === 'alex' || thread.id === activeThreadId) {
-              const threadMsgList = dbMessages.map(m => ({
-                id: m.id,
-                role: m.role as 'user' | 'assistant',
-                content: m.content,
-                timestamp: m.timestamp
-              }));
-              return {
-                ...thread,
-                lastMessageText: lastMsg.content,
-                lastMessageTime: lastMsg.timestamp,
-                messages: threadMsgList
-              };
-            }
-            return thread;
-          }));
-        }
+        setChatHistory(dbUserMessages);
       }
     } catch (err: any) {
-      console.warn('fetchMessagesFromDB catch:', err.message);
+      console.warn('fetchMessagesFromDB user error:', err?.message || err);
+    }
+
+    // 2. Fetch ALL messages for Admin to isolate and display per-user chat threads
+    try {
+      const { data: allData, error: allError } = await supabase
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (!allError && allData && allData.length > 0) {
+        const userGroupMap = new Map<string, any[]>();
+        allData.forEach((row: any) => {
+          const uid = row.user_id || 'guest';
+          if (!userGroupMap.has(uid)) {
+            userGroupMap.set(uid, []);
+          }
+          userGroupMap.get(uid)!.push(row);
+        });
+
+        setChatThreadsList(prevThreads => {
+          const updatedThreads = [...prevThreads];
+
+          userGroupMap.forEach((rows, uid) => {
+            const threadMsgs: ChatMessage[] = rows.map((row: any) => ({
+              id: row.id,
+              role: (row.role === 'admin' || row.role === 'assistant') ? 'assistant' : 'user',
+              content: row.content || '',
+              timestamp: new Date(row.created_at || Date.now()).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+            }));
+
+            const lastMsg = threadMsgs[threadMsgs.length - 1];
+            const existingIndex = updatedThreads.findIndex(t => t.id === uid || t.email === uid);
+
+            const matchingInquiry = crmInquiriesList.find(inq => 
+              (inq.clientName && inq.clientName.toLowerCase().includes(uid.toLowerCase())) || 
+              (uid.toLowerCase().includes(inq.clientName.toLowerCase()))
+            );
+            const isCurrentUser = uid === currentUser?.email;
+
+            const resolvedName = isCurrentUser 
+              ? (currentUser?.name || uid)
+              : (matchingInquiry ? matchingInquiry.clientName : (existingIndex >= 0 ? updatedThreads[existingIndex].name : (uid.includes('@') ? uid.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Client ' + uid)));
+
+            const resolvedEmail = uid.includes('@') ? uid : (matchingInquiry ? (matchingInquiry.clientName.includes('@') ? matchingInquiry.clientName : '') : '');
+
+            if (existingIndex >= 0) {
+              updatedThreads[existingIndex] = {
+                ...updatedThreads[existingIndex],
+                name: resolvedName || updatedThreads[existingIndex].name,
+                email: resolvedEmail || updatedThreads[existingIndex].email,
+                lastMessageText: lastMsg ? lastMsg.content : updatedThreads[existingIndex].lastMessageText,
+                lastMessageTime: lastMsg ? lastMsg.timestamp : updatedThreads[existingIndex].lastMessageTime,
+                messages: threadMsgs
+              };
+            } else {
+              updatedThreads.unshift({
+                id: uid,
+                name: resolvedName,
+                avatarUrl: isCurrentUser && currentUser?.avatarUrl ? currentUser.avatarUrl : `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80`,
+                companyName: matchingInquiry ? matchingInquiry.projectName : 'DigiWorku Client',
+                status: 'online',
+                lastMessageText: lastMsg ? lastMsg.content : 'No messages yet',
+                lastMessageTime: lastMsg ? lastMsg.timestamp : '',
+                tag: 'CLIENT',
+                unreadCount: threadMsgs.filter(m => m.role === 'user').length > 0 ? 1 : 0,
+                email: resolvedEmail,
+                phone: currentUser?.mobile || '+91 98765 43210',
+                activeProjectName: matchingInquiry ? matchingInquiry.projectName : 'Digital Engagement',
+                activeProjectBudget: matchingInquiry ? (matchingInquiry.budget || '₹45,000') : '₹45,000',
+                activeProjectProgress: 25,
+                adminNotes: '',
+                messages: threadMsgs
+              });
+            }
+          });
+
+          return updatedThreads;
+        });
+      }
+    } catch (err: any) {
+      console.warn('fetchMessagesFromDB admin error:', err?.message || err);
     }
   };
 
@@ -2077,7 +2380,7 @@ export default function App() {
       fetchMessagesFromDB();
     }, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentUser]);
 
   // Manual Supabase connection check trigger
   const handleCheckSupabaseConnection = async () => {
@@ -2230,21 +2533,23 @@ export default function App() {
     setChatHistory(updatedHistory);
     setInputMessage('');
 
-    // Save message to Supabase DB 'messages' table
+    // Save message to Supabase DB 'messages' table with user_id for per-user isolation
+    const userId = currentUser?.email || 'guest';
     try {
       await supabase.from('messages').insert([{
         id: newUserMsg.id,
         role: 'user',
         content: userText,
+        user_id: userId,
         created_at: new Date().toISOString()
       }]);
     } catch (err: any) {
       console.warn("Failed saving user message to Supabase:", err?.message || err);
     }
 
-    // Update Admin thread list state
+    // Update Admin thread list state for this specific user
     setChatThreadsList(prev => prev.map(t => {
-      if (t.id === 'alex' || t.id === activeThreadId) {
+      if (t.id === userId) {
         return {
           ...t,
           lastMessageText: userText,
@@ -2509,12 +2814,69 @@ export default function App() {
     }, 1000);
   };
 
+  // Auto-Generate Detailed Page Sections Helper
+  const autoGenerateDetailedSections = () => {
+    const title = serviceFormTitle.trim() || 'Custom Service';
+    const category = serviceFormCategory;
+
+    setServiceFormOverview(`In today's competitive landscape, ${title} is critical to brand positioning and operational efficiency. At DigiWorku, we design and engineer end-to-end digital solutions that engage users, optimize conversions, and scale effortlessly with your business growth.`);
+    
+    setServiceFormOfferings([
+      { title: `${title} Architecture`, desc: 'Custom strategic blueprint and core technical implementation.', icon: 'Globe' },
+      { title: 'Responsive Design & UX', desc: 'Flawless presentation tailored for mobile, tablet, and desktop.', icon: 'Palette' },
+      { title: 'Speed & Optimization', desc: 'High-speed performance tuning, security suite, and scalability.', icon: 'Zap' },
+      { title: 'Analytics & Monitoring', desc: 'Integrated dashboards for real-time tracking and metrics.', icon: 'BarChart3' }
+    ]);
+
+    setServiceFormProcess([
+      { step: 1, title: 'Requirement Discovery', desc: 'In-depth consultation to clarify business goals, tech stack, and scope.' },
+      { step: 2, title: 'Strategic Architecture', desc: 'Designing wireframes, visual style guides, and project roadmaps.' },
+      { step: 3, title: 'Agile Execution', desc: 'Iterative design and engineering with staging preview updates.' },
+      { step: 4, title: 'QA & Final Deployment', desc: 'Cross-platform testing, production launch, and complete asset handoff.' }
+    ]);
+
+    setServiceFormFeatures([
+      { title: 'Enterprise Standard Engineering', desc: `Built with industry best practices for ${title} to ensure long-term stability.` },
+      { title: 'Dedicated Partner Support', desc: 'Direct line of communication with DigiWorku project managers and leads.' },
+      { title: '100% Full Intellectual Ownership', desc: 'Complete copyright and source file transfer upon project delivery.' },
+      { title: '30-Day Support Warranty', desc: 'Comprehensive post-launch technical support included.' }
+    ]);
+
+    setServiceFormWhyUs([
+      'Top-Tier Engineering & Creative Talent',
+      'Transparent Milestone Pricing & Fast Turnaround',
+      'Focus on High Conversion & User ROI',
+      'Agile Communication & Staging Previews',
+      '100% Source Code & Asset Transfer',
+      '30-Day Free Post-Launch Support'
+    ].join('\n'));
+
+    setServiceFormDeliverables([
+      `Complete ${title} production package`,
+      'Full source code repository / vector design files',
+      'Production deployment and server setup',
+      'Technical documentation and admin user guide',
+      '30-day post-launch technical warranty'
+    ].join('\n'));
+
+    setServiceFormFaqs([
+      { q: `What is the estimated delivery timeframe for ${title}?`, a: 'Standard delivery takes between 2 to 4 weeks depending on required features and feedback speed.' },
+      { q: 'Will I own full copyright to the work?', a: 'Yes, 100% intellectual property ownership and source files are transferred upon completion.' },
+      { q: 'Is ongoing maintenance available?', a: 'Yes, we provide 30 days of free support after launch, as well as monthly maintenance packages.' }
+    ]);
+
+    triggerToast('⚡ Auto-filled rich detailed page content!');
+  };
+
   // Service Management actions
   const handleAddNewService = () => {
     if (!serviceFormTitle.trim() || !serviceFormDescription.trim() || !serviceFormPrice.trim()) {
-      triggerToast("⚠️ Please fill in all fields to add a service.");
+      triggerToast("⚠️ Please fill in Service Title, Short Description, and Price.");
       return;
     }
+
+    const whyUsArray = serviceFormWhyUs.split('\n').map(s => s.trim()).filter(Boolean);
+    const deliverablesArray = serviceFormDeliverables.split('\n').map(s => s.trim()).filter(Boolean);
 
     const newService: ServiceItem = {
       id: `serv-custom-${Date.now()}`,
@@ -2523,7 +2885,15 @@ export default function App() {
       category: serviceFormCategory,
       price: serviceFormPrice,
       icon: serviceFormIcon,
-      content: serviceFormContent.trim() || undefined
+      content: serviceFormContent.trim() || undefined,
+      intro: serviceFormDescription,
+      overview: serviceFormOverview.trim() || serviceFormContent.trim() || undefined,
+      offerings: serviceFormOfferings.length > 0 ? serviceFormOfferings : undefined,
+      process: serviceFormProcess.length > 0 ? serviceFormProcess : undefined,
+      features: serviceFormFeatures.length > 0 ? serviceFormFeatures : undefined,
+      whyUs: whyUsArray.length > 0 ? whyUsArray : undefined,
+      deliverables: deliverablesArray.length > 0 ? deliverablesArray : undefined,
+      faqs: serviceFormFaqs.length > 0 ? serviceFormFaqs : undefined
     };
 
     setServicesList(prev => [...prev, newService]);
@@ -2535,9 +2905,12 @@ export default function App() {
   const handleUpdateService = () => {
     if (!editingServiceId) return;
     if (!serviceFormTitle.trim() || !serviceFormDescription.trim() || !serviceFormPrice.trim()) {
-      triggerToast("⚠️ Please fill in all fields to update the service.");
+      triggerToast("⚠️ Please fill in Service Title, Short Description, and Price.");
       return;
     }
+
+    const whyUsArray = serviceFormWhyUs.split('\n').map(s => s.trim()).filter(Boolean);
+    const deliverablesArray = serviceFormDeliverables.split('\n').map(s => s.trim()).filter(Boolean);
 
     setServicesList(prev => prev.map(s => {
       if (s.id === editingServiceId) {
@@ -2548,7 +2921,15 @@ export default function App() {
           category: serviceFormCategory,
           price: serviceFormPrice,
           icon: serviceFormIcon,
-          content: serviceFormContent.trim() || undefined
+          content: serviceFormContent.trim() || undefined,
+          intro: serviceFormDescription,
+          overview: serviceFormOverview.trim() || serviceFormContent.trim() || undefined,
+          offerings: serviceFormOfferings.length > 0 ? serviceFormOfferings : undefined,
+          process: serviceFormProcess.length > 0 ? serviceFormProcess : undefined,
+          features: serviceFormFeatures.length > 0 ? serviceFormFeatures : undefined,
+          whyUs: whyUsArray.length > 0 ? whyUsArray : undefined,
+          deliverables: deliverablesArray.length > 0 ? deliverablesArray : undefined,
+          faqs: serviceFormFaqs.length > 0 ? serviceFormFaqs : undefined
         };
       }
       return s;
@@ -2573,6 +2954,13 @@ export default function App() {
     setServiceFormPrice(service.price);
     setServiceFormIcon(service.icon);
     setServiceFormContent(service.content || '');
+    setServiceFormOverview(service.overview || service.content || '');
+    setServiceFormOfferings(service.offerings || []);
+    setServiceFormProcess(service.process || []);
+    setServiceFormFeatures(service.features || []);
+    setServiceFormWhyUs(service.whyUs ? service.whyUs.join('\n') : '');
+    setServiceFormDeliverables(service.deliverables ? service.deliverables.join('\n') : '');
+    setServiceFormFaqs(service.faqs || []);
   };
 
   const resetServiceForm = () => {
@@ -2582,7 +2970,15 @@ export default function App() {
     setServiceFormPrice('');
     setServiceFormIcon('Globe');
     setServiceFormContent('');
+    setServiceFormOverview('');
+    setServiceFormOfferings([]);
+    setServiceFormProcess([]);
+    setServiceFormFeatures([]);
+    setServiceFormWhyUs('');
+    setServiceFormDeliverables('');
+    setServiceFormFaqs([]);
   };
+
 
   // Filter projects by search and top buttons
   const filteredProjects = projectsList.filter(proj => {
@@ -3296,15 +3692,12 @@ export default function App() {
                           </button>
 
                           <button
-                            id="talk-expert-hero-btn"
-                            onClick={() => {
-                              setActiveTab('chat');
-                              // Inject simulated PM conversation
-                              setInputMessage("Hello PM Admin, I am exploring customized backend architecture for our startup.");
-                            }}
-                            className="bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-850 dark:text-slate-100 px-6 py-3.5 rounded-xl font-bold text-sm transition-all cursor-pointer shadow-sm hover:shadow-md active:scale-98"
+                            id="join-us-hero-btn"
+                            onClick={() => setIsFreelancerModalOpen(true)}
+                            className="bg-[#00311F] hover:bg-[#002517] dark:bg-emerald-950/80 dark:hover:bg-emerald-900 border border-emerald-500/30 text-emerald-400 dark:text-emerald-300 px-6 py-3.5 rounded-xl font-bold text-sm transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-98 flex items-center gap-2"
                           >
-                            Talk to Expert
+                            <UserPlus className="w-4 h-4 text-emerald-400" />
+                            <span>Join Us (Freelancer)</span>
                           </button>
                         </div>
 
@@ -3352,18 +3745,81 @@ export default function App() {
                           </div>
 
                           {/* Active components metrics split grid */}
-                          <div className="grid grid-cols-2 gap-4 mb-6">
+                          <div className="grid grid-cols-3 gap-2.5 mb-3">
 
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
-                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Projects</span>
-                              <span className="block text-2xl font-black text-slate-900 dark:text-white mt-1">12+</span>
+                            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
+                              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Active</span>
+                              {isEditingHomeMetrics ? (
+                                <input
+                                  type="text"
+                                  value={editActiveVal}
+                                  onChange={(e) => setEditActiveVal(e.target.value)}
+                                  className="w-full text-base font-black text-[#00c853] bg-white dark:bg-slate-900 border border-[#00c853] rounded px-1 py-0.5 mt-1 focus:outline-none"
+                                />
+                              ) : (
+                                <span className="block text-lg md:text-xl font-black text-[#00c853] mt-0.5">{homeMetrics.active}</span>
+                              )}
                             </div>
 
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
-                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Happy Clients</span>
-                              <span className="block text-2xl font-black text-slate-900 dark:text-white mt-1">500+</span>
+                            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
+                              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Completed</span>
+                              {isEditingHomeMetrics ? (
+                                <input
+                                  type="text"
+                                  value={editCompletedVal}
+                                  onChange={(e) => setEditCompletedVal(e.target.value)}
+                                  className="w-full text-base font-black text-blue-500 bg-white dark:bg-slate-900 border border-blue-500 rounded px-1 py-0.5 mt-1 focus:outline-none"
+                                />
+                              ) : (
+                                <span className="block text-lg md:text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5">{homeMetrics.completed}</span>
+                              )}
                             </div>
 
+                            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/50 dark:border-slate-700/50">
+                              <span className="block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Pending</span>
+                              {isEditingHomeMetrics ? (
+                                <input
+                                  type="text"
+                                  value={editPendingVal}
+                                  onChange={(e) => setEditPendingVal(e.target.value)}
+                                  className="w-full text-base font-black text-amber-500 bg-white dark:bg-slate-900 border border-amber-500 rounded px-1 py-0.5 mt-1 focus:outline-none"
+                                />
+                              ) : (
+                                <span className="block text-lg md:text-xl font-black text-amber-500 mt-0.5">{homeMetrics.pending}</span>
+                              )}
+                            </div>
+
+                          </div>
+
+                          {/* Quick Edit Metrics Trigger Button */}
+                          <div className="flex justify-end mb-4">
+                            {isEditingHomeMetrics ? (
+                              <button
+                                onClick={() => {
+                                  const newMetrics = { active: editActiveVal, completed: editCompletedVal, pending: editPendingVal };
+                                  setHomeMetrics(newMetrics);
+                                  localStorage.setItem('digiworku-home-metrics', JSON.stringify(newMetrics));
+                                  setIsEditingHomeMetrics(false);
+                                }}
+                                className="px-3 py-1 bg-[#00c853] hover:bg-[#00b047] text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-xs flex items-center gap-1"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Save Metrics</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditActiveVal(homeMetrics.active);
+                                  setEditCompletedVal(homeMetrics.completed);
+                                  setEditPendingVal(homeMetrics.pending);
+                                  setIsEditingHomeMetrics(true);
+                                }}
+                                className="px-2.5 py-1 text-[10px] font-extrabold text-slate-500 hover:text-[#00c853] bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg transition-all cursor-pointer flex items-center gap-1"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                                <span>Edit Metrics</span>
+                              </button>
+                            )}
                           </div>
 
                           {/* Interactive Revenue growth widget chart simulation */}
@@ -4484,7 +4940,13 @@ export default function App() {
                           </button>
                         </div>
                       )}
-                      {crmInquiriesList.map((inq) => (
+                      {crmInquiriesList.map((inq) => {
+                        const isFreelancerApp = inq.projectName.includes('Freelancer') || inq.clientName.includes('Freelancer') || inq.summary.includes('Primary Skill');
+                        // Extract portfolio URL if available
+                        const portfolioMatch = inq.summary.match(/Portfolio:\s*(https?:\/\/[^\s|]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}[^\s|]*)/);
+                        const portfolioUrl = portfolioMatch && portfolioMatch[1] !== 'N/A' ? (portfolioMatch[1].startsWith('http') ? portfolioMatch[1] : `https://${portfolioMatch[1]}`) : null;
+
+                        return (
                         <div
                           key={inq.id}
                           className={`p-6 rounded-2xl border ${
@@ -4500,7 +4962,7 @@ export default function App() {
                           
                           <div className="flex justify-between items-start gap-3">
                             <div>
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
                                 <span className="text-[10px] font-mono text-slate-400 font-black">{inq.id.slice(0, 18)}</span>
                                 <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
                                   inq.status === 'new'
@@ -4511,22 +4973,31 @@ export default function App() {
                                 }`}>
                                   {inq.status === 'new' ? '🔴 New' : inq.status === 'reviewed' ? '🟡 Reviewed' : '🟢 Converted'}
                                 </span>
+                                {isFreelancerApp && (
+                                  <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-300/40 flex items-center gap-1">
+                                    👨‍💻 Freelancer Candidate
+                                  </span>
+                                )}
                               </div>
-                              <h3 className="font-extrabold text-slate-900 dark:text-white">{inq.clientName}</h3>
+                              <h3 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                                {inq.clientName}
+                              </h3>
                               <span className="text-[11px] text-[#00c853] font-bold tracking-tight">{inq.projectName}</span>
                             </div>
                             <span className="text-xs text-slate-400 font-medium whitespace-nowrap">{inq.timeAgo}</span>
                           </div>
 
                           <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-xl border border-slate-100 dark:border-slate-700">
-                            <span className="block text-[9.5px] uppercase font-black text-slate-400 tracking-widest mb-1">PROPOSAL SUMMARY</span>
+                            <span className="block text-[9.5px] uppercase font-black text-slate-400 tracking-widest mb-1">
+                              {isFreelancerApp ? 'FREELANCER PROFILE & EXPERIENCE' : 'PROPOSAL SUMMARY'}
+                            </span>
                             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-semibold">
                               {inq.summary}
                             </p>
                           </div>
 
                           {/* Contact info from DB */}
-                          {(inq.email || inq.mobile) && (
+                          {(inq.email || inq.mobile || portfolioUrl) && (
                             <div className="flex flex-wrap gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                               {inq.email && (
                                 <span className="flex items-center gap-1">
@@ -4539,6 +5010,17 @@ export default function App() {
                                   <Phone className="w-3 h-3 text-[#00c853]" />
                                   {inq.mobile}
                                 </span>
+                              )}
+                              {portfolioUrl && (
+                                <a
+                                  href={portfolioUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline font-bold"
+                                >
+                                  <ExternalLink className="w-3 h-3" />
+                                  View Portfolio
+                                </a>
                               )}
                             </div>
                           )}
@@ -4611,7 +5093,8 @@ export default function App() {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      );
+                    })}
                     </div>
                   </motion.div>
                 )}
@@ -5840,7 +6323,7 @@ create table if not exists public.inquiries (
                   </motion.div>
                 )}
 
-                {/* VIEW 2: DEDICATED CHAT WORKSPACE (Image 2) */}
+                {/* VIEW 2: DEDICATED CHAT WORKSPACE (DigiWorku Brand Theme) */}
                 {activeTab === 'chat' && (
                   panelMode === 'admin' ? renderAdminChatConsole() : (
                     <motion.div
@@ -5849,22 +6332,26 @@ create table if not exists public.inquiries (
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.3 }}
-                      className="flex-1 flex flex-col min-h-0 bg-[#efeae2] dark:bg-[#0b141a]"
+                      className="flex-1 flex flex-col min-h-0 bg-[#FFF7E6] dark:bg-[#111111] grid-mesh"
                     >
 
                       {/* Chat header area */}
-                      <div className={`px-6 py-3.5 border-b flex items-center justify-between shrink-0 ${darkMode ? 'bg-[#202c33] border-slate-800' : 'bg-[#f0f2f5] border-slate-200 shadow-xs'}`}>
+                      <div className={`px-4 md:px-6 py-3.5 border-b flex items-center justify-between shrink-0 transition-colors ${darkMode ? 'bg-[#1a1a1a] border-slate-800' : 'bg-[#FFFDF0] border-slate-200 shadow-xs'}`}>
 
                         <div className="flex items-center gap-3">
                           <div className="relative">
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white dark:border-[#202c33] z-10 animate-pulse"></span>
-                            <div className="w-10 h-10 rounded-xl bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-100 flex items-center justify-center font-extrabold">
-                              👨‍💼
-                            </div>
+                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#00c853] rounded-full border-2 border-white dark:border-[#1a1a1a] z-10 animate-pulse"></span>
+                            <img
+                              src="https://i.ibb.co/8nvv02ZL/Digi-Worku-logo.jpg"
+                              alt="DigiWorku Logo"
+                              className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-xs"
+                            />
                           </div>
                           <div>
-                            <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 leading-none">DigiWorku Team</h4>
-                            <span className="text-[10px] text-emerald-500 font-bold mt-1 block">ONLINE</span>
+                            <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-slate-100 leading-none">
+                              Digi<span className="text-[#00c853]">Worku</span> Team Support
+                            </h4>
+                            <span className="text-[10px] text-[#00c853] font-bold mt-1 block tracking-wider uppercase">🟢 LIVE CONNECTED</span>
                           </div>
                         </div>
 
@@ -5874,14 +6361,14 @@ create table if not exists public.inquiries (
                             onClick={() => {
                               window.location.href = "tel:9521207156";
                             }}
-                            className="p-2.5 text-slate-500 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-full cursor-pointer transition-all active:scale-95"
+                            className="p-2.5 text-slate-500 hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full cursor-pointer transition-all active:scale-95"
                             title="Voice Call"
                           >
                             <Phone className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => { }}
-                            className="p-2.5 text-slate-500 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-full cursor-pointer transition-all active:scale-95"
+                            className="p-2.5 text-slate-500 hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full cursor-pointer transition-all active:scale-95"
                             title="Video Call"
                           >
                             <Video className="w-4.5 h-4.5" />
@@ -5890,16 +6377,15 @@ create table if not exists public.inquiries (
 
                       </div>
 
-                      {/* Chat Area Scroll block with beautiful doodle background */}
+                      {/* Chat Area Scroll block */}
                       <div
                         className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 relative"
                         style={{ contentVisibility: 'auto' }}
                       >
-                        <ChatDoodleBackground darkMode={darkMode} />
 
                         {/* Static Today label banner */}
                         <div className="flex justify-center my-2 select-none relative z-10">
-                          <span className="bg-white/90 dark:bg-[#202c33]/90 shadow-xs border border-slate-200/20 text-slate-600 dark:text-slate-300 text-[10px] font-bold tracking-widest px-3.5 py-1 rounded-full uppercase">
+                          <span className="bg-[#FFFDF0]/90 dark:bg-[#1a1a1a]/90 shadow-xs border border-slate-200/60 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-extrabold tracking-widest px-3.5 py-1 rounded-full uppercase">
                             TODAY
                           </span>
                         </div>
@@ -5913,15 +6399,15 @@ create table if not exists public.inquiries (
                             >
                               <div className={`max-w-[85%] md:max-w-[70%] flex flex-col space-y-0.5`}>
 
-                                {/* Inside chat body container bubble */}
-                                <div className={`px-4.5 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap select-text transition-all ${isUser
-                                  ? 'bg-[#d9fdd3] text-[#111b21] dark:bg-[#005c4b] dark:text-[#e9edef] rounded-tr-none shadow-xs'
-                                  : 'bg-white text-[#111b21] dark:bg-[#202c33] dark:text-[#e9edef] rounded-tl-none border border-slate-200/30 dark:border-slate-800/20 shadow-xs'
+                                {/* Inside chat body container bubble (DigiWorku Theme) */}
+                                <div className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap select-text transition-all ${isUser
+                                  ? 'bg-[#00311F] text-[#FFF7E6] dark:bg-[#00c853] dark:text-[#0d0d0d] rounded-tr-none shadow-sm font-semibold'
+                                  : 'bg-[#FFFDF0] text-[#00311F] dark:bg-[#222222] dark:text-[#e8e8e8] rounded-tl-none border border-slate-200/80 dark:border-slate-700/80 shadow-xs font-semibold'
                                   }`}>
 
-                                  {/* Sender Name for group style (only for admin/system) */}
+                                  {/* Sender Name */}
                                   {!isUser && (
-                                    <span className="block text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 mb-1 tracking-tight">
+                                    <span className="block text-[10px] font-black text-[#00c853] mb-1 tracking-tight">
                                       DigiWorku Team
                                     </span>
                                   )}
@@ -6076,23 +6562,23 @@ create table if not exists public.inquiries (
                         <div ref={messagesEndRef} />
                       </div>
 
-                      {/* Input Panel footer area (Matches Image 2) */}
-                      <div className={`p-4 border-t ${darkMode ? 'bg-[#0b141a] border-slate-800' : 'bg-[#f0f2f5] border-slate-200'}`}>
+                      {/* Input Panel footer area (DigiWorku Theme) */}
+                      <div className={`p-3.5 sm:p-4 border-t transition-colors ${darkMode ? 'bg-[#1a1a1a] border-slate-800' : 'bg-[#FFFDF0] border-slate-200'}`}>
 
-                        <form onSubmit={handleSendChatMessage} className="max-w-4xl mx-auto flex items-center gap-3 sm:gap-4">
+                        <form onSubmit={handleSendChatMessage} className="max-w-4xl mx-auto flex items-center gap-2 sm:gap-3">
 
-                          {/* Paperclip attachment icon matches design */}
+                          {/* Paperclip attachment icon */}
                           <div ref={attachmentMenuRef} className="relative shrink-0 flex items-center">
                             <button
                               type="button"
                               onClick={() => setIsAttachmentMenuOpen(!isAttachmentMenuOpen)}
-                              className={`p-1.5 transition-all cursor-pointer shrink-0 rounded-full ${isAttachmentMenuOpen
-                                ? 'text-[#00c853] bg-[#00c853]/15'
-                                : 'text-[#54656f] dark:text-[#aebac1] hover:text-[#005c4b] dark:hover:text-[#53bdeb]'
+                              className={`p-2 transition-all cursor-pointer shrink-0 rounded-xl ${isAttachmentMenuOpen
+                                ? 'text-white bg-[#00c853]'
+                                : 'text-slate-400 hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800'
                                 }`}
                               title="Attach Files & Docs"
                             >
-                              <Paperclip className={`w-[22px] h-[22px] transform transition-transform ${isAttachmentMenuOpen ? 'rotate-45' : '-rotate-[15deg]'} select-none stroke-[2px]`} />
+                              <Paperclip className={`w-5 h-5 transform transition-transform ${isAttachmentMenuOpen ? 'rotate-45' : ''} select-none`} />
                             </button>
 
                             {/* Hidden native input for seamless uploading of image, video, pdf, zip, audio, etc. */}
@@ -6112,11 +6598,11 @@ create table if not exists public.inquiries (
                                   animate={{ opacity: 1, y: 0, scale: 1 }}
                                   exit={{ opacity: 0, y: 15, scale: 0.95 }}
                                   transition={{ duration: 0.15, ease: 'easeOut' }}
-                                  className="absolute bottom-14 left-0 z-50 bg-white dark:bg-[#233138] rounded-2xl shadow-xl border border-slate-200/60 dark:border-slate-800 p-4.5 w-64 md:w-72"
+                                  className="absolute bottom-14 left-0 z-50 bg-white dark:bg-[#222222] rounded-2xl shadow-xl border border-slate-200/80 dark:border-slate-700 p-4.5 w-64 md:w-72"
                                 >
-                                  <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 px-1 flex items-center justify-between">
+                                  <div className="text-[11px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-3 px-1 flex items-center justify-between">
                                     <span>Upload or Share Asset</span>
-                                    <span className="text-[9px] bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 px-1.5 py-0.5 rounded-md font-extrabold animate-pulse">Active</span>
+                                    <span className="text-[9px] bg-[#00c853]/10 text-[#00c853] px-1.5 py-0.5 rounded-md font-extrabold animate-pulse">Active</span>
                                   </div>
 
                                   <div className="grid grid-cols-3 gap-3">
@@ -6141,10 +6627,10 @@ create table if not exists public.inquiries (
                                       onClick={() => triggerLocalFileInput('image/*,video/*')}
                                       className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all cursor-pointer group"
                                     >
-                                      <div className="w-11 h-11 rounded-full bg-purple-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-all">
+                                      <div className="w-11 h-11 rounded-full bg-[#00c853] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-all">
                                         <Image className="w-5 h-5 stroke-[2.2px]" />
                                       </div>
-                                      <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold group-hover:text-purple-500 transition-colors">
+                                      <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold group-hover:text-[#00c853] transition-colors">
                                         Media
                                       </span>
                                     </button>
@@ -6219,46 +6705,32 @@ create table if not exists public.inquiries (
                             </AnimatePresence>
                           </div>
 
-                          {/* Chat Text Input - beautifully rounded with soft pastel background */}
+                          {/* Chat Text Input - DigiWorku styling */}
                           <div className="flex-1 relative">
                             <input
                               type="text"
                               value={inputMessage}
                               onChange={(e) => setInputMessage(e.target.value)}
-                              placeholder="Type a message..."
-                              className="w-full px-5 py-3 sm:py-3.5 pr-4 rounded-[25px] text-xs sm:text-sm border-none focus:outline-hidden focus:ring-2 focus:ring-[#005c4b]/30 bg-[#eef2fa] dark:bg-[#202c33] text-[#111b21] dark:text-[#e9edef] placeholder-[#64748b] dark:placeholder-[#8696a0] font-sans transition-all leading-none"
+                              placeholder="Type your message to DigiWorku team..."
+                              className="w-full px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#00c853] focus:ring-1 focus:ring-[#00c853] bg-[#FFF7E6] dark:bg-[#222222] text-[#00311F] dark:text-white placeholder-[#00311F]/40 dark:placeholder-slate-500 font-medium transition-all"
                             />
                           </div>
 
-                          {/* Microphone icon button exactly like design */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              triggerToast("🎙️ Speech-to-text recording initiated in sandbox console.");
-                            }}
-                            className="p-1 text-[#54656f] dark:text-[#aebac1] hover:text-[#005c4b] dark:hover:text-[#53bdeb] transition-all cursor-pointer shrink-0"
-                            title="Voice Message (Simulation)"
-                          >
-                            <Mic className="w-[20px] h-[20px] select-none stroke-[2px]" />
-                          </button>
-
-                          {/* Send indicator circle button matching design */}
+                          {/* Send circle button */}
                           <button
                             type="submit"
                             disabled={!inputMessage.trim() || isChatLoading}
-                            className="w-[45px] h-[45px] bg-[#005c4b] hover:bg-[#004a3c] text-white rounded-full flex items-center justify-center active:scale-95 transition-all cursor-pointer disabled:opacity-40 disabled:hover:bg-[#005c4b] shrink-0 border-none shadow-[0_2px_5px_rgba(0,0,0,0.15)]"
+                            className="w-10 h-10 sm:w-11 sm:h-11 bg-[#00c853] hover:bg-[#00b047] text-white rounded-xl flex items-center justify-center active:scale-95 transition-all cursor-pointer disabled:opacity-40 disabled:hover:bg-[#00c853] shrink-0 border-none shadow-md shadow-[#00c853]/20"
                           >
-                            <Send className="w-[18px] h-[18px] text-white fill-white translate-x-[2px] -translate-y-[0px]" />
+                            <Send className="w-4 h-4 text-white" />
                           </button>
 
                         </form>
 
-
-
                       </div>
-
                     </motion.div>
-                  ))}
+                  )
+                )}
 
                 {/* VIEW 3: PORTFOLIO SHOWCASE PANEL (Image 3) */}
                 {activeTab === 'portfolio' && (
@@ -6472,100 +6944,348 @@ create table if not exists public.inquiries (
                           <motion.div
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className={`p-6 rounded-2xl border ${darkMode ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-xl'
-                              } space-y-6 max-w-3xl`}
+                            className={`p-6 rounded-2xl border ${darkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xl'
+                              } space-y-6 max-w-4xl`}
                           >
-                            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
-                              <h3 className="text-sm font-black uppercase text-slate-400 tracking-wider">
-                                {editingServiceId ? '✏️ Edit Existing Service' : '🚀 Add New Service Offering'}
-                              </h3>
-                              <button
-                                onClick={() => {
-                                  setIsAddingService(false);
-                                  setEditingServiceId(null);
-                                  resetServiceForm();
-                                }}
-                                className="p-1 rounded-lg text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
-                              >
-                                <X className="w-5 h-5" />
-                              </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Service Name *</label>
-                                <input
-                                  type="text"
-                                  value={serviceFormTitle}
-                                  onChange={(e) => setServiceFormTitle(e.target.value)}
-                                  placeholder="e.g. Mobile Application Development"
-                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950"
-                                />
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-4 gap-3">
+                              <div>
+                                <h3 className="text-sm font-black uppercase text-slate-800 dark:text-white tracking-wider flex items-center gap-2">
+                                  <span>{editingServiceId ? '✏️ Edit Existing Service' : '🚀 Add New Service Offering'}</span>
+                                </h3>
+                                <p className="text-[11px] text-slate-400 mt-0.5">Customize all 7 detailed sections of the public service detail page.</p>
                               </div>
 
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Starting Price *</label>
-                                <input
-                                  type="text"
-                                  value={serviceFormPrice}
-                                  onChange={(e) => setServiceFormPrice(e.target.value)}
-                                  placeholder="e.g. ₹50,000"
-                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950"
-                                />
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Service Category *</label>
-                                <select
-                                  value={serviceFormCategory}
-                                  onChange={(e) => setServiceFormCategory(e.target.value as any)}
-                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950"
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={autoGenerateDetailedSections}
+                                  className="bg-emerald-500/10 hover:bg-emerald-500/20 text-[#00c853] border border-[#00c853]/30 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                                  title="Auto-fill sample overview, process, offerings, features & FAQs"
                                 >
-                                  <option value="Development">Development (Web / Core)</option>
-                                  <option value="Design & Branding">Design & Branding Assets</option>
-                                  <option value="Video Production">Video Production post-edit</option>
-                                  <option value="Marketing">Marketing Campaign metrics</option>
-                                </select>
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Lucide Icon Aspect *</label>
-                                <select
-                                  value={serviceFormIcon}
-                                  onChange={(e) => setServiceFormIcon(e.target.value)}
-                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950"
+                                  <Sparkles className="w-3.5 h-3.5" />
+                                  <span>Auto-Fill Rich Page Template ⚡</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setIsAddingService(false);
+                                    setEditingServiceId(null);
+                                    resetServiceForm();
+                                  }}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                                 >
-                                  {AVAILABLE_SERVICE_ICONS.map(ic => (
-                                    <option key={ic} value={ic}>{ic}</option>
-                                  ))}
-                                </select>
+                                  <X className="w-5 h-5" />
+                                </button>
                               </div>
                             </div>
 
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Short Description *</label>
+                            {/* SECTION 1: BASIC INFORMATION */}
+                            <div className="space-y-4">
+                              <h4 className="text-xs font-black uppercase text-[#00c853] tracking-wider border-b border-slate-100 dark:border-slate-800 pb-1">
+                                1. Basic Details & Pricing
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Service Name *</label>
+                                  <input
+                                    type="text"
+                                    value={serviceFormTitle}
+                                    onChange={(e) => setServiceFormTitle(e.target.value)}
+                                    placeholder="e.g. Mobile Application Development"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950"
+                                  />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Starting Price *</label>
+                                  <input
+                                    type="text"
+                                    value={serviceFormPrice}
+                                    onChange={(e) => setServiceFormPrice(e.target.value)}
+                                    placeholder="e.g. ₹50,000"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950"
+                                  />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Service Category *</label>
+                                  <select
+                                    value={serviceFormCategory}
+                                    onChange={(e) => setServiceFormCategory(e.target.value as any)}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950"
+                                  >
+                                    <option value="Development">Development (Web / Core)</option>
+                                    <option value="Design & Branding">Design & Branding Assets</option>
+                                    <option value="Video Production">Video Production post-edit</option>
+                                    <option value="Marketing">Marketing Campaign metrics</option>
+                                  </select>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lucide Icon Aspect *</label>
+                                  <select
+                                    value={serviceFormIcon}
+                                    onChange={(e) => setServiceFormIcon(e.target.value)}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950"
+                                  >
+                                    {AVAILABLE_SERVICE_ICONS.map(ic => (
+                                      <option key={ic} value={ic}>{ic}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Short Description (Card Subtitle) *</label>
+                                <textarea
+                                  value={serviceFormDescription}
+                                  onChange={(e) => setServiceFormDescription(e.target.value)}
+                                  rows={2}
+                                  placeholder="Provide summary overview of this service..."
+                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950 leading-relaxed"
+                                />
+                              </div>
+                            </div>
+
+                            {/* SECTION 2: OVERVIEW */}
+                            <div className="space-y-2">
+                              <h4 className="text-xs font-black uppercase text-[#00c853] tracking-wider border-b border-slate-100 dark:border-slate-800 pb-1">
+                                2. Overview Section
+                              </h4>
                               <textarea
-                                value={serviceFormDescription}
-                                onChange={(e) => setServiceFormDescription(e.target.value)}
-                                rows={2}
-                                placeholder="Provide summary overview of this service..."
+                                value={serviceFormOverview}
+                                onChange={(e) => setServiceFormOverview(e.target.value)}
+                                rows={3}
+                                placeholder="Detailed overview paragraph explaining the value proposition of this service..."
                                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950 leading-relaxed"
                               />
                             </div>
 
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Service Detailed Content & Blog Article (Info Page) *</label>
-                              <textarea
-                                value={serviceFormContent}
-                                onChange={(e) => setServiceFormContent(e.target.value)}
-                                rows={6}
-                                placeholder="Write comprehensive blog/details about this service (process, deliverables, timeline, tech stack)..."
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950 leading-relaxed font-sans"
-                              />
-                              <p className="text-[10px] text-slate-400 font-medium">This detailed content will be displayed on the interactive Service Blog page when users tap/click on this service card.</p>
+                            {/* SECTION 3: WHAT WE OFFER */}
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                                <h4 className="text-xs font-black uppercase text-[#00c853] tracking-wider">
+                                  3. What We Offer (Offering Cards)
+                                </h4>
+                                <button
+                                  type="button"
+                                  onClick={() => setServiceFormOfferings(prev => [...prev, { title: '', desc: '', icon: 'Globe' }])}
+                                  className="text-[10px] font-bold text-[#00c853] bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                >
+                                  + Add Offering Item
+                                </button>
+                              </div>
+                              {serviceFormOfferings.map((item, idx) => (
+                                <div key={idx} className="flex gap-2 items-start bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <input
+                                      type="text"
+                                      value={item.title}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setServiceFormOfferings(prev => prev.map((o, i) => i === idx ? { ...o, title: val } : o));
+                                      }}
+                                      placeholder="Offering Title (e.g. Custom APIs)"
+                                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={item.desc}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setServiceFormOfferings(prev => prev.map((o, i) => i === idx ? { ...o, desc: val } : o));
+                                      }}
+                                      placeholder="Description (e.g. High speed REST endpoints)"
+                                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900"
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setServiceFormOfferings(prev => prev.filter((_, i) => i !== idx))}
+                                    className="p-1.5 text-slate-400 hover:text-red-500 transition cursor-pointer"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
                             </div>
 
-                            <div className="flex justify-end gap-3.5 pt-2">
+                            {/* SECTION 4: OUR PROCESS */}
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                                <h4 className="text-xs font-black uppercase text-[#00c853] tracking-wider">
+                                  4. Our Process Steps
+                                </h4>
+                                <button
+                                  type="button"
+                                  onClick={() => setServiceFormProcess(prev => [...prev, { step: prev.length + 1, title: '', desc: '' }])}
+                                  className="text-[10px] font-bold text-[#00c853] bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                >
+                                  + Add Process Step
+                                </button>
+                              </div>
+                              {serviceFormProcess.map((step, idx) => (
+                                <div key={idx} className="flex gap-2 items-start bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                                  <span className="w-6 h-6 rounded-full bg-[#00c853] text-white font-bold text-xs flex items-center justify-center shrink-0 mt-1">
+                                    {idx + 1}
+                                  </span>
+                                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <input
+                                      type="text"
+                                      value={step.title}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setServiceFormProcess(prev => prev.map((p, i) => i === idx ? { ...p, title: val } : p));
+                                      }}
+                                      placeholder="Step Title (e.g. Discovery)"
+                                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={step.desc}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setServiceFormProcess(prev => prev.map((p, i) => i === idx ? { ...p, desc: val } : p));
+                                      }}
+                                      placeholder="Step Description..."
+                                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900"
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setServiceFormProcess(prev => prev.filter((_, i) => i !== idx))}
+                                    className="p-1.5 text-slate-400 hover:text-red-500 transition cursor-pointer"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* SECTION 5: KEY CAPABILITIES */}
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                                <h4 className="text-xs font-black uppercase text-[#00c853] tracking-wider">
+                                  5. Key Capabilities (Features)
+                                </h4>
+                                <button
+                                  type="button"
+                                  onClick={() => setServiceFormFeatures(prev => [...prev, { title: '', desc: '' }])}
+                                  className="text-[10px] font-bold text-[#00c853] bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                >
+                                  + Add Capability Card
+                                </button>
+                              </div>
+                              {serviceFormFeatures.map((feat, idx) => (
+                                <div key={idx} className="flex gap-2 items-start bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                                  <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <input
+                                      type="text"
+                                      value={feat.title}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setServiceFormFeatures(prev => prev.map((f, i) => i === idx ? { ...f, title: val } : f));
+                                      }}
+                                      placeholder="Capability Title"
+                                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900"
+                                    />
+                                    <input
+                                      type="text"
+                                      value={feat.desc}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setServiceFormFeatures(prev => prev.map((f, i) => i === idx ? { ...f, desc: val } : f));
+                                      }}
+                                      placeholder="Capability Details..."
+                                      className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900"
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => setServiceFormFeatures(prev => prev.filter((_, i) => i !== idx))}
+                                    className="p-1.5 text-slate-400 hover:text-red-500 transition cursor-pointer"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* SECTION 6: DELIVERABLES & WHY CHOOSE US */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Deliverables Included (1 per line)</label>
+                                <textarea
+                                  value={serviceFormDeliverables}
+                                  onChange={(e) => setServiceFormDeliverables(e.target.value)}
+                                  rows={4}
+                                  placeholder="Full Source Code&#10;Production Deployment&#10;Admin Documentation"
+                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950 leading-relaxed"
+                                />
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Why Choose DigiWorku (1 per line)</label>
+                                <textarea
+                                  value={serviceFormWhyUs}
+                                  onChange={(e) => setServiceFormWhyUs(e.target.value)}
+                                  rows={4}
+                                  placeholder="Top Engineering Talent&#10;Agile Daily Updates&#10;30-Day Support Warranty"
+                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-950 leading-relaxed"
+                                />
+                              </div>
+                            </div>
+
+                            {/* SECTION 7: FAQS */}
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1">
+                                <h4 className="text-xs font-black uppercase text-[#00c853] tracking-wider">
+                                  7. Frequently Asked Questions (FAQs)
+                                </h4>
+                                <button
+                                  type="button"
+                                  onClick={() => setServiceFormFaqs(prev => [...prev, { q: '', a: '' }])}
+                                  className="text-[10px] font-bold text-[#00c853] bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 rounded-lg transition cursor-pointer"
+                                >
+                                  + Add FAQ Question
+                                </button>
+                              </div>
+                              {serviceFormFaqs.map((faq, idx) => (
+                                <div key={idx} className="space-y-2 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 relative">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-[#00c853]">FAQ #{idx + 1}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setServiceFormFaqs(prev => prev.filter((_, i) => i !== idx))}
+                                      className="text-slate-400 hover:text-red-500 transition cursor-pointer"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                  <input
+                                    type="text"
+                                    value={faq.q}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setServiceFormFaqs(prev => prev.map((f, i) => i === idx ? { ...f, q: val } : f));
+                                    }}
+                                    placeholder="Question (e.g. How long does development take?)"
+                                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900"
+                                  />
+                                  <textarea
+                                    value={faq.a}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setServiceFormFaqs(prev => prev.map((f, i) => i === idx ? { ...f, a: val } : f));
+                                    }}
+                                    rows={2}
+                                    placeholder="Answer details..."
+                                    className="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-medium bg-white dark:bg-slate-900"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="flex justify-end gap-3.5 pt-4 border-t border-slate-100 dark:border-slate-800">
                               <button
                                 onClick={() => {
                                   setIsAddingService(false);
@@ -6578,10 +7298,10 @@ create table if not exists public.inquiries (
                               </button>
                               <button
                                 onClick={editingServiceId ? handleUpdateService : handleAddNewService}
-                                className="bg-[#00c853] hover:bg-[#00b047] text-white px-5 py-2.5 rounded-xl text-xs font-black cursor-pointer flex items-center gap-1.5"
+                                className="bg-[#00c853] hover:bg-[#00b047] text-white px-6 py-2.5 rounded-xl text-xs font-black cursor-pointer flex items-center gap-1.5 shadow-lg shadow-[#00c853]/20"
                               >
                                 <Check className="w-4 h-4" />
-                                <span>{editingServiceId ? 'Update Service' : 'Create Service'}</span>
+                                <span>{editingServiceId ? 'Update Service' : 'Create Detailed Service'}</span>
                               </button>
                             </div>
                           </motion.div>
@@ -6869,7 +7589,8 @@ create table if not exists public.inquiries (
                     className="absolute inset-0 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-[#0d0d0d] z-50 pb-20"
                   >
                     <ServiceDetailPage 
-                      slug={activeServiceSlug} 
+                      slug={activeServiceSlug}
+                      service={servicesList.find(s => s.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and') === activeServiceSlug)}
                       darkMode={darkMode} 
                       onBack={() => {
                         window.history.pushState({}, '', '/services');

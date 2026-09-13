@@ -20,14 +20,89 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-interface ServiceDetailProps {
+export interface ServiceDetailProps {
   slug: string;
+  service?: any;
   darkMode: boolean;
   onBack: () => void;
   onRequestService: () => void;
 }
 
-// Data Dictionary for Services
+// Icon name or element converter
+const getIconComponent = (iconName: any): React.ElementType => {
+  if (!iconName) return Sparkles;
+  if (typeof iconName !== 'string') return iconName;
+  const mapping: Record<string, React.ElementType> = {
+    Globe,
+    Palette,
+    Film,
+    Sparkles,
+    CheckCircle2,
+    Clock,
+    Zap,
+    Shield,
+    Layers,
+    Smartphone,
+    BarChart,
+    Code,
+    Layout,
+    MessageSquare,
+    ChevronDown
+  };
+  return mapping[iconName] || Sparkles;
+};
+
+// Fallback Generators for incomplete custom services
+const defaultOfferings = (category: string) => [
+  { title: 'Core Strategy & Planning', desc: 'In-depth consultation and architectural roadmap.', icon: Globe },
+  { title: 'Custom Implementation', desc: 'Tailored development and design according to specs.', icon: Code },
+  { title: 'Responsive & Adaptive Design', desc: 'Flawless presentation across mobile and desktop.', icon: Smartphone },
+  { title: 'Performance Optimization', desc: 'High-speed execution, optimization and security.', icon: Zap },
+  { title: 'Quality Assurance & Testing', desc: 'Comprehensive QA testing for bug-free deployment.', icon: Shield },
+  { title: 'Post-Launch Technical Support', desc: '30-day warranty and ongoing maintenance.', icon: CheckCircle2 }
+];
+
+const defaultProcess = () => [
+  { step: 1, title: 'Requirement Discovery', desc: 'Understanding your business goals, target audience, and project scope.' },
+  { step: 2, title: 'Strategy & Wireframing', desc: 'Mapping out architecture, visual style, and execution roadmap.' },
+  { step: 3, title: 'Design & Prototyping', desc: 'Creating stunning visual concepts and interactive mockups.' },
+  { step: 4, title: 'Execution & Engineering', desc: 'Writing clean, scalable code and producing high-grade assets.' },
+  { step: 5, title: 'Testing & Polish', desc: 'Rigorous cross-platform testing, optimization, and client review.' },
+  { step: 6, title: 'Final Launch & Handoff', desc: 'Production deployment, source code transfer, and team training.' }
+];
+
+const defaultFeatures = (title: string) => [
+  { title: 'Enterprise Standard Quality', desc: `Built with industry best practices for ${title} to ensure scalability.` },
+  { title: 'Fast Execution & Delivery', desc: 'Agile milestone tracking with regular staging updates.' },
+  { title: 'Dedicated Support Team', desc: 'Direct line of communication with our lead partners and engineers.' },
+  { title: '100% Full Intellectual Ownership', desc: 'Complete copyright and source file transfer upon completion.' }
+];
+
+const defaultWhyUs = () => [
+  'Top-Tier Engineering & Creative Team',
+  'Transparent Milestone Pricing',
+  'Agile Communication & Daily Updates',
+  'Modern Tech Stack & Creative Aesthetics',
+  'Focus on High Conversion & User ROI',
+  '30-Day Post-Launch Technical Warranty'
+];
+
+const defaultDeliverables = (title: string) => [
+  `Complete ${title} production package`,
+  'Full source files and editing assets',
+  'Production deployment and DNS / platform setup',
+  'Technical documentation and admin user manual',
+  '30-day post-launch warranty'
+];
+
+const defaultFaqs = (title: string) => [
+  { q: `What is the estimated delivery timeframe for ${title}?`, a: 'Standard projects are delivered within 2 to 4 weeks depending on the complexity of deliverables and feedback review speed.' },
+  { q: 'What is required from me to start the project?', a: 'We need your project brief, brand assets (logos, colors if available), and any specific feature references you want included.' },
+  { q: 'Will I own full copyright to the work?', a: 'Yes. Upon final milestone payment, 100% intellectual property ownership and source files are completely transferred to you.' },
+  { q: 'Do you offer post-launch maintenance?', a: 'Yes, we include 30 days of free support after launch, as well as ongoing monthly support plans.' }
+];
+
+// Data Dictionary for Default Services
 const SERVICE_DATA: Record<string, any> = {
   'website-development': {
     title: 'Website Development',
@@ -245,9 +320,41 @@ const SERVICE_DATA: Record<string, any> = {
   }
 };
 
-export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, darkMode, onBack, onRequestService }) => {
-  const service = SERVICE_DATA[slug] || SERVICE_DATA['website-development'];
-  const Icon = service.icon;
+export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, service: passedService, darkMode, onBack, onRequestService }) => {
+  const staticMatch = SERVICE_DATA[slug];
+  const serviceObj = passedService || staticMatch || {};
+
+  const title = serviceObj.title || (slug ? slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Professional Service');
+  const category = serviceObj.category || 'Development';
+  const price = serviceObj.price || '₹25,000';
+  const Icon = getIconComponent(serviceObj.icon);
+  const intro = serviceObj.intro || serviceObj.description || 'Scalable, responsive, and high-performance solutions engineered for digital growth.';
+  const overview = serviceObj.overview || serviceObj.content || serviceObj.description || 'DigiWorku offers end-to-end digital engineering and strategic design services tailored to scale your enterprise business.';
+
+  const offerings = (serviceObj.offerings && serviceObj.offerings.length > 0)
+    ? serviceObj.offerings
+    : defaultOfferings(category);
+
+  const process = (serviceObj.process && serviceObj.process.length > 0)
+    ? serviceObj.process
+    : defaultProcess();
+
+  const features = (serviceObj.features && serviceObj.features.length > 0)
+    ? serviceObj.features
+    : defaultFeatures(title);
+
+  const whyUs = (serviceObj.whyUs && serviceObj.whyUs.length > 0)
+    ? serviceObj.whyUs
+    : defaultWhyUs();
+
+  const deliverables = (serviceObj.deliverables && serviceObj.deliverables.length > 0)
+    ? serviceObj.deliverables
+    : defaultDeliverables(title);
+
+  const faqs = (serviceObj.faqs && serviceObj.faqs.length > 0)
+    ? serviceObj.faqs
+    : defaultFaqs(title);
+
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const toggleFaq = (index: number) => {
@@ -278,9 +385,9 @@ export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, darkMode
             Services
           </button>
           <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
-          <span className="text-slate-500 dark:text-slate-300 whitespace-nowrap">{service.category}</span>
+          <span className="text-slate-500 dark:text-slate-300 whitespace-nowrap">{category}</span>
           <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
-          <span className={`whitespace-nowrap ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{service.title}</span>
+          <span className={`whitespace-nowrap ${darkMode ? 'text-slate-200' : 'text-slate-900'}`}>{title}</span>
         </nav>
 
         <div className="flex flex-col lg:flex-row gap-12">
@@ -296,13 +403,13 @@ export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, darkMode
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#00c853]/10 text-[#00c853] text-sm font-bold uppercase tracking-wider mb-6">
                 <Icon className="w-4 h-4" />
-                {service.category}
+                {category}
               </div>
               <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight ${darkMode ? 'text-white' : 'text-[#00311F]'}`}>
-                {service.title}
+                {title}
               </h1>
               <p className={`text-lg sm:text-xl leading-relaxed max-w-3xl mb-8 ${darkMode ? 'text-slate-300' : 'text-[#00311F]/75'}`}>
-                {service.intro}
+                {intro}
               </p>
               
               <div className="flex flex-wrap items-center gap-4">
@@ -340,7 +447,7 @@ export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, darkMode
                 Overview
               </h2>
               <p className={`leading-relaxed text-lg ${darkMode ? 'text-slate-300' : 'text-[#00311F]/75'}`}>
-                {service.overview}
+                {overview}
               </p>
             </section>
 
@@ -351,15 +458,18 @@ export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, darkMode
                 What We Offer
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {service.offerings.map((offer: any, i: number) => (
-                  <div key={i} className={`p-6 rounded-2xl border transition-all hover:border-[#00c853]/50 group ${darkMode ? 'bg-[#1e1e1e] border-[#2e2e2e]' : 'bg-white border-slate-200 shadow-sm'}`}>
-                    <div className="w-10 h-10 rounded-lg bg-[#e8fcf0] dark:bg-emerald-950/60 text-[#00c853] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                      <offer.icon className="w-5 h-5" />
+                {offerings.map((offer: any, i: number) => {
+                  const OfferIcon = getIconComponent(offer.icon);
+                  return (
+                    <div key={i} className={`p-6 rounded-2xl border transition-all hover:border-[#00c853]/50 group ${darkMode ? 'bg-[#1e1e1e] border-[#2e2e2e]' : 'bg-white border-slate-200 shadow-sm'}`}>
+                      <div className="w-10 h-10 rounded-lg bg-[#e8fcf0] dark:bg-emerald-950/60 text-[#00c853] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <OfferIcon className="w-5 h-5" />
+                      </div>
+                      <h3 className={`font-bold text-lg mb-2 ${darkMode ? 'text-white' : 'text-[#00311F]'}`}>{offer.title}</h3>
+                      <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-[#00311F]/60'}`}>{offer.desc}</p>
                     </div>
-                    <h3 className={`font-bold text-lg mb-2 ${darkMode ? 'text-white' : 'text-[#00311F]'}`}>{offer.title}</h3>
-                    <p className={`text-sm ${darkMode ? 'text-slate-400' : 'text-[#00311F]/60'}`}>{offer.desc}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
@@ -370,17 +480,17 @@ export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, darkMode
                 Our Process
               </h2>
               <div className="space-y-6">
-                {service.process.map((step: any, i: number) => (
+                {process.map((step: any, i: number) => (
                   <div key={i} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className="w-8 h-8 rounded-full bg-[#00c853] text-white flex items-center justify-center font-bold text-sm shrink-0 z-10 shadow-md">
-                        {step.step}
+                        {step.step || i + 1}
                       </div>
-                      {i !== service.process.length - 1 && (
+                      {i !== process.length - 1 && (
                         <div className={`w-0.5 h-full my-2 ${darkMode ? 'bg-slate-700' : 'bg-slate-200'}`}></div>
                       )}
                     </div>
-                    <div className={`pb-6 pt-1 ${i === service.process.length - 1 ? 'pb-0' : ''}`}>
+                    <div className={`pb-6 pt-1 ${i === process.length - 1 ? 'pb-0' : ''}`}>
                       <h3 className={`font-bold text-lg mb-1 ${darkMode ? 'text-white' : 'text-[#00311F]'}`}>{step.title}</h3>
                       <p className={`${darkMode ? 'text-slate-400' : 'text-[#00311F]/60'}`}>{step.desc}</p>
                     </div>
@@ -389,14 +499,14 @@ export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, darkMode
               </div>
             </section>
 
-            {/* Features */}
+            {/* Features / Key Capabilities */}
             <section id="features" className="mb-16 scroll-mt-24">
               <h2 className={`text-2xl font-bold mb-8 flex items-center gap-3 ${darkMode ? 'text-white' : 'text-[#00311F]'}`}>
                 <span className="w-8 h-1 rounded-full bg-[#00c853]"></span>
                 Key Capabilities
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {service.features.map((feat: any, i: number) => (
+                {features.map((feat: any, i: number) => (
                   <div key={i} className={`p-6 rounded-2xl border border-transparent hover:border-[#00c853]/30 transition-all ${darkMode ? 'bg-[#1e1e1e]' : 'bg-[#FFF3D6]'}`}>
                     <CheckCircle2 className="w-6 h-6 text-[#00c853] mb-4" />
                     <h3 className={`font-bold text-lg mb-2 ${darkMode ? 'text-white' : 'text-[#00311F]'}`}>{feat.title}</h3>
@@ -413,7 +523,7 @@ export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, darkMode
                 Why Choose DigiWorku
               </h2>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {service.whyUs.map((reason: string, i: number) => (
+                {whyUs.map((reason: string, i: number) => (
                   <li key={i} className="flex items-start gap-3">
                     <div className="mt-1 w-5 h-5 rounded-full bg-[#e8fcf0] dark:bg-emerald-950/60 text-[#00c853] flex items-center justify-center shrink-0">
                       <Sparkles className="w-3 h-3" />
@@ -431,7 +541,7 @@ export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, darkMode
                 Frequently Asked Questions
               </h2>
               <div className="space-y-3">
-                {service.faqs.map((faq: any, i: number) => (
+                {faqs.map((faq: any, i: number) => (
                   <div 
                     key={i} 
                     className={`rounded-xl border overflow-hidden transition-all duration-200 ${darkMode ? 'bg-[#1e1e1e] border-[#2e2e2e]' : 'bg-white border-slate-200 shadow-sm'}`}
@@ -472,20 +582,20 @@ export const ServiceDetailPage: React.FC<ServiceDetailProps> = ({ slug, darkMode
               <div className={`p-6 rounded-2xl border shadow-xl ${darkMode ? 'bg-[#1a1a1a] border-[#2e2e2e]' : 'bg-white border-slate-200'}`}>
                 <div className="text-center mb-6">
                   <p className={`text-sm font-bold uppercase tracking-wider mb-2 ${darkMode ? 'text-slate-300' : 'text-[#00311F]/60'}`}>Starting From</p>
-                  <h3 className="text-4xl font-extrabold text-[#00c853]">{service.price}</h3>
+                  <h3 className="text-4xl font-extrabold text-[#00c853]">{price}</h3>
                 </div>
                 
                 <div className="space-y-4 mb-8">
                   <h4 className={`font-bold text-sm border-b pb-2 ${darkMode ? 'text-white border-[#2e2e2e]' : 'text-[#00311F] border-slate-200'}`}>Deliverables Included:</h4>
                   <ul className="space-y-3">
-                    {service.deliverables.slice(0, 4).map((item: string, i: number) => (
+                    {deliverables.slice(0, 4).map((item: string, i: number) => (
                       <li key={i} className={`flex items-start gap-2 text-sm ${darkMode ? 'text-slate-300' : 'text-[#00311F]/75'}`}>
                         <CheckCircle2 className="w-4 h-4 text-[#00c853] mt-0.5 shrink-0" />
                         <span className="leading-tight">{item}</span>
                       </li>
                     ))}
                   </ul>
-                  {service.deliverables.length > 4 && (
+                  {deliverables.length > 4 && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 italic mt-2">+ more features included</p>
                   )}
                 </div>
@@ -575,3 +685,4 @@ const Rocket = ({ className }: { className?: string }) => (
     <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
   </svg>
 );
+
