@@ -1090,7 +1090,7 @@ export default function App() {
     const savedUser = localStorage.getItem('digiworku-user-session');
     const user = savedUser ? JSON.parse(savedUser) : null;
 
-    const userId = user?.email || 'alex';
+    const userId = user?.email || 'guest';
     const hasThread = threads.some((t: ChatThread) => t.id === userId);
     if (!hasThread) {
       threads.unshift({
@@ -1197,7 +1197,7 @@ export default function App() {
       return t;
     }));
 
-    if (activeThreadId === 'alex') {
+    if (activeThreadId === (currentUser?.email || 'guest')) {
       setChatHistory(prev => [...prev, quotationMsg]);
     }
     triggerToast("📄 Quotation generated & shared in client channel!");
@@ -1225,7 +1225,7 @@ export default function App() {
       return t;
     }));
 
-    if (activeThreadId === 'alex') {
+    if (activeThreadId === (currentUser?.email || 'guest')) {
       setChatHistory(prev => [...prev, approvalMsg]);
     }
     triggerToast("🎉 Project marked APPROVED & COMMITTED!");
@@ -1417,6 +1417,48 @@ export default function App() {
                   title="Google Meet session"
                 >
                   <Video className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (confirm(`Are you sure you want to delete all messages for "${activeThread.name}" on both sides (Client & Admin)? This action cannot be undone.`)) {
+                      const targetUserId = activeThread.email || activeThread.id;
+                      
+                      // 1. Delete from Supabase DB
+                      try {
+                        await supabase.from('messages').delete().eq('user_id', targetUserId);
+                      } catch (err: any) {
+                        console.warn("Failed deleting messages from Supabase:", err?.message || err);
+                      }
+
+                      // 2. Clear thread messages locally
+                      setChatThreadsList(prev => prev.map(t => {
+                        if (t.id === activeThread.id || t.id === targetUserId) {
+                          return {
+                            ...t,
+                            lastMessageText: 'Chat cleared by Admin',
+                            messages: []
+                          };
+                        }
+                        return t;
+                      }));
+
+                      // 3. Clear chatHistory if active thread is current logged-in user
+                      if (targetUserId === (currentUser?.email || 'guest')) {
+                        setChatHistory([]);
+                      }
+                      localStorage.removeItem(`digiworku-messages-${targetUserId}`);
+                      localStorage.removeItem('digiworku-messages');
+
+                      triggerToast(`🗑️ Deleted all messages for "${activeThread.name}" on both sides!`);
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-600 dark:text-red-400 hover:text-white transition-all text-xs font-bold flex items-center gap-1.5 cursor-pointer ml-1"
+                  title="Delete all messages in this thread for both Admin and Client"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Clear Chat</span>
                 </button>
                 <button
                   type="button"
@@ -1958,41 +2000,16 @@ export default function App() {
   const [totalClientsCount, setTotalClientsCount] = useState<number>(150);
   const [activeWorkflowsCount, setActiveWorkflowsCount] = useState<number>(24);
 
-  // Chat system state
+  // Chat system state (isolated per user)
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
-    const saved = localStorage.getItem('digiworku-messages');
-    if (saved) return JSON.parse(saved);
-    return [
-      {
-        id: 'msg-rec-1',
-        role: 'assistant',
-        content: "Hello Alex! We've updated the dashboard widgets based on your feedback. Can you please check if the metrics are reflecting correctly now?",
-        timestamp: '12:30 PM'
-      },
-      {
-        id: 'msg-send-1',
-        role: 'user',
-        content: "Thanks for the update. Checking them right now. Give me 5 minutes.",
-        timestamp: '12:32 PM'
-      },
-      {
-        id: 'msg-rec-2',
-        role: 'assistant',
-        content: "Here's the detailed report as well. It captures our live deployment schedule.",
-        timestamp: '12:44 PM',
-        attachment: {
-          filename: 'Q4_Performance_Report.pdf',
-          size: '2.4 MB',
-          type: 'pdf'
-        }
-      },
-      {
-        id: 'msg-send-2',
-        role: 'user',
-        content: "The workflow automation is now live for testing. I've just initiated the first sequence.",
-        timestamp: '12:45 PM'
-      }
-    ];
+    const savedUser = localStorage.getItem('digiworku-user-session');
+    const user = savedUser ? JSON.parse(savedUser) : null;
+    const userId = user?.email || 'guest';
+    const saved = localStorage.getItem(`digiworku-messages-${userId}`);
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [];
   });
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isChatLoading, setIsChatLoading] = useState<boolean>(false);
@@ -2047,15 +2064,31 @@ export default function App() {
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Sync state options to localStorage
+  // Clean legacy global chat key on load
   useEffect(() => {
-    localStorage.setItem('digiworku-projects', JSON.stringify(projectsList));
-  }, [projectsList]);
+    localStorage.removeItem('digiworku-messages');
+  }, []);
+
+  // Sync current user chat history whenever currentUser changes (login / signup / logout)
+  useEffect(() => {
+    const userId = currentUser?.email || 'guest';
+    const saved = localStorage.getItem(`digiworku-messages-${userId}`);
+    if (saved) {
+      try {
+        setChatHistory(JSON.parse(saved));
+      } catch (e) {
+        setChatHistory([]);
+      }
+    } else {
+      setChatHistory([]);
+    }
+  }, [currentUser]);
 
   useEffect(() => {
-    localStorage.setItem('digiworku-messages', JSON.stringify(chatHistory));
+    const userId = currentUser?.email || 'guest';
+    localStorage.setItem(`digiworku-messages-${userId}`, JSON.stringify(chatHistory));
     scrollToBottom();
-  }, [chatHistory]);
+  }, [chatHistory, currentUser]);
 
   // Cross-tab real-time sync for localStorage changes
   useEffect(() => {
@@ -2080,6 +2113,7 @@ export default function App() {
             setProjectsList(JSON.parse(e.newValue));
             break;
           case 'digiworku-messages':
+          case `digiworku-messages-${currentUser?.email || 'guest'}`:
             setChatHistory(JSON.parse(e.newValue));
             break;
           case 'digiworku-user-session':
@@ -2258,7 +2292,7 @@ export default function App() {
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
-      if (!userError && userData && userData.length > 0) {
+      if (!userError && userData) {
         const dbUserMessages: ChatMessage[] = userData.map((row: any) => ({
           id: row.id,
           role: (row.role === 'admin' || row.role === 'assistant') ? 'assistant' : 'user',
@@ -4067,9 +4101,9 @@ export default function App() {
                                           <div className="flex items-center justify-end gap-1.5">
                                             <button
                                               onClick={() => {
-                                                setActiveThreadId('alex');
+                                                const matchThread = chatThreadsList.find(t => t.email === project.email || t.id === project.email || t.name === project.leadName);
+                                                setActiveThreadId(matchThread ? matchThread.id : (project.email || 'guest'));
                                                 setActiveTab('chat');
-                                                triggerToast(`💬 Connecting to main chat workspace for ${project.leadName}...`);
                                               }}
                                               className="p-1 px-2 rounded-lg bg-slate-100 hover:bg-emerald-500 hover:text-white dark:bg-slate-700 dark:hover:bg-emerald-600 text-slate-500 dark:text-slate-404 transition-all cursor-pointer flex items-center gap-1 text-[10px]"
                                               title="Chat Center"
@@ -7864,6 +7898,153 @@ create table if not exists public.inquiries (
                   <span className="font-semibold">Secured by OAuth 2.0 Auth</span>
                 </div>
 
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Freelancer Candidate Application Modal ("Join Us") */}
+        <AnimatePresence>
+          {isFreelancerModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsFreelancerModalOpen(false)}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs"
+              />
+
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 15 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 15 }}
+                className={`w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border relative z-10 p-6 md:p-8 space-y-6 ${darkMode ? 'bg-[#141414] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  }`}
+              >
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-[#00c853] flex items-center justify-center border border-emerald-500/20">
+                      <UserPlus className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black tracking-tight">Join DigiWorku Freelancer Network</h3>
+                      <p className="text-xs text-slate-400 font-medium">Apply as a top 1% digital specialist candidate</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setIsFreelancerModalOpen(false)}
+                    className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white transition cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleFreelancerSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Full Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={freelancerFormName}
+                        onChange={(e) => setFreelancerFormName(e.target.value)}
+                        placeholder="e.g. Vikram Sharma"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Email Address *</label>
+                      <input
+                        type="email"
+                        required
+                        value={freelancerFormEmail}
+                        onChange={(e) => setFreelancerFormEmail(e.target.value)}
+                        placeholder="e.g. vikram@gmail.com"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Mobile Number *</label>
+                      <input
+                        type="tel"
+                        required
+                        value={freelancerFormPhone}
+                        onChange={(e) => setFreelancerFormPhone(e.target.value)}
+                        placeholder="e.g. +91 98765 43210"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Primary Expertise *</label>
+                      <select
+                        value={freelancerFormSkill}
+                        onChange={(e) => setFreelancerFormSkill(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
+                      >
+                        <option value="Full Stack Developer (React / Node / Next.js)">Full Stack Developer (React / Node)</option>
+                        <option value="UI/UX Specialist & Figma Designer">UI/UX Specialist & Figma Designer</option>
+                        <option value="Senior Video Editor & Motion Designer">Senior Video Editor & Motion Graphics</option>
+                        <option value="Graphic Designer & Brand Illustrator">Graphic Designer & Brand Specialist</option>
+                        <option value="SEO & Performance Growth Specialist">SEO & Performance Marketing</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Portfolio / GitHub / Behance Link *</label>
+                    <input
+                      type="url"
+                      required
+                      value={freelancerFormPortfolio}
+                      onChange={(e) => setFreelancerFormPortfolio(e.target.value)}
+                      placeholder="e.g. https://behance.net/vikram or https://github.com/vikram"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Experience & Brief Bio *</label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={freelancerFormBio}
+                      onChange={(e) => setFreelancerFormBio(e.target.value)}
+                      placeholder="Tell us briefly about your years of experience, top tools, and key client achievements..."
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#00c853] bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white leading-relaxed"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsFreelancerModalOpen(false)}
+                      className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingFreelancer}
+                      className="bg-[#00c853] hover:bg-[#00b047] disabled:opacity-50 text-white px-6 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-[#00c853]/20"
+                    >
+                      {isSubmittingFreelancer ? (
+                        <span>Submitting...</span>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4" />
+                          <span>Submit Freelancer Application</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
               </motion.div>
             </div>
           )}
