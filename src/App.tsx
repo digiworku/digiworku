@@ -3415,6 +3415,22 @@ export default function App() {
                       </div>
                     </button>
 
+                    <button
+                      onClick={() => { setActiveTab('portfolio'); setIsSidebarOpen(false); }}
+                      className={`w-full flex items-center justify-between p-3 px-4 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${activeTab === 'portfolio'
+                        ? 'bg-[#00c853] text-white shadow-lg shadow-[#00c853]/15 font-bold'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-[#00c853] dark:hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Briefcase className="w-5 h-5" />
+                        <span>Portfolio Manager</span>
+                      </div>
+                      <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                        {projectsList.length}
+                      </span>
+                    </button>
+
                     <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
                       <button
                         onClick={() => {
@@ -6858,6 +6874,37 @@ export default function App() {
                     transition={{ duration: 0.3 }}
                     className="flex-1 p-6 md:p-8 space-y-8"
                   >
+
+                    {/* Admin Portfolio Management Banner - only visible in admin mode */}
+                    {(isAdmin || panelMode === 'admin') && (
+                      <div className={`rounded-2xl border p-4 md:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${darkMode ? 'bg-emerald-950/30 border-emerald-800/40' : 'bg-emerald-50 border-emerald-200'}`}>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#00c853] flex items-center justify-center shadow-md shrink-0">
+                            <Briefcase className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <span className="block text-[10px] font-black uppercase tracking-widest text-[#00c853]">Admin Mode</span>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-white">Portfolio Manager</h3>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              {projectsList.length} projects in database · Add, Edit, Delete projects below
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap shrink-0">
+                          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border ${darkMode ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-600'}`}>
+                            <div className="w-2 h-2 rounded-full bg-[#00c853] animate-pulse" />
+                            Supabase Connected
+                          </div>
+                          <button
+                            onClick={handleOpenAddProject}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00c853] hover:bg-[#00b04a] text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span>Upload New Project</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Search / Header block inside view matches Image 3 header */}
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
