@@ -73,12 +73,13 @@ import {
   Ban,
   UserMinus,
   Edit3,
-  ExternalLink
+  ExternalLink,
+  WifiOff,
+  Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AuthForm } from './components/AuthForm';
 import { AnimatedGridBackground } from './components/AnimatedGridBackground';
-import { ChatDoodleBackground } from './components/ChatDoodleBackground';
 import { ServiceDetailPage } from './components/ServiceDetailPage';
 import { LegalPages, type LegalPageSlug } from './components/LegalPages';
 import { supabase } from './supabase';
@@ -93,16 +94,18 @@ export const getChatUserId = (currentUser: any) => {
   return guestId;
 };
 
-// Structured Types
-interface ProjectItem {
+export interface ProjectItem {
   id: string;
   title: string;
   description: string;
-  category: 'Design' | 'Development' | 'Marketing' | 'Consulting';
+  category: string;
   tags: string[];
   imageUrl: string;
+  videoUrl?: string;
+  mediaType?: 'image' | 'video';
   clientName: string;
   impactResult?: string;
+  created_at?: string;
 }
 
 export interface OfferingItem {
@@ -195,47 +198,51 @@ interface ChatMessage {
   };
 }
 
-// Initial Mock Portfolios matching the exact designs of Image 3
 const INITIAL_PROJECTS: ProjectItem[] = [
+  {
+    id: 'proj-ugc-1',
+    title: 'Viral D2C E-Commerce UGC Reel',
+    description: 'High-converting Instagram & TikTok UGC short video featuring product unboxing, aesthetic lifestyle framing, and trending audio voiceover.',
+    category: 'UGC Videos',
+    tags: ['UGC', 'INSTAGRAM', 'REELS', 'D2C'],
+    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-lighting-1230-large.mp4',
+    mediaType: 'video',
+    clientName: 'GlowSkin Organics',
+    impactResult: '2.4M Views & +58% Direct Purchase Conversion Rate'
+  },
+  {
+    id: 'proj-gfx-1',
+    title: 'Brand Identity & Visual Graphics Suite',
+    description: 'Complete brand graphics package including vector logo mark, social media promotion banners, typography system, and product packaging vector files.',
+    category: 'Graphics Design',
+    tags: ['GRAPHICS', 'BRANDING', 'PACKAGING'],
+    imageUrl: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80',
+    mediaType: 'image',
+    clientName: 'Aura Premium Beverages',
+    impactResult: '100% Brand Guidelines Standard & Retail Handoff'
+  },
   {
     id: 'proj-1',
     title: 'EliteCommerce UI/UX',
     description: 'A complete overhaul of the shopping experience for a luxury fashion house, focusing on micro-interactions and seamless checkout flows.',
-    category: 'Design',
+    category: 'UI/UX Design',
     tags: ['DESIGN', 'RETAIL'],
     imageUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=80',
+    mediaType: 'image',
     clientName: 'EliteCommerce',
     impactResult: '+45% conversion optimization with modern design standards'
-  },
-  {
-    id: 'proj-2',
-    title: 'FinTrust Identity',
-    description: 'Establishing trust for a global digital bank through minimalist visual language and premium secure dark interface styles.',
-    category: 'Design',
-    tags: ['BRANDING', 'SECURITY'],
-    imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80',
-    clientName: 'FinTrust Bank',
-    impactResult: '98% user trust rating boost over older core systems'
   },
   {
     id: 'proj-3',
     title: 'Nexus Cloud Architecture',
     description: 'Scalable serverless infrastructure designed for high-concurrency real-time digital communication and transactional stability.',
-    category: 'Development',
+    category: 'Web Development',
     tags: ['DEVELOPMENT', 'CLOUD'],
     imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80',
+    mediaType: 'image',
     clientName: 'Nexus Inc.',
     impactResult: 'Zero outages under extreme 100k+ concurrent requests peak'
-  },
-  {
-    id: 'proj-4',
-    title: 'GrowthHacker 2.0 Campaign',
-    description: 'A multi-channel viral marketing strategy, utilizing localized performance advertising that increased user retention by 65%.',
-    category: 'Marketing',
-    tags: ['MARKETING', 'GROWTH'],
-    imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80',
-    clientName: 'GrowthHackers Ltd.',
-    impactResult: 'Client cost-per-acquisition reduced by 30%'
   }
 ];
 
@@ -339,6 +346,7 @@ export interface CRMProject {
   budget: string;
   description: string;
   progress: number;
+  email?: string;
 }
 
 export interface CRMInquiry {
@@ -646,7 +654,6 @@ export default function App() {
   const [supabaseMessage, setSupabaseMessage] = useState<string>('Initializing connection to Supabase instance...');
   const [supabaseAutoSync, setSupabaseAutoSync] = useState<boolean>(true);
   const [isSupabaseSyncing, setIsSupabaseSyncing] = useState<boolean>(false);
-  const [isSqlSchemaExpanded, setIsSqlSchemaExpanded] = useState<boolean>(false);
 
   // Profile Drawer States
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
@@ -675,6 +682,20 @@ export default function App() {
   // Notifications State
   const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+
+  // Network Offline Monitor State
+  const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Split-Panel Navigation Modes
   const [panelMode, setPanelMode] = useState<'user' | 'admin'>(() => {
@@ -1982,9 +2003,8 @@ export default function App() {
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isChatLoading, setIsChatLoading] = useState<boolean>(false);
 
-  // Attachment & Google Drive States
+  // Attachment States
   const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState<boolean>(false);
-  const [isDriveModalOpen, setIsDriveModalOpen] = useState<boolean>(false);
   const [fileInputAccept, setFileInputAccept] = useState<string>('*/*');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachmentMenuRef = useRef<HTMLDivElement>(null);
@@ -2019,6 +2039,158 @@ export default function App() {
   });
   const [portfolioFilter, setPortfolioFilter] = useState<string>('All');
   const [searchProjectQuery, setSearchProjectQuery] = useState<string>('');
+
+  // Admin Project CRUD States
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean>(false);
+  const [editingProject, setEditingProject] = useState<ProjectItem | null>(null);
+  const [selectedProjectDetail, setSelectedProjectDetail] = useState<ProjectItem | null>(null);
+
+  const [projectFormTitle, setProjectFormTitle] = useState<string>('');
+  const [projectFormCategory, setProjectFormCategory] = useState<string>('UGC Videos');
+  const [projectFormCustomCategory, setProjectFormCustomCategory] = useState<string>('');
+  const [projectFormMediaType, setProjectFormMediaType] = useState<'image' | 'video'>('image');
+  const [projectFormImageUrl, setProjectFormImageUrl] = useState<string>('');
+  const [projectFormVideoUrl, setProjectFormVideoUrl] = useState<string>('');
+  const [projectFormClientName, setProjectFormClientName] = useState<string>('');
+  const [projectFormDescription, setProjectFormDescription] = useState<string>('');
+  const [projectFormTags, setProjectFormTags] = useState<string>('');
+  const [projectFormImpactResult, setProjectFormImpactResult] = useState<string>('');
+
+  // Sync projectsList to localStorage
+  useEffect(() => {
+    localStorage.setItem('digiworku-projects', JSON.stringify(projectsList));
+  }, [projectsList]);
+
+  // Fetch Projects from Supabase on mount
+  useEffect(() => {
+    const fetchProjectsFromDB = async () => {
+      try {
+        const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+          const formatted: ProjectItem[] = data.map(item => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            category: item.category,
+            tags: Array.isArray(item.tags) ? item.tags : (typeof item.tags === 'string' ? item.tags.split(',') : []),
+            imageUrl: item.image_url || item.imageUrl || 'https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=80',
+            videoUrl: item.video_url || item.videoUrl || undefined,
+            mediaType: item.media_type || item.mediaType || (item.video_url || item.videoUrl ? 'video' : 'image'),
+            clientName: item.client_name || item.clientName || 'DigiWorku Client',
+            impactResult: item.impact_result || item.impactResult || undefined,
+            created_at: item.created_at
+          }));
+          setProjectsList(formatted);
+        }
+      } catch (e) {
+        console.log('Supabase projects table fetch notice:', e);
+      }
+    };
+    fetchProjectsFromDB();
+  }, []);
+
+  const resetProjectForm = () => {
+    setEditingProject(null);
+    setProjectFormTitle('');
+    setProjectFormCategory('UGC Videos');
+    setProjectFormCustomCategory('');
+    setProjectFormMediaType('image');
+    setProjectFormImageUrl('');
+    setProjectFormVideoUrl('');
+    setProjectFormClientName('');
+    setProjectFormDescription('');
+    setProjectFormTags('');
+    setProjectFormImpactResult('');
+  };
+
+  const handleOpenAddProject = () => {
+    resetProjectForm();
+    setIsProjectModalOpen(true);
+  };
+
+  const handleOpenEditProject = (proj: ProjectItem) => {
+    setEditingProject(proj);
+    setProjectFormTitle(proj.title);
+    setProjectFormCategory(proj.category);
+    setProjectFormCustomCategory('');
+    setProjectFormMediaType(proj.mediaType || (proj.videoUrl ? 'video' : 'image'));
+    setProjectFormImageUrl(proj.imageUrl || '');
+    setProjectFormVideoUrl(proj.videoUrl || '');
+    setProjectFormClientName(proj.clientName || '');
+    setProjectFormDescription(proj.description || '');
+    setProjectFormTags(Array.isArray(proj.tags) ? proj.tags.join(', ') : '');
+    setProjectFormImpactResult(proj.impactResult || '');
+    setIsProjectModalOpen(true);
+  };
+
+  const handleSaveProject = async () => {
+    const title = projectFormTitle.trim();
+    const finalCategory = (projectFormCategory === 'Custom...' ? projectFormCustomCategory : projectFormCategory).trim() || 'General';
+    const clientName = projectFormClientName.trim() || 'DigiWorku Client';
+    const description = projectFormDescription.trim();
+    if (!title || !description) {
+      triggerToast("⚠️ Please enter Project Title and Description.");
+      return;
+    }
+
+    const tagsArray = projectFormTags.split(',').map(t => t.trim().toUpperCase()).filter(Boolean);
+    const fallbackImage = 'https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=80';
+
+    const newProjItem: ProjectItem = {
+      id: editingProject ? editingProject.id : `proj-${Date.now()}`,
+      title,
+      category: finalCategory,
+      description,
+      clientName,
+      tags: tagsArray.length > 0 ? tagsArray : [finalCategory.toUpperCase()],
+      imageUrl: projectFormImageUrl.trim() || fallbackImage,
+      videoUrl: projectFormMediaType === 'video' ? projectFormVideoUrl.trim() : undefined,
+      mediaType: projectFormMediaType,
+      impactResult: projectFormImpactResult.trim() || undefined,
+      created_at: new Date().toISOString()
+    };
+
+    if (editingProject) {
+      setProjectsList(prev => prev.map(p => p.id === editingProject.id ? newProjItem : p));
+      triggerToast(`✨ Updated project "${title}"`);
+    } else {
+      setProjectsList(prev => [newProjItem, ...prev]);
+      triggerToast(`🚀 Added new project "${title}" to Portfolio!`);
+    }
+
+    // Database Sync (Supabase)
+    try {
+      const dbPayload = {
+        id: newProjItem.id,
+        title: newProjItem.title,
+        description: newProjItem.description,
+        category: newProjItem.category,
+        tags: newProjItem.tags,
+        image_url: newProjItem.imageUrl,
+        video_url: newProjItem.videoUrl,
+        media_type: newProjItem.mediaType,
+        client_name: newProjItem.clientName,
+        impact_result: newProjItem.impactResult
+      };
+      await supabase.from('projects').upsert(dbPayload);
+    } catch (e) {
+      console.log("Supabase project upsert notice:", e);
+    }
+
+    setIsProjectModalOpen(false);
+    resetProjectForm();
+  };
+
+  const handleDeleteProject = async (id: string, title: string) => {
+    setProjectsList(prev => prev.filter(p => p.id !== id));
+    triggerToast(`🗑️ Deleted project "${title}"`);
+    try {
+      await supabase.from('projects').delete().eq('id', id);
+    } catch (e) {
+      console.log("Supabase delete project notice:", e);
+    }
+  };
+
   // Service item variables
   const [serviceCategories, setServiceCategories] = useState({
     'Development': true,
@@ -2736,41 +2908,6 @@ export default function App() {
     e.target.value = '';
   };
 
-  const handleSelectDriveFile = (file: { filename: string; size: string; type: 'pdf' | 'image' | 'video' | 'zip' | 'voice' | 'drive' | 'archive' | 'other'; mimeType: string }) => {
-    const timeFormatted = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-    const newAttachMsg: ChatMessage = {
-      id: `msg-user-drive-${Date.now()}`,
-      role: 'user',
-      content: `☁️ Imported from Google Drive: **${file.filename}**`,
-      timestamp: timeFormatted,
-      attachment: {
-        filename: file.filename,
-        size: file.size,
-        type: 'drive',
-        url: '#' // Google Drive simulation url
-      }
-    };
-
-    setChatHistory(prev => [...prev, newAttachMsg]);
-    setIsDriveModalOpen(false);
-    setIsAttachmentMenuOpen(false);
-    triggerToast(`☁️ Connected & imported ${file.filename} directly from Google Drive.`);
-
-    // Intelligent simulated response
-    setIsChatLoading(true);
-    setTimeout(() => {
-      const replyMsg: ChatMessage = {
-        id: `msg-admin-drive-reply-${Date.now()}`,
-        role: 'assistant',
-        content: `Acknowledged! I have fetched and synchronized **${file.filename}** directly from your cloud directory in real-time. Full API read/write channels are stable.`,
-        timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-      };
-      setChatHistory(prev => [...prev, replyMsg]);
-      setIsChatLoading(false);
-    }, 1800);
-  };
-
   // Request Service Directly by opening Chat Workspace & initiating conversation
   const handleRequestServiceDirectly = (serviceInput: ServiceItem | string) => {
     const title = typeof serviceInput === 'string' ? serviceInput : serviceInput.title;
@@ -2986,11 +3123,27 @@ export default function App() {
   };
 
 
+  // Dynamic categories list from projectsList + defaults
+  const portfolioCategoriesList = Array.from(new Set([
+    'All',
+    'UGC Videos',
+    'Graphics Design',
+    'UI/UX Design',
+    'Web Development',
+    'App Development',
+    'Video Editing',
+    'Branding & Media',
+    'Marketing',
+    'AI & Automation',
+    ...projectsList.map(p => p.category)
+  ]));
+
   // Filter projects by search and top buttons
   const filteredProjects = projectsList.filter(proj => {
     const matchesCategory = portfolioFilter === 'All' || proj.category.toLowerCase() === portfolioFilter.toLowerCase();
     const matchesSearch = proj.title.toLowerCase().includes(searchProjectQuery.toLowerCase()) ||
       proj.description.toLowerCase().includes(searchProjectQuery.toLowerCase()) ||
+      proj.category.toLowerCase().includes(searchProjectQuery.toLowerCase()) ||
       proj.clientName.toLowerCase().includes(searchProjectQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -3005,6 +3158,22 @@ export default function App() {
 
   return (
     <div id="digiworku-root" className={`${activeTab === 'chat' ? 'h-screen max-h-screen overflow-hidden' : 'min-h-screen'} font-sans flex text-[#1f2937] transition-colors duration-200 ${darkMode ? 'dark bg-[#111111] text-[#f1f5f9]' : 'bg-[#fafafc] text-[#1f2937]'} relative overflow-x-hidden w-full max-w-full min-w-0`}>
+      {/* WCAG 2.1 Accessible Skip to Content Link */}
+      <a
+        href="#main-content-canvas"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-[#00c853] focus:text-slate-950 focus:font-black focus:rounded-xl focus:shadow-2xl"
+      >
+        Skip to main content
+      </a>
+
+      {/* Network Offline Alert Banner */}
+      {isOffline && (
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-slate-950 px-4 py-2 text-center text-xs font-bold shadow-lg flex items-center justify-center gap-2">
+          <WifiOff className="w-4 h-4 shrink-0" />
+          <span>You are currently offline. Changes will automatically sync when connection is restored.</span>
+        </div>
+      )}
+
       <AnimatedGridBackground darkMode={darkMode} />
 
       {/* Toast popup */}
@@ -3428,7 +3597,7 @@ export default function App() {
             {/* Logo Brand with click action to return Home */}
             <div className="flex items-center gap-2 sm:gap-2.5 cursor-pointer shrink-0" onClick={() => { setActiveTab('home'); setIsSidebarOpen(false); }}>
               <img
-                src="https://i.ibb.co/8nvv02ZL/Digi-Worku-logo.jpg"
+                src="/logo.jpg"
                 alt="DigiWorku Logo"
                 referrerPolicy="no-referrer"
                 className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl object-cover shadow-md border border-slate-200/40 dark:border-slate-800/40 hover:scale-105 transition-transform duration-200 shrink-0"
@@ -6283,61 +6452,6 @@ export default function App() {
                           </button>
                         </div>
                       </div>
-
-                      {/* Schema Expansion Panel */}
-                      <div className="border-t border-slate-100 dark:border-slate-800 pt-5">
-                        <button
-                          onClick={() => setIsSqlSchemaExpanded(!isSqlSchemaExpanded)}
-                          className="flex items-center justify-between w-full text-left font-black text-xs text-slate-400 hover:text-slate-500 transition-colors uppercase tracking-wider cursor-pointer"
-                        >
-                          <span>Show SQL Table Schemas</span>
-                          <ChevronRight className={`w-4 h-4 transition-transform duration-200 ${isSqlSchemaExpanded ? 'rotate-90' : ''}`} />
-                        </button>
-
-                        {isSqlSchemaExpanded && (
-                          <div className="mt-3.5 space-y-3 overflow-hidden text-xs font-semibold">
-                            <p className="text-[11px] text-slate-405 dark:text-slate-400 leading-relaxed">
-                              Copy and execute this script inside your Supabase Project's <strong>SQL Editor</strong> to instantly provision the required columns and schemas:
-                            </p>
-
-                            <div className="relative">
-                              <pre className="p-4 bg-slate-950 dark:bg-slate-900 text-[10px] leading-relaxed text-slate-300 font-mono rounded-xl border border-slate-800 overflow-x-auto select-all max-h-60">
-                                {`-- Create Projects Table
-create table if not exists public.projects (
-  id text primary key,
-  title text not null,
-  description text,
-  category text,
-  tags text[],
-  image_url text,
-  client_name text,
-  impact_result text,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-
--- Create Messages Table
-create table if not exists public.messages (
-  id text primary key,
-  role text not null,
-  content text not null,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-
--- Create Inquiries Table
-create table if not exists public.inquiries (
-  id text primary key,
-  name text not null,
-  email text,
-  mobile text,
-  message text,
-  status text default 'New',
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);`}
-                              </pre>
-                            </div>
-                          </div>
-                        )}
-                      </div>
                     </div>
 
                   </motion.div>
@@ -6362,7 +6476,7 @@ create table if not exists public.inquiries (
                           <div className="relative">
                             <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#00c853] rounded-full border-2 border-white dark:border-[#1a1a1a] z-10 animate-pulse"></span>
                             <img
-                              src="https://i.ibb.co/8nvv02ZL/Digi-Worku-logo.jpg"
+                              src="/logo.jpg"
                               alt="DigiWorku Logo"
                               className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-xs"
                             />
@@ -6683,24 +6797,6 @@ create table if not exists public.inquiries (
                                       </span>
                                     </button>
 
-                                    {/* 5. Google Drive cloud */}
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setIsAttachmentMenuOpen(false);
-                                        setIsDriveModalOpen(true);
-                                      }}
-                                      className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all cursor-pointer group"
-                                    >
-                                      <div className="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-all relative">
-                                        <HardDrive className="w-5 h-5 stroke-[2.2px]" />
-                                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-green-500 rounded-full border border-white"></span>
-                                      </div>
-                                      <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold group-hover:text-blue-550 transition-colors">
-                                        Drive.gdoc
-                                      </span>
-                                    </button>
-
                                     {/* 6. Standard file explorer */}
                                     <button
                                       type="button"
@@ -6769,15 +6865,15 @@ create table if not exists public.inquiries (
                       <div>
                         <span className="block text-[11px] font-black uppercase text-[#00c853] tracking-wider">WORK PORTFOLIO</span>
                         <h2 className="text-2xl md:text-3.5xl font-black text-slate-900 dark:text-white mt-1 leading-none font-display">
-                          Web & App Development Works & <span className="text-[#00c853]">Impact Results</span>
+                          UGC Videos, Graphics Design & Tech <span className="text-[#00c853]">Showcase</span>
                         </h2>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-xl leading-relaxed">
-                          Explore our latest achievements. We don't just build software; hum impact create karte hain (we create impact) through design-led innovation.
+                          Explore our wide range of delivered projects across UGC Reels, Graphics Design, Web & App Engineering, Branding, and AI Solutions.
                         </p>
                       </div>
 
-                      {/* Interactive Search inside Top portfolio */}
-                      <div className="flex items-center gap-3 shrink-0">
+                      {/* Interactive Search & Admin Add Project Button */}
+                      <div className="flex items-center gap-3 shrink-0 flex-wrap">
 
                         <div className="relative">
                           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -6790,13 +6886,23 @@ create table if not exists public.inquiries (
                           />
                         </div>
 
+                        {(isAdmin || panelMode === 'admin') && (
+                          <button
+                            onClick={handleOpenAddProject}
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00c853] hover:bg-[#00b04a] text-white font-bold text-xs shadow-md transition-all cursor-pointer shrink-0"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span>Add Project</span>
+                          </button>
+                        )}
+
                       </div>
 
                     </div>
 
-                    {/* Filter tags buttons matching Image 3 (All, Design, Development, Marketing, Consulting) */}
+                    {/* Filter tags buttons dynamically populated from active portfolio categories */}
                     <div className="flex items-center gap-2 flex-wrap pb-1 border-b border-slate-200 dark:border-slate-800">
-                      {['All', 'Design', 'Development', 'Marketing', 'Consulting'].map((cat) => (
+                      {portfolioCategoriesList.map((cat) => (
                         <button
                           key={cat}
                           onClick={() => setPortfolioFilter(cat)}
@@ -6810,41 +6916,61 @@ create table if not exists public.inquiries (
                       ))}
                     </div>
 
-                    {/* Bento-style Grid of Project Cards with realistic images */}
+                    {/* Bento-style Grid of Project Cards with Video & Image support */}
                     <div id="project-bento-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 pt-2">
 
                       {filteredProjects.map((proj, idx) => {
-                        // Let Card 1 (EliteCommerce) take full span 2 inline on desktop / lag-sizes to fit the exact layout of Image 3
                         const isLargeCard = idx === 0;
+                        const isVideo = proj.mediaType === 'video' || Boolean(proj.videoUrl);
 
                         return (
                           <div
                             key={proj.id}
-                            onClick={() => {
-                              // Let users copy impact details naturally
-                              if (proj.impactResult) {
-                                triggerToast(`📈 Copy outcome score: "${proj.impactResult}"`);
-                              }
-                            }}
-                            className={`group border rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-[#00c853] transition-all hover:-translate-y-1.5 hover:shadow-2xl cursor-pointer ${isLargeCard ? 'lg:col-span-8' : 'lg:col-span-4'
+                            className={`group border rounded-2xl overflow-hidden focus-within:ring-2 focus-within:ring-[#00c853] transition-all hover:-translate-y-1.5 hover:shadow-2xl relative ${isLargeCard ? 'lg:col-span-8' : 'lg:col-span-4'
                               } ${darkMode ? 'bg-[#202020]/50 border-slate-800' : 'bg-white border-slate-200 shadow-xs'}`}
                           >
 
-                            {/* Image banner block */}
-                            <div className="aspect-video relative overflow-hidden bg-slate-100 dark:bg-slate-900/60">
-                              <img
-                                src={proj.imageUrl}
-                                alt={proj.title}
-                                className="w-full h-full object-cover group-hover:scale-103 duration-500 filter brightness-95"
-                                referrerPolicy="no-referrer"
-                              />
+                            {/* Media banner block */}
+                            <div
+                              onClick={() => setSelectedProjectDetail(proj)}
+                              className="aspect-video relative overflow-hidden bg-slate-900 cursor-pointer group/media"
+                            >
+                              {isVideo && proj.videoUrl ? (
+                                <div className="relative w-full h-full">
+                                  <video
+                                    src={proj.videoUrl}
+                                    poster={proj.imageUrl}
+                                    muted
+                                    loop
+                                    playsInline
+                                    onMouseEnter={(e) => (e.currentTarget as HTMLVideoElement).play()}
+                                    onMouseLeave={(e) => (e.currentTarget as HTMLVideoElement).pause()}
+                                    className="w-full h-full object-cover group-hover:scale-103 duration-500 filter brightness-95"
+                                  />
+                                  <div className="absolute inset-0 bg-slate-950/30 flex items-center justify-center group-hover/media:bg-slate-950/10 transition-colors">
+                                    <div className="w-12 h-12 rounded-full bg-[#00c853] text-white flex items-center justify-center shadow-xl group-hover/media:scale-110 transition-transform">
+                                      <Play className="w-5 h-5 fill-current ml-0.5" />
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <img
+                                  src={proj.imageUrl}
+                                  alt={proj.title}
+                                  className="w-full h-full object-cover group-hover:scale-103 duration-500 filter brightness-95"
+                                  referrerPolicy="no-referrer"
+                                />
+                              )}
 
-                              {/* Top Tags row */}
-                              <div className="absolute top-4 left-4 flex gap-1.5">
-                                {proj.tags.map((tag) => (
+                              {/* Category Badge & Tags */}
+                              <div className="absolute top-4 left-4 flex flex-wrap gap-1.5 z-10 pointer-events-none">
+                                <span className="bg-[#00c853] text-white text-[9px] font-black px-2.5 py-1 rounded-sm tracking-widest uppercase shadow-xs">
+                                  {proj.category}
+                                </span>
+                                {proj.tags.slice(0, 2).map((tag) => (
                                   <span
                                     key={tag}
-                                    className="bg-[#00c853] text-white text-[9px] font-black px-2.5 py-1 rounded-sm tracking-widest scale-95"
+                                    className="bg-slate-950/70 text-white text-[9px] font-bold px-2 py-1 rounded-sm tracking-wider uppercase backdrop-blur-xs"
                                   >
                                     {tag}
                                   </span>
@@ -6860,23 +6986,44 @@ create table if not exists public.inquiries (
                             {/* Title details description block */}
                             <div className="p-5 space-y-3">
 
-                              <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-extrabold tracking-widest uppercase text-[#00c853]">{proj.clientName}</span>
-                                <span className="text-[10px] text-slate-400 font-extrabold">PROJECT UNIT</span>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[10px] font-extrabold tracking-widest uppercase text-[#00c853] truncate">{proj.clientName}</span>
+                                
+                                {(isAdmin || panelMode === 'admin') && (
+                                  <div className="flex items-center gap-1.5 shrink-0 z-20">
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleOpenEditProject(proj); }}
+                                      className="p-1 rounded-md text-slate-400 hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                      title="Edit Project"
+                                    >
+                                      <Edit3 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleDeleteProject(proj.id, proj.title); }}
+                                      className="p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                      title="Delete Project"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
                               </div>
 
-                              <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-normal">
+                              <h3
+                                onClick={() => setSelectedProjectDetail(proj)}
+                                className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-normal cursor-pointer hover:text-[#00c853] transition-colors"
+                              >
                                 {proj.title}
                               </h3>
 
-                              <p className="text-xs text-slate-500 dark:text-slate-450 leading-relaxed">
+                              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
                                 {proj.description}
                               </p>
 
                               {proj.impactResult && (
                                 <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-1.5 text-xs text-[#00c853] font-bold">
                                   <TrendingUp className="w-4 h-4 shrink-0" />
-                                  <span>Outcome: {proj.impactResult}</span>
+                                  <span className="truncate">Outcome: {proj.impactResult}</span>
                                 </div>
                               )}
 
@@ -6891,16 +7038,23 @@ create table if not exists public.inquiries (
                           <FolderGit2 className="w-12 h-12 text-slate-300 mx-auto stroke-1" />
                           <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">No Projects Found</h4>
                           <p className="text-xs text-slate-400">
-                            We could not find matching active products under filter "{portfolioFilter}" and query "{searchProjectQuery}".
+                            We could not find matching projects under category "{portfolioFilter}".
                           </p>
+                          {(isAdmin || panelMode === 'admin') && (
+                            <button
+                              onClick={handleOpenAddProject}
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00c853] text-white font-bold text-xs shadow-md"
+                            >
+                              <Plus className="w-4 h-4" />
+                              <span>Add First Project</span>
+                            </button>
+                          )}
                         </div>
                       )}
 
                     </div>
 
-
-
-                    {/* Bottom CTA block matching image details */}
+                    {/* Bottom CTA block */}
                     <div className="text-center py-6 mt-4 border-t border-slate-200/50 dark:border-slate-800 space-y-4">
                       <h4 className="text-sm md:text-[16px] font-black text-slate-900 dark:text-white">Aapka project next showcase ho sakta hai.</h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400">Ready to transform your business with premium digital solutions?</p>
@@ -7780,137 +7934,6 @@ create table if not exists public.inquiries (
           )}
         </AnimatePresence>
 
-        {/* High Fidelity Interactive Google Drive Modal */}
-        <AnimatePresence>
-          {isDriveModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-
-              {/* Backdrop */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsDriveModalOpen(false)}
-                className="absolute inset-0 bg-black/60 backdrop-blur-xs"
-              />
-
-              {/* Modal Body */}
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 15 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 15 }}
-                className={`w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl border relative z-10 ${darkMode ? 'bg-[#1e272d] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-                  }`}
-              >
-
-                {/* Branded Google Header */}
-                <div className="p-5 border-b border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between bg-slate-50 dark:bg-slate-900/40">
-                  <div className="flex items-center gap-3">
-                    {/* Real visual multi-colored Google Drive Triangle simulation */}
-                    <div className="w-8 h-8 rounded-lg bg-white shadow-xs p-1.5 flex items-center justify-center relative shrink-0">
-                      <svg viewBox="0 0 488 488" className="w-full h-full select-none">
-                        <path fill="#FFC107" d="M149.6 114H334l-81.8 141.6z" />
-                        <path fill="#FFC107" d="M149.6 114l84.4 146 81.8-141.6z" />
-                        <path fill="#2196F3" d="M334 114L252.2 255.6H418z" />
-                        <path fill="#4CAF50" d="M70 398l84.3-146 81.9 141.6H70z" />
-                        <path fill="#1565C0" d="M252.2 255.6l81.8-141.6 84 146z" />
-                        <path fill="#2E7D32" d="M154.3 252h168l81.7 141.6H154.3z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-extrabold tracking-tight">Import from Google Drive</h3>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Connected with alex.rivera@gmail.com</p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setIsDriveModalOpen(false)}
-                    className="p-1 px-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-xs font-bold font-sans cursor-pointer text-slate-500"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                {/* Search drive documents in real-time */}
-                <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/10">
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
-                    <input
-                      type="text"
-                      placeholder="Search Google Drive docs, sheets, audio or zip..."
-                      className="w-full pl-8.5 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-blue-500 bg-white dark:bg-[#131c21]"
-                    />
-                  </div>
-                </div>
-
-                {/* Shared items directory list */}
-                <div className="max-h-72 overflow-y-auto p-4 space-y-2">
-                  {[
-                    { filename: "DigiWorku_Finalist_Proposal.pdf", size: "1.4 MB", type: "pdf", mimeType: "application/pdf", date: "Modified yesterday" },
-                    { filename: "Workspace_Brand_Identity.zip", size: "48.2 MB", type: "zip", mimeType: "application/zip", date: "Uploaded Jun 12" },
-                    { filename: "Team_Briefing_Audio.mp3", size: "8.5 MB", type: "voice", mimeType: "audio/mpeg", date: "Recorded Jun 10" },
-                    { filename: "Marketing_Launch_Video.mp4", size: "32 MB", type: "video", mimeType: "video/mp4", date: "Added Jun 08" },
-                    { filename: "Client_Feedback_Grid.gsheet", size: "124 KB", type: "drive", mimeType: "application/vnd.google-apps.spreadsheet", date: "Modified Jun 05" },
-                    { filename: "Wireframe_Feedback_Specs.gdoc", size: "44 KB", type: "drive", mimeType: "application/vnd.google-apps.document", date: "Modified May 28" }
-                  ].map((file, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleSelectDriveFile({
-                        filename: file.filename,
-                        size: file.size,
-                        type: file.type as any,
-                        mimeType: file.mimeType
-                      })}
-                      className="w-full text-left p-3 rounded-xl flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-blue-500/15 cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-3">
-                        {/* Interactive visual icon */}
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold relative shrink-0 ${file.type === 'pdf' ? 'bg-red-50 dark:bg-red-950/20 text-red-500' :
-                          file.type === 'zip' ? 'bg-amber-50 dark:bg-amber-950/20 text-amber-500' :
-                            file.type === 'voice' ? 'bg-orange-50 dark:bg-orange-950/20 text-orange-500' :
-                              file.type === 'video' ? 'bg-purple-50 dark:bg-purple-950/20 text-purple-500' :
-                                'bg-blue-50 dark:bg-blue-950/20 text-blue-500'
-                          }`}>
-                          {file.type === 'pdf' && <FileText className="w-4.5 h-4.5" />}
-                          {file.type === 'zip' && <FolderArchive className="w-4.5 h-4.5" />}
-                          {file.type === 'voice' && <Music className="w-4.5 h-4.5" />}
-                          {file.type === 'video' && <Video className="w-4.5 h-4.5" />}
-                          {file.type === 'drive' && <HardDrive className="w-4.5 h-4.5" />}
-                        </div>
-
-                        <div>
-                          <span className="block text-xs font-bold text-slate-700 dark:text-slate-200 group-hover:text-blue-500 transition-colors">
-                            {file.filename}
-                          </span>
-                          <span className="block text-[10px] text-slate-400 font-bold">
-                            {file.size} • {file.date}
-                          </span>
-                        </div>
-                      </div>
-
-                      <span className="text-[10px] font-black text-blue-500 bg-blue-500/10 px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-                        Import
-                      </span>
-
-                    </button>
-                  ))}
-                </div>
-
-                {/* Status footer */}
-                <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 bg-slate-50 dark:bg-slate-900/40">
-                  <span className="font-bold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
-                    GCloud Link Safe
-                  </span>
-                  <span className="font-semibold">Secured by OAuth 2.0 Auth</span>
-                </div>
-
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
         {/* Freelancer Candidate Application Modal ("Join Us") */}
         <AnimatePresence>
           {isFreelancerModalOpen && (
@@ -8058,6 +8081,285 @@ create table if not exists public.inquiries (
           )}
         </AnimatePresence>
 
+        {/* Admin Project Add/Edit Modal */}
+        <AnimatePresence>
+          {isProjectModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsProjectModalOpen(false)}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+              />
+
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 15 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 15 }}
+                className={`w-full max-w-lg rounded-2xl shadow-2xl border relative z-10 overflow-hidden ${
+                  darkMode ? 'bg-[#1a1a1a] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                }`}
+              >
+                <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <h3 className="text-base font-bold flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#00c853]" />
+                    <span>{editingProject ? 'Edit Portfolio Project' : 'Upload New Portfolio Project'}</span>
+                  </h3>
+                  <button
+                    onClick={() => setIsProjectModalOpen(false)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Project Title *</label>
+                    <input
+                      type="text"
+                      value={projectFormTitle}
+                      onChange={(e) => setProjectFormTitle(e.target.value)}
+                      placeholder="e.g. Viral D2C E-Commerce UGC Reel"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#00c853]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Category *</label>
+                      <select
+                        value={projectFormCategory}
+                        onChange={(e) => setProjectFormCategory(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#00c853]"
+                      >
+                        <option value="UGC Videos">UGC Videos</option>
+                        <option value="Graphics Design">Graphics Design</option>
+                        <option value="UI/UX Design">UI/UX Design</option>
+                        <option value="Web Development">Web Development</option>
+                        <option value="App Development">App Development</option>
+                        <option value="Video Editing">Video Editing</option>
+                        <option value="Branding & Media">Branding & Media</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="AI & Automation">AI & Automation</option>
+                        <option value="Custom...">Custom Category...</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Media Type</label>
+                      <select
+                        value={projectFormMediaType}
+                        onChange={(e) => setProjectFormMediaType(e.target.value as 'image' | 'video')}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[#00c853]"
+                      >
+                        <option value="image">Image Banner</option>
+                        <option value="video">Video Reel / Player</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {projectFormCategory === 'Custom...' && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Custom Category Name</label>
+                      <input
+                        type="text"
+                        value={projectFormCustomCategory}
+                        onChange={(e) => setProjectFormCustomCategory(e.target.value)}
+                        placeholder="e.g. Motion Graphics, 3D Rendering"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Image Thumbnail URL</label>
+                    <input
+                      type="text"
+                      value={projectFormImageUrl}
+                      onChange={(e) => setProjectFormImageUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/... or /logo.jpg"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold"
+                    />
+                  </div>
+
+                  {projectFormMediaType === 'video' && (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Video Stream URL (MP4 / WebM)</label>
+                      <input
+                        type="text"
+                        value={projectFormVideoUrl}
+                        onChange={(e) => setProjectFormVideoUrl(e.target.value)}
+                        placeholder="https://assets.mixkit.co/... or MP4 video URL"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Client / Brand Name</label>
+                      <input
+                        type="text"
+                        value={projectFormClientName}
+                        onChange={(e) => setProjectFormClientName(e.target.value)}
+                        placeholder="e.g. GlowSkin Organics"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Tags (Comma separated)</label>
+                      <input
+                        type="text"
+                        value={projectFormTags}
+                        onChange={(e) => setProjectFormTags(e.target.value)}
+                        placeholder="UGC, REELS, D2C"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Description *</label>
+                    <textarea
+                      rows={3}
+                      value={projectFormDescription}
+                      onChange={(e) => setProjectFormDescription(e.target.value)}
+                      placeholder="Detailed project summary..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Impact Result / Metric</label>
+                    <input
+                      type="text"
+                      value={projectFormImpactResult}
+                      onChange={(e) => setProjectFormImpactResult(e.target.value)}
+                      placeholder="e.g. 2.4M Views & +58% Purchase Conversion"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold text-[#00c853]"
+                    />
+                  </div>
+                </div>
+
+                <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between">
+                  <button
+                    onClick={() => setIsProjectModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleSaveProject}
+                    className="px-5 py-2.5 rounded-xl bg-[#00c853] hover:bg-[#00b04a] text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                  >
+                    {editingProject ? 'Update Project' : 'Save Project to Database'}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Project Detail Lightbox Modal */}
+        <AnimatePresence>
+          {selectedProjectDetail && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedProjectDetail(null)}
+                className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+              />
+
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className={`w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border relative z-10 max-h-[90vh] flex flex-col ${
+                  darkMode ? 'bg-[#181818] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                }`}
+              >
+                {/* Media Container */}
+                <div className="relative aspect-video bg-black shrink-0">
+                  {selectedProjectDetail.mediaType === 'video' || selectedProjectDetail.videoUrl ? (
+                    <video
+                      src={selectedProjectDetail.videoUrl}
+                      poster={selectedProjectDetail.imageUrl}
+                      controls
+                      autoPlay
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <img
+                      src={selectedProjectDetail.imageUrl}
+                      alt={selectedProjectDetail.title}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+
+                  <button
+                    onClick={() => setSelectedProjectDetail(null)}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-slate-950/70 text-white hover:bg-slate-900 transition-colors shadow-lg z-10"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+
+                  <span className="absolute bottom-4 left-4 bg-[#00c853] text-white text-[10px] font-black px-3 py-1 rounded-md tracking-widest uppercase">
+                    {selectedProjectDetail.category}
+                  </span>
+                </div>
+
+                {/* Details Container */}
+                <div className="p-6 space-y-4 overflow-y-auto flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black uppercase text-[#00c853] tracking-widest">
+                      {selectedProjectDetail.clientName}
+                    </span>
+                    <div className="flex gap-1.5">
+                      {selectedProjectDetail.tags.map(t => (
+                        <span key={t} className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-400">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <h3 className="text-2xl font-black tracking-tight">{selectedProjectDetail.title}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {selectedProjectDetail.description}
+                  </p>
+
+                  {selectedProjectDetail.impactResult && (
+                    <div className="p-3.5 rounded-xl bg-[#00c853]/10 border border-[#00c853]/20 flex items-center gap-2 text-xs text-[#00c853] font-bold">
+                      <TrendingUp className="w-4 h-4 shrink-0" />
+                      <span>Outcome Metric: {selectedProjectDetail.impactResult}</span>
+                    </div>
+                  )}
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      onClick={() => {
+                        const projTitle = selectedProjectDetail.title;
+                        setSelectedProjectDetail(null);
+                        handleRequestServiceDirectly(`Portfolio Project Inquiry: ${projTitle}`);
+                      }}
+                      className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#00c853] hover:bg-[#00b04a] text-white font-bold text-xs shadow-lg shadow-[#00c853]/20 transition-all cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>Request Similar Project</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
         {/* High Fidelity Interactive Sign In & Sign Up Modal (Get Started) */}
         <AnimatePresence>
           {isAuthModalOpen && (
@@ -8097,7 +8399,7 @@ create table if not exists public.inquiries (
                   {/* Centered Minimal Brand Logo */}
                   <div className="flex justify-center mb-4">
                     <img
-                      src="https://i.ibb.co/8nvv02ZL/Digi-Worku-logo.jpg"
+                      src="/logo.jpg"
                       alt="DigiWorku Logo"
                       referrerPolicy="no-referrer"
                       className="w-12 h-12 rounded-2xl object-cover shadow-sm border border-slate-100 dark:border-slate-800"
