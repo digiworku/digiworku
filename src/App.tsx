@@ -81,6 +81,16 @@ import { AnimatedGridBackground } from './components/AnimatedGridBackground';
 import { ChatDoodleBackground } from './components/ChatDoodleBackground';
 import { ServiceDetailPage } from './components/ServiceDetailPage';
 import { supabase } from './supabase';
+// Helper to consistently get the unique user ID for chat, even for guests
+export const getChatUserId = (currentUser: any) => {
+  if (currentUser?.email) return currentUser.email;
+  let guestId = localStorage.getItem('digiworku_guest_id');
+  if (!guestId) {
+    guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem('digiworku_guest_id', guestId);
+  }
+  return guestId;
+};
 
 // Structured Types
 interface ProjectItem {
@@ -660,53 +670,7 @@ export default function App() {
 
   // Notifications State
   const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
-  const [notifications, setNotifications] = useState<any[]>([
-    {
-      id: 'notif-1',
-      title: '🚀 AI Agent Initialized',
-      description: 'DigiWorku AI Operator is ready. Smart routing has been updated for high-speed indexing.',
-      time: 'Just now',
-      type: 'success',
-      read: false,
-      category: 'System'
-    },
-    {
-      id: 'notif-2',
-      title: '💬 Team Member Assigned',
-      description: 'Ananya Sharma has been linked as your Lead PM for DigiWorku workspace.',
-      time: '20 mins ago',
-      type: 'message',
-      read: false,
-      category: 'Team'
-    },
-    {
-      id: 'notif-3',
-      title: '📁 Proposal Indexed Successfully',
-      description: 'Document DigiWorku_Finalist_Proposal.pdf is mapped and parsed into vector context.',
-      time: '1 hour ago',
-      type: 'info',
-      read: true,
-      category: 'Documents'
-    },
-    {
-      id: 'notif-4',
-      title: '🔒 Sandbox Shield Operational',
-      description: 'Secure sandbox workspace created with 256-bit SSL TLS Encryption enabled.',
-      time: '3 hours ago',
-      type: 'success',
-      read: true,
-      category: 'Security'
-    },
-    {
-      id: 'notif-5',
-      title: '⚠️ System Updates Required',
-      description: 'Please review and confirm your corporate settings parameters in settings console.',
-      time: '5 hours ago',
-      type: 'warning',
-      read: false,
-      category: 'Action Required'
-    }
-  ]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   // Split-Panel Navigation Modes
   const [panelMode, setPanelMode] = useState<'user' | 'admin'>(() => {
@@ -1090,7 +1054,7 @@ export default function App() {
     const savedUser = localStorage.getItem('digiworku-user-session');
     const user = savedUser ? JSON.parse(savedUser) : null;
 
-    const userId = user?.email || 'guest';
+    const userId = getChatUserId(user);
     const hasThread = threads.some((t: ChatThread) => t.id === userId);
     if (!hasThread) {
       threads.unshift({
@@ -1127,7 +1091,7 @@ export default function App() {
   const [activeThreadId, setActiveThreadId] = useState<string>(() => {
     const savedUser = localStorage.getItem('digiworku-user-session');
     const user = savedUser ? JSON.parse(savedUser) : null;
-    return user?.email || 'guest';
+    return getChatUserId(user);
   });
   const [projectsViewMode, setProjectsViewMode] = useState<'kanban' | 'timeline'>('kanban');
   const [searchCrmProjectQuery, setSearchCrmProjectQuery] = useState<string>('');
@@ -1197,7 +1161,7 @@ export default function App() {
       return t;
     }));
 
-    if (activeThreadId === (currentUser?.email || 'guest')) {
+    if (activeThreadId === getChatUserId(currentUser)) {
       setChatHistory(prev => [...prev, quotationMsg]);
     }
     triggerToast("📄 Quotation generated & shared in client channel!");
@@ -1225,7 +1189,7 @@ export default function App() {
       return t;
     }));
 
-    if (activeThreadId === (currentUser?.email || 'guest')) {
+    if (activeThreadId === getChatUserId(currentUser)) {
       setChatHistory(prev => [...prev, approvalMsg]);
     }
     triggerToast("🎉 Project marked APPROVED & COMMITTED!");
@@ -1445,7 +1409,7 @@ export default function App() {
                       }));
 
                       // 3. Clear chatHistory if active thread is current logged-in user
-                      if (targetUserId === (currentUser?.email || 'guest')) {
+                      if (targetUserId === getChatUserId(currentUser)) {
                         setChatHistory([]);
                       }
                       localStorage.removeItem(`digiworku-messages-${targetUserId}`);
@@ -1585,7 +1549,7 @@ export default function App() {
                   }));
 
                   // Also update chatHistory if the active thread is the currently logged-in user
-                  const userId = currentUser?.email || 'guest';
+                  const userId = getChatUserId(currentUser);
                   if (activeThreadId === userId) {
                     setChatHistory(prev => [...prev, newMsg]);
                   }
@@ -2004,7 +1968,7 @@ export default function App() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>(() => {
     const savedUser = localStorage.getItem('digiworku-user-session');
     const user = savedUser ? JSON.parse(savedUser) : null;
-    const userId = user?.email || 'guest';
+    const userId = getChatUserId(user);
     const saved = localStorage.getItem(`digiworku-messages-${userId}`);
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
@@ -2071,7 +2035,7 @@ export default function App() {
 
   // Sync current user chat history whenever currentUser changes (login / signup / logout)
   useEffect(() => {
-    const userId = currentUser?.email || 'guest';
+    const userId = getChatUserId(currentUser);
     const saved = localStorage.getItem(`digiworku-messages-${userId}`);
     if (saved) {
       try {
@@ -2085,7 +2049,7 @@ export default function App() {
   }, [currentUser]);
 
   useEffect(() => {
-    const userId = currentUser?.email || 'guest';
+    const userId = getChatUserId(currentUser);
     localStorage.setItem(`digiworku-messages-${userId}`, JSON.stringify(chatHistory));
     scrollToBottom();
   }, [chatHistory, currentUser]);
@@ -2113,8 +2077,12 @@ export default function App() {
             setProjectsList(JSON.parse(e.newValue));
             break;
           case 'digiworku-messages':
-          case `digiworku-messages-${currentUser?.email || 'guest'}`:
+          case `digiworku-messages-${getChatUserId(currentUser)}`:
             setChatHistory(JSON.parse(e.newValue));
+            break;
+          case 'digiworku-broadcast-notification':
+            const newNotif = JSON.parse(e.newValue);
+            setNotifications(prev => [newNotif, ...prev]);
             break;
           case 'digiworku-user-session':
             setCurrentUser(JSON.parse(e.newValue));
@@ -2134,7 +2102,7 @@ export default function App() {
 
   // Synchronize User Chat to their thread — keyed by current user's email
   useEffect(() => {
-    const userId = currentUser?.email || 'guest';
+    const userId = getChatUserId(currentUser);
     setChatThreadsList(prev => {
       const thread = prev.find(t => t.id === userId);
       if (thread) {
@@ -2282,7 +2250,7 @@ export default function App() {
 
   // Fetch live chat messages from Supabase DB (Client isolated history + Admin multi-thread sync)
   const fetchMessagesFromDB = async () => {
-    const userId = currentUser?.email || 'guest';
+    const userId = getChatUserId(currentUser);
 
     // 1. Fetch current logged in user's chat messages for client workspace
     try {
@@ -2315,7 +2283,7 @@ export default function App() {
       if (!allError && allData && allData.length > 0) {
         const userGroupMap = new Map<string, any[]>();
         allData.forEach((row: any) => {
-          const uid = row.user_id || 'guest';
+          const uid = row.user_id || 'unknown_guest';
           if (!userGroupMap.has(uid)) {
             userGroupMap.set(uid, []);
           }
@@ -2568,7 +2536,7 @@ export default function App() {
     setInputMessage('');
 
     // Save message to Supabase DB 'messages' table with user_id for per-user isolation
-    const userId = currentUser?.email || 'guest';
+    const userId = getChatUserId(currentUser);
     try {
       await supabase.from('messages').insert([{
         id: newUserMsg.id,
@@ -3354,13 +3322,13 @@ export default function App() {
               title="View Profile"
             >
               <img
-                src={currentUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'Alex Rivera')}&background=00c853&color=fff&bold=true`}
+                src={currentUser?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || 'Guest Client')}&background=00c853&color=fff&bold=true`}
                 alt="User Profile"
                 className="w-9 h-9 rounded-full object-cover ring-2 ring-emerald-500/10"
               />
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-black text-slate-800 dark:text-slate-200 truncate leading-tight">
-                  {currentUser?.name || "Alex Rivera"}
+                  {currentUser?.name || "Guest Client"}
                 </span>
                 <span className="text-[9px] text-slate-400 dark:text-slate-500 font-extrabold uppercase tracking-wider mt-0.5">
                   {currentUser ? "Client" : "user"}
@@ -3545,12 +3513,12 @@ export default function App() {
                 ) : (
                   <>
                     <img
-                      src="https://ui-avatars.com/api/?name=Alex+Rivera&background=00c853&color=fff&bold=true"
-                      alt="Alex Rivera"
+                      src="https://ui-avatars.com/api/?name=Guest+Client&background=00c853&color=fff&bold=true"
+                      alt="Guest Client"
                       className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-[#00c853]/45 shrink-0"
                     />
                     <div className="hidden xl:block min-w-0">
-                      <span className="block text-xs font-bold text-slate-900 dark:text-slate-200 leading-none truncate max-w-[100px]">Alex Rivera</span>
+                      <span className="block text-xs font-bold text-slate-900 dark:text-slate-200 leading-none truncate max-w-[100px]">Guest Client</span>
                       <span className="block text-[9.5px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight text-left mt-0.5">
                         User
                       </span>
@@ -3645,25 +3613,7 @@ export default function App() {
                     </button>
                   </form>
 
-                  {/* Convenient Credential Autofill Helper Card */}
-                  <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center">
-                    <span className="text-[9px] font-extrabold tracking-widest uppercase text-slate-400 block mb-2">DEVELOPER / DEMO AUTOPLAY</span>
-                    <button
-                      onClick={() => {
-                        setAdminEmailInput('digiworku55@gmail.com');
-                        setAdminPasswordInput('DigiWorku55@');
-                        triggerToast("🔐 Admin Credentials Autofilled! Tap Unlock to proceed.");
-                      }}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/25 hover:bg-blue-500/15 text-blue-500 dark:text-blue-400 transition text-[9px] font-extrabold tracking-wider uppercase cursor-pointer mb-2.5"
-                    >
-                      <Sparkles className="w-3 h-3 text-blue-500" />
-                      <span>Autofill credentials</span>
-                    </button>
-                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 text-[10.5px] text-slate-500 font-semibold text-left space-y-1">
-                      <div><span className="text-slate-400">Email: </span><code className="text-[#00c853] font-mono select-all select-none">digiworku55@gmail.com</code></div>
-                      <div><span className="text-slate-400">Pass: </span><code className="text-[#00c853] font-mono select-all select-none">DigiWorku55@</code></div>
-                    </div>
-                  </div>
+
 
                   <div className="text-center mt-5">
                     <button
@@ -4102,7 +4052,7 @@ export default function App() {
                                             <button
                                               onClick={() => {
                                                 const matchThread = chatThreadsList.find(t => t.email === project.email || t.id === project.email || t.name === project.leadName);
-                                                setActiveThreadId(matchThread ? matchThread.id : (project.email || 'guest'));
+                                                setActiveThreadId(matchThread ? matchThread.id : (project.email || getChatUserId(null)));
                                                 setActiveTab('chat');
                                               }}
                                               className="p-1 px-2 rounded-lg bg-slate-100 hover:bg-emerald-500 hover:text-white dark:bg-slate-700 dark:hover:bg-emerald-600 text-slate-500 dark:text-slate-404 transition-all cursor-pointer flex items-center gap-1 text-[10px]"
@@ -8192,7 +8142,7 @@ create table if not exists public.inquiries (
                 </div>
 
                 {/* Action Toolbar */}
-                <div className="px-4 py-2 bg-slate-100/50 dark:bg-slate-900/20 border-b border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-xs font-bold text-slate-500">
+                <div className="px-4 py-2 bg-slate-100/50 dark:bg-slate-900/20 border-b border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-xs font-bold text-slate-500 flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
@@ -8214,6 +8164,32 @@ create table if not exists public.inquiries (
                       Clear all
                     </button>
                   </div>
+
+                  {isAdmin && panelMode === 'admin' && (
+                    <button
+                      onClick={() => {
+                        const title = prompt("Enter Broadcast Title:");
+                        if (!title) return;
+                        const msg = prompt("Enter Broadcast Message:");
+                        if (!msg) return;
+                        const newNotif = {
+                          id: `broadcast-${Date.now()}`,
+                          title: `📢 ${title}`,
+                          description: msg,
+                          time: 'Just now',
+                          type: 'success',
+                          read: false,
+                          category: 'Admin Broadcast'
+                        };
+                        setNotifications(prev => [newNotif, ...prev]);
+                        localStorage.setItem('digiworku-broadcast-notification', JSON.stringify(newNotif));
+                        triggerToast("📢 Broadcast sent to all active users!");
+                      }}
+                      className="text-[#00c853] hover:text-[#00a845] flex items-center gap-1 cursor-pointer transition-colors border border-[#00c853]/20 bg-[#00c853]/10 px-2 py-1 rounded-md"
+                    >
+                      <Rocket className="w-3.5 h-3.5" /> Broadcast
+                    </button>
+                  )}
                 </div>
 
                 {/* Notification Content Area */}
@@ -8529,7 +8505,7 @@ create table if not exists public.inquiries (
                               type="text"
                               value={editProfileName}
                               onChange={(e) => setEditProfileName(e.target.value)}
-                              placeholder="Alex Rivera"
+                              placeholder="Guest Client"
                               className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-xs font-bold focus:outline-none focus:border-[#00c853] transition-colors"
                             />
                           </div>
