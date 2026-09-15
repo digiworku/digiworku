@@ -12,4 +12,8 @@ Disallow: /*?mode=admin
 Disallow: /*?panel=admin
 
 # Sitemap reference
-Sitemap: https://digiworku.com/sitemap.xml
+Sitemap: https://digiworku.in/sitemap.xml
+
+# LLMs / AI agent context file (Agentic Browsing)
+# https://llmstxt.org
+LLMs-txt: https://digiworku.in/llms.txt

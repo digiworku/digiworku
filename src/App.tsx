@@ -80,6 +80,7 @@ import { AuthForm } from './components/AuthForm';
 import { AnimatedGridBackground } from './components/AnimatedGridBackground';
 import { ChatDoodleBackground } from './components/ChatDoodleBackground';
 import { ServiceDetailPage } from './components/ServiceDetailPage';
+import { LegalPages, type LegalPageSlug } from './components/LegalPages';
 import { supabase } from './supabase';
 // Helper to consistently get the unique user ID for chat, even for guests
 export const getChatUserId = (currentUser: any) => {
@@ -594,11 +595,13 @@ export default function App() {
     }
   };
 
-  const [activeTabState, setActiveTabState] = useState<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail'>(() => {
+  const [activeTabState, setActiveTabState] = useState<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail' | 'legal'>(() => {
     return pathToTab(window.location.pathname);
   });
 
-  const setActiveTab = (tab: 'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail') => {
+  const [activeLegalSlug, setActiveLegalSlug] = useState<LegalPageSlug | null>(null);
+
+  const setActiveTab = (tab: 'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail' | 'legal') => {
     setActiveTabState(tab);
     const targetPath = tabToPath(tab);
     if (window.location.pathname !== targetPath) {
@@ -665,7 +668,8 @@ export default function App() {
 
   const [isAutoReplyModalOpen, setIsAutoReplyModalOpen] = useState<boolean>(false);
   const [hasAutoReplied, setHasAutoReplied] = useState<boolean>(() => {
-    return localStorage.getItem('digiworku-has-auto-replied') === 'true';
+    // Always treat as already replied so auto-message never appears
+    return true;
   });
 
   // Notifications State
@@ -721,8 +725,8 @@ export default function App() {
         return;
       }
 
-      const validTabs: Array<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail'> = [
-        'home', 'clients', 'projects', 'inquiries', 'chat', 'portfolio', 'reviews', 'team', 'analytics', 'settings', 'services', 'serviceDetail'
+      const validTabs: Array<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail' | 'legal'> = [
+        'home', 'clients', 'projects', 'inquiries', 'chat', 'portfolio', 'reviews', 'team', 'analytics', 'settings', 'services', 'serviceDetail', 'legal'
       ];
 
       if (pathname.startsWith('/services/') && pathname !== '/services' && pathname !== '/services/') {
@@ -3656,7 +3660,7 @@ export default function App() {
 
                         {/* Massive Bold Header matching Image 1 */}
                         <h1 className={`text-4xl md:text-5xl lg:text-5.5xl font-black tracking-tight leading-[1.08] font-display ${darkMode ? 'text-white' : 'text-[#00311F]'}`}>
-                          Build Your Business Faster With <span className="text-[#00c853] underline decoration-[#00c853]/20 decoration-wavy">DigiWorku</span>
+                          Top IT & AI Agency in India: Build Faster With <span className="text-[#00c853] underline decoration-[#00c853]/20 decoration-wavy">DigiWorku</span>
                         </h1>
 
                         {/* Paragraph */}
@@ -3699,9 +3703,10 @@ export default function App() {
                           {/* Premium Tech Agency Branding Hero Image */}
                           <div className="mb-5 rounded-xl overflow-hidden h-40 relative group border border-slate-100 dark:border-slate-800">
                             <img
-                              src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=600&q=80"
+                              src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=400&q=70"
                               alt="Tech Agency Team Collaboration"
                               referrerPolicy="no-referrer"
+                              fetchPriority="high"
                               className="w-full h-full object-cover group-hover:scale-102 duration-300 filter brightness-95 dark:brightness-90"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent flex items-end p-3.5">
@@ -4165,11 +4170,42 @@ export default function App() {
                     )}
 
                     {/* Secure Workspace Disclaimer */}
-                    <div className="text-center pt-8 pb-4 max-w-3xl mx-auto">
+                    <div className="text-center pt-8 pb-2 max-w-3xl mx-auto">
                       <span className="block text-[9.5px] tracking-widest text-slate-400 dark:text-slate-500 font-extrabold uppercase select-none">
                         DigiWorku CRM Node Server Connected Securely • 256-bit SSL TLS Encryption Active
                       </span>
                     </div>
+
+                    {/* Platform Footer with Legal Links */}
+                    <footer className="border-t border-slate-200 dark:border-slate-800 mt-4 pt-6 pb-8 px-4">
+                      <div className="max-w-4xl mx-auto">
+                        <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-4">
+                          {([
+                            ['privacy-policy', 'Privacy Policy'],
+                            ['terms-of-service', 'Terms of Service'],
+                            ['cookie-policy', 'Cookie Policy'],
+                            ['refund-policy', 'Refund Policy'],
+                            ['cancellation-policy', 'Cancellation Policy'],
+                            ['disclaimer', 'Disclaimer'],
+                            ['acceptable-use-policy', 'Acceptable Use'],
+                            ['security-policy', 'Security'],
+                            ['responsible-disclosure', 'Responsible Disclosure'],
+                            ['help-center', 'Help Center'],
+                          ] as [LegalPageSlug, string][]).map(([slug, label]) => (
+                            <button
+                              key={slug}
+                              onClick={() => { setActiveLegalSlug(slug); setActiveTab('legal'); }}
+                              className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-[#00c853] dark:hover:text-[#00c853] transition-colors cursor-pointer underline-offset-2 hover:underline"
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-center text-[10px] text-slate-400 dark:text-slate-600 font-medium">
+                          © {new Date().getFullYear()} DigiWorku. All rights reserved. · India's Digital Workforce Platform
+                        </p>
+                      </div>
+                    </footer>
 
                   </motion.div>
                 )}
@@ -6733,7 +6769,7 @@ create table if not exists public.inquiries (
                       <div>
                         <span className="block text-[11px] font-black uppercase text-[#00c853] tracking-wider">WORK PORTFOLIO</span>
                         <h2 className="text-2xl md:text-3.5xl font-black text-slate-900 dark:text-white mt-1 leading-none font-display">
-                          Selected Works & <span className="text-[#00c853]">Impact Results</span>
+                          Web & App Development Works & <span className="text-[#00c853]">Impact Results</span>
                         </h2>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-xl leading-relaxed">
                           Explore our latest achievements. We don't just build software; hum impact create karte hain (we create impact) through design-led innovation.
@@ -7381,7 +7417,7 @@ create table if not exists public.inquiries (
                           <div className="space-y-1">
                             <span className="block text-[11px] font-black uppercase text-[#00c853] tracking-wider">WORKSPACE MENU</span>
                             <h2 className="text-2xl md:text-3.5xl font-black text-slate-900 dark:text-white mt-1 font-display">
-                              Our Professional <span className="text-[#00c853]">Services</span>
+                              Our IT & Digital Marketing <span className="text-[#00c853]">Services</span>
                             </h2>
                             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
                               Scale your business with high-quality digital solutions tailored to your unique requirements. Explore our specialized offerings below.
@@ -7583,6 +7619,28 @@ create table if not exists public.inquiries (
                       onRequestService={() => {
                         const found = servicesList.find(s => s.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and') === activeServiceSlug);
                         handleRequestServiceDirectly(found ? found : (activeServiceSlug || 'Website Development'));
+                      }}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Legal Pages */}
+                {activeTab === 'legal' && activeLegalSlug && (
+                  <motion.div
+                    key={`tab-legal-${activeLegalSlug}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="absolute inset-0 overflow-y-auto overflow-x-hidden z-50"
+                  >
+                    <LegalPages
+                      slug={activeLegalSlug}
+                      darkMode={darkMode}
+                      onBack={() => {
+                        setActiveTab('home');
+                        setActiveLegalSlug(null);
+                        window.history.pushState({}, '', '/');
                       }}
                     />
                   </motion.div>

@@ -1,0 +1,36 @@
+# DigiWorku — AI & Digital Workforce Platform (India)
+
+> DigiWorku is India's leading digital workforce platform, connecting startups, businesses, and creators with dedicated engineering, UI/UX design, video production, brand identity, and AI automation teams.
+
+## About DigiWorku
+- Company: DigiWorku
+- Website: https://digiworku.in
+- Type: IT & AI Agency / Digital Workforce Platform
+- Founded in India; serving clients globally
+- Price Range: ₹8,000 – ₹3,50,000 per project
+
+## Core Services
+- Web Application & Website Development (React, Next.js, Node.js)
+- UI/UX Graphic Design & Brand Identity
+- Video Production & Editing
+- AI Automation & Systems Engineering
+- Growth Marketing & SEO
+- Dedicated Remote Engineering Teams / IT Outsourcing
+
+## Pages Available
+- `/` — Homepage (hero, overview, stats)
+- `/services` — All services offered
+- `/portfolio` — Selected client work and case studies
+- `/inquiries` — Contact / inquiry submission
+- `/reviews` — Client testimonials and ratings
+- `/team` — Dedicated team members
+
+## Contact
+- Inquiries: Submit via https://digiworku.in/inquiries
+- Live Chat: Available on the platform portal
+
+## Sitemap
+https://digiworku.in/sitemap.xml
+
+## robots.txt
+https://digiworku.in/robots.txt
