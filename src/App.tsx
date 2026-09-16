@@ -10,6 +10,7 @@ import {
   Trash2,
   Copy,
   ArrowRight,
+  ArrowLeft,
   ChevronRight,
   Plus,
   Search,
@@ -636,7 +637,7 @@ export default function App() {
   const [homeMetrics, setHomeMetrics] = useState<{ active: string; completed: string; pending: string }>(() => {
     const saved = localStorage.getItem('digiworku-home-metrics');
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+      try { return JSON.parse(saved); } catch (e) { }
     }
     return { active: '12+', completed: '500+', pending: '4' };
   });
@@ -648,6 +649,11 @@ export default function App() {
 
   const [activeServiceSlug, setActiveServiceSlug] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+
+  // Swipe gesture refs for sidebar open/close
+  const swipeTouchStartX = useRef<number>(0);
+  const swipeTouchStartY = useRef<number>(0);
+  const swipeIsTracking = useRef<boolean>(false);
 
   // Supabase Backend Integration States
   const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'connected' | 'error'>('checking');
@@ -690,12 +696,54 @@ export default function App() {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
     window.addEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
     window.addEventListener('offline', handleOffline);
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Swipe-to-open sidebar gesture (left edge swipe → open, right swipe on open → close)
+  useEffect(() => {
+    const EDGE_ZONE = 30; // px from left edge to start tracking
+    const MIN_SWIPE_DISTANCE = 60; // minimum horizontal swipe to trigger
+    const MAX_VERTICAL_DRIFT = 80; // max vertical movement (to avoid scroll conflicts)
+
+    const onTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      swipeTouchStartX.current = touch.clientX;
+      swipeTouchStartY.current = touch.clientY;
+      // Track if starting from left edge zone (to open) OR if sidebar is already open (to close)
+      swipeIsTracking.current = touch.clientX <= EDGE_ZONE || isSidebarOpen;
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (!swipeIsTracking.current) return;
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - swipeTouchStartX.current;
+      const deltaY = Math.abs(touch.clientY - swipeTouchStartY.current);
+
+      // Ignore if too much vertical scroll
+      if (deltaY > MAX_VERTICAL_DRIFT) return;
+
+      if (!isSidebarOpen && deltaX > MIN_SWIPE_DISTANCE) {
+        // Swipe RIGHT from left edge → Open sidebar
+        setIsSidebarOpen(true);
+      } else if (isSidebarOpen && deltaX < -MIN_SWIPE_DISTANCE) {
+        // Swipe LEFT when sidebar is open → Close sidebar
+        setIsSidebarOpen(false);
+      }
+      swipeIsTracking.current = false;
+    };
+
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener('touchstart', onTouchStart);
+      document.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [isSidebarOpen]);
 
   // Split-Panel Navigation Modes
   const [panelMode, setPanelMode] = useState<'user' | 'admin'>(() => {
@@ -707,11 +755,12 @@ export default function App() {
     return localStorage.getItem('digiworku-is-admin') === 'true';
   });
 
-  // Admin Authentication State variables (digiworku55@gmail.com / DigiWorku55@)
+  // Admin Authentication State variables (digiworku55@gmail.com / virkanwlia@gmail.com)
   const [adminEmailInput, setAdminEmailInput] = useState<string>('');
   const [adminPasswordInput, setAdminPasswordInput] = useState<string>('');
   const [adminAuthError, setAdminAuthError] = useState<string | null>(null);
   const [isAdminAuthLoading, setIsAdminAuthLoading] = useState<boolean>(false);
+  const [adminMobileChatView, setAdminMobileChatView] = useState<'list' | 'thread'>('list');
 
   // Sync panel mode to localStorage
   useEffect(() => {
@@ -804,8 +853,11 @@ export default function App() {
     setIsAdminAuthLoading(true);
     setAdminAuthError(null);
 
+    const allowedAdminEmails = ['digiworku55@gmail.com', 'virkanwlia@gmail.com'];
+    const cleanEmail = adminEmailInput.trim().toLowerCase();
+
     setTimeout(() => {
-      if (adminEmailInput.trim() === 'digiworku55@gmail.com' && adminPasswordInput === 'DigiWorku55@') {
+      if (allowedAdminEmails.includes(cleanEmail) && adminPasswordInput === 'DigiWorku55@') {
         setIsAdmin(true);
         localStorage.setItem('digiworku-is-admin', 'true');
         setAdminEmailInput('');
@@ -912,7 +964,7 @@ export default function App() {
         if (parsed.name) setRequestFormClientName(parsed.name);
         if (parsed.email) setRequestFormEmail(parsed.email);
         if (parsed.mobile) setRequestFormPhone(parsed.mobile);
-      } catch (e) {}
+      } catch (e) { }
     }
     setIsServiceRequestModalOpen(true);
   };
@@ -1248,9 +1300,9 @@ export default function App() {
         className="flex-1 flex min-h-0 bg-slate-50 dark:bg-[#0d0d0d] overflow-hidden"
       >
         {/* Left Column: Messages List Sidebar */}
-        <div className="w-80 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-[#161616]/90 shrink-0">
-          <div className="p-4.5 border-b border-slate-205 dark:border-slate-800 flex flex-col gap-3.5">
-            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Messages</h2>
+        <div className={`w-full md:w-80 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-[#161616]/90 shrink-0 ${adminMobileChatView === 'thread' ? 'hidden md:flex' : 'flex'}`}>
+          <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3">
+            <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Messages</h2>
 
             {/* Search Input Bar */}
             <div className="relative">
@@ -1293,6 +1345,7 @@ export default function App() {
                   key={thread.id}
                   onClick={() => {
                     setActiveThreadId(thread.id);
+                    setAdminMobileChatView('thread');
                     if (thread.unreadCount > 0) {
                       setChatThreadsList(prev => prev.map(t => t.id === thread.id ? { ...t, unreadCount: 0 } : t));
                     }
@@ -1355,22 +1408,29 @@ export default function App() {
 
         {/* Center Column: Chat Messages Viewport Panel */}
         {activeThread ? (
-          <div className="flex-1 flex flex-col bg-slate-50 dark:bg-[#0d0d0d]/40 min-w-0 h-full relative border-r border-slate-200 dark:border-slate-800">
+          <div className={`flex-1 flex flex-col bg-slate-50 dark:bg-[#0d0d0d]/40 min-w-0 h-full relative border-r border-slate-200 dark:border-slate-800 ${adminMobileChatView === 'list' ? 'hidden md:flex' : 'flex'}`}>
             {/* Sub-Header info client */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#161616] shadow-xs shrink-0">
-              <div className="flex items-center gap-3">
-                <span className="relative">
+            <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#161616] shadow-xs shrink-0 gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <button
+                  onClick={() => setAdminMobileChatView('list')}
+                  className="md:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0 cursor-pointer"
+                  title="Back to conversations"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+                <span className="relative shrink-0">
                   <img
                     src={activeThread.avatarUrl}
                     alt={activeThread.name}
-                    className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-800"
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200 dark:border-slate-800"
                   />
                   {activeThread.status === 'online' && (
                     <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#161616]" />
                   )}
                 </span>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white leading-none">
+                <div className="min-w-0">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-white leading-none truncate">
                     {activeThread.name}
                   </h3>
                   <span className="text-[10px] text-emerald-500 font-bold block mt-1 uppercase tracking-wider">
@@ -1413,7 +1473,7 @@ export default function App() {
                   onClick={async () => {
                     if (confirm(`Are you sure you want to delete all messages for "${activeThread.name}" on both sides (Client & Admin)? This action cannot be undone.`)) {
                       const targetUserId = activeThread.email || activeThread.id;
-                      
+
                       // 1. Delete from Supabase DB
                       try {
                         await supabase.from('messages').delete().eq('user_id', targetUserId);
@@ -1871,7 +1931,7 @@ export default function App() {
                     className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${autoReplyEnabled
                       ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/30'
                       : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border border-emerald-500/30'
-                    }`}
+                      }`}
                   >
                     {autoReplyEnabled ? 'Remove Reply' : 'Enable Reply'}
                   </button>
@@ -1996,7 +2056,7 @@ export default function App() {
     const userId = getChatUserId(user);
     const saved = localStorage.getItem(`digiworku-messages-${userId}`);
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+      try { return JSON.parse(saved); } catch (e) { }
     }
     return [];
   });
@@ -2121,6 +2181,37 @@ export default function App() {
     setProjectFormTags(Array.isArray(proj.tags) ? proj.tags.join(', ') : '');
     setProjectFormImpactResult(proj.impactResult || '');
     setIsProjectModalOpen(true);
+  };
+
+  const handlePortfolioFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      triggerToast("⚠️ File size limit is 50MB. Please select a smaller file.");
+      return;
+    }
+
+    const isVid = file.type.startsWith('video');
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (isVid) {
+        setProjectFormMediaType('video');
+        setProjectFormVideoUrl(result);
+        if (!projectFormImageUrl) {
+          setProjectFormImageUrl('https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80');
+        }
+        triggerToast("🎥 Video file loaded successfully!");
+      } else {
+        setProjectFormMediaType('image');
+        setProjectFormImageUrl(result);
+        triggerToast("🖼️ Image file loaded successfully!");
+      }
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handleSaveProject = async () => {
@@ -2390,7 +2481,7 @@ export default function App() {
           const diffDays = Math.floor(diffHours / 24);
           const timeAgo = diffDays > 0 ? `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
             : diffHours > 0 ? `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
-            : diffMins > 1 ? `${diffMins} mins ago` : 'Just now';
+              : diffMins > 1 ? `${diffMins} mins ago` : 'Just now';
 
           const statusMap: Record<string, CRMInquiry['status']> = {
             'new': 'new', 'New': 'new',
@@ -2480,13 +2571,13 @@ export default function App() {
             const lastMsg = threadMsgs[threadMsgs.length - 1];
             const existingIndex = updatedThreads.findIndex(t => t.id === uid || t.email === uid);
 
-            const matchingInquiry = crmInquiriesList.find(inq => 
-              (inq.clientName && inq.clientName.toLowerCase().includes(uid.toLowerCase())) || 
+            const matchingInquiry = crmInquiriesList.find(inq =>
+              (inq.clientName && inq.clientName.toLowerCase().includes(uid.toLowerCase())) ||
               (uid.toLowerCase().includes(inq.clientName.toLowerCase()))
             );
             const isCurrentUser = uid === currentUser?.email;
 
-            const resolvedName = isCurrentUser 
+            const resolvedName = isCurrentUser
               ? (currentUser?.name || uid)
               : (matchingInquiry ? matchingInquiry.clientName : (existingIndex >= 0 ? updatedThreads[existingIndex].name : (uid.includes('@') ? uid.split('@')[0].replace(/\./g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Client ' + uid)));
 
@@ -2963,7 +3054,7 @@ export default function App() {
     const category = serviceFormCategory;
 
     setServiceFormOverview(`In today's competitive landscape, ${title} is critical to brand positioning and operational efficiency. At DigiWorku, we design and engineer end-to-end digital solutions that engage users, optimize conversions, and scale effortlessly with your business growth.`);
-    
+
     setServiceFormOfferings([
       { title: `${title} Architecture`, desc: 'Custom strategic blueprint and core technical implementation.', icon: 'Globe' },
       { title: 'Responsive Design & UX', desc: 'Flawless presentation tailored for mobile, tablet, and desktop.', icon: 'Palette' },
@@ -3165,6 +3256,17 @@ export default function App() {
       >
         Skip to main content
       </a>
+
+      {/* Swipe-to-open edge handle — visible only on mobile when sidebar is closed */}
+      {!isSidebarOpen && (
+        <div
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-40 flex items-center justify-center md:hidden"
+          style={{ touchAction: 'none', pointerEvents: 'none' }}
+          aria-hidden="true"
+        >
+          <div className={`w-1 h-12 rounded-r-full opacity-40 transition-all ${darkMode ? 'bg-emerald-400' : 'bg-slate-400'}`} />
+        </div>
+      )}
 
       {/* Network Offline Alert Banner */}
       {isOffline && (
@@ -3763,7 +3865,7 @@ export default function App() {
                         <input
                           type="email"
                           required
-                          placeholder="digiworku55@gmail.com"
+                          placeholder="digiworku55@gmail.com / virkanwlia@gmail.com"
                           value={adminEmailInput}
                           onChange={(e) => setAdminEmailInput(e.target.value)}
                           className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-850 bg-slate-55 dark:bg-[#202020]/40 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition-all font-semibold"
@@ -3819,7 +3921,6 @@ export default function App() {
               </motion.div>
             ) : (
               <>
-
                 {/* VIEW 1: LANDING PAGE & LIVE DASHBOARD (Image 1) */}
                 {activeTab === 'home' && (
                   <motion.div
@@ -4403,7 +4504,7 @@ export default function App() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.3 }}
-                    className="flex-1 p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full"
+                    className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-5 max-w-7xl mx-auto w-full"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
                       <div>
@@ -4516,7 +4617,7 @@ export default function App() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.3 }}
-                    className="flex-1 p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full"
+                    className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-5 max-w-7xl mx-auto w-full"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
                       <div>
@@ -5083,7 +5184,7 @@ export default function App() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.3 }}
-                    className="flex-1 p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full"
+                    className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-5 max-w-7xl mx-auto w-full"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
                       <div>
@@ -5111,20 +5212,18 @@ export default function App() {
                     </div>
 
                     {/* DB Status indicator */}
-                    <div className={`flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg w-fit ${
-                      supabaseStatus === 'connected'
+                    <div className={`flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg w-fit ${supabaseStatus === 'connected'
                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
                         : supabaseStatus === 'checking'
                           ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
                           : 'bg-red-500/10 text-red-600 dark:text-red-400'
-                    }`}>
-                      <span className={`w-2 h-2 rounded-full ${
-                        supabaseStatus === 'connected' ? 'bg-emerald-500 animate-pulse' :
-                        supabaseStatus === 'checking' ? 'bg-amber-400 animate-pulse' : 'bg-red-500'
-                      }`} />
+                      }`}>
+                      <span className={`w-2 h-2 rounded-full ${supabaseStatus === 'connected' ? 'bg-emerald-500 animate-pulse' :
+                          supabaseStatus === 'checking' ? 'bg-amber-400 animate-pulse' : 'bg-red-500'
+                        }`} />
                       {supabaseStatus === 'connected' ? '🟢 Live — Connected to Supabase DB (inquiries table)' :
-                       supabaseStatus === 'checking' ? '🟡 Connecting to database...' :
-                       '🔴 DB Disconnected — showing local data only'}
+                        supabaseStatus === 'checking' ? '🟡 Connecting to database...' :
+                          '🔴 DB Disconnected — showing local data only'}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -5152,154 +5251,152 @@ export default function App() {
                         const portfolioUrl = portfolioMatch && portfolioMatch[1] !== 'N/A' ? (portfolioMatch[1].startsWith('http') ? portfolioMatch[1] : `https://${portfolioMatch[1]}`) : null;
 
                         return (
-                        <div
-                          key={inq.id}
-                          className={`p-6 rounded-2xl border ${
-                            inq.unread
-                              ? darkMode ? 'bg-[#1a2a1e] border-[#00c853]/30' : 'bg-[#f0fff6] border-[#00c853]/25 shadow-sm'
-                              : darkMode ? 'bg-[#202020]/50 border-slate-800/80' : 'bg-white border-slate-200 shadow-sm'
-                          } space-y-4 relative overflow-hidden`}
-                        >
-                          {/* Unread indicator stripe */}
-                          {inq.unread && (
-                            <div className="absolute top-0 left-0 w-1 h-full bg-[#00c853] rounded-l-2xl" />
-                          )}
-                          
-                          <div className="flex justify-between items-start gap-3">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2 mb-1">
-                                <span className="text-[10px] font-mono text-slate-400 font-black">{inq.id.slice(0, 18)}</span>
-                                <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                  inq.status === 'new'
-                                    ? 'bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400'
-                                    : inq.status === 'reviewed'
-                                    ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400'
-                                    : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400'
-                                }`}>
-                                  {inq.status === 'new' ? '🔴 New' : inq.status === 'reviewed' ? '🟡 Reviewed' : '🟢 Converted'}
-                                </span>
-                                {isFreelancerApp && (
-                                  <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-300/40 flex items-center gap-1">
-                                    👨‍💻 Freelancer Candidate
+                          <div
+                            key={inq.id}
+                            className={`p-6 rounded-2xl border ${inq.unread
+                                ? darkMode ? 'bg-[#1a2a1e] border-[#00c853]/30' : 'bg-[#f0fff6] border-[#00c853]/25 shadow-sm'
+                                : darkMode ? 'bg-[#202020]/50 border-slate-800/80' : 'bg-white border-slate-200 shadow-sm'
+                              } space-y-4 relative overflow-hidden`}
+                          >
+                            {/* Unread indicator stripe */}
+                            {inq.unread && (
+                              <div className="absolute top-0 left-0 w-1 h-full bg-[#00c853] rounded-l-2xl" />
+                            )}
+
+                            <div className="flex justify-between items-start gap-3">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <span className="text-[10px] font-mono text-slate-400 font-black">{inq.id.slice(0, 18)}</span>
+                                  <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${inq.status === 'new'
+                                      ? 'bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400'
+                                      : inq.status === 'reviewed'
+                                        ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400'
+                                        : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                    }`}>
+                                    {inq.status === 'new' ? '🔴 New' : inq.status === 'reviewed' ? '🟡 Reviewed' : '🟢 Converted'}
+                                  </span>
+                                  {isFreelancerApp && (
+                                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-300/40 flex items-center gap-1">
+                                      👨‍💻 Freelancer Candidate
+                                    </span>
+                                  )}
+                                </div>
+                                <h3 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                                  {inq.clientName}
+                                </h3>
+                                <span className="text-[11px] text-[#00c853] font-bold tracking-tight">{inq.projectName}</span>
+                              </div>
+                              <span className="text-xs text-slate-400 font-medium whitespace-nowrap">{inq.timeAgo}</span>
+                            </div>
+
+                            <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-xl border border-slate-100 dark:border-slate-700">
+                              <span className="block text-[9.5px] uppercase font-black text-slate-400 tracking-widest mb-1">
+                                {isFreelancerApp ? 'FREELANCER PROFILE & EXPERIENCE' : 'PROPOSAL SUMMARY'}
+                              </span>
+                              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-semibold">
+                                {inq.summary}
+                              </p>
+                            </div>
+
+                            {/* Contact info from DB */}
+                            {(inq.email || inq.mobile || portfolioUrl) && (
+                              <div className="flex flex-wrap gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                {inq.email && (
+                                  <span className="flex items-center gap-1">
+                                    <Mail className="w-3 h-3 text-[#00c853]" />
+                                    {inq.email}
                                   </span>
                                 )}
+                                {inq.mobile && (
+                                  <span className="flex items-center gap-1">
+                                    <Phone className="w-3 h-3 text-[#00c853]" />
+                                    {inq.mobile}
+                                  </span>
+                                )}
+                                {portfolioUrl && (
+                                  <a
+                                    href={portfolioUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline font-bold"
+                                  >
+                                    <ExternalLink className="w-3 h-3" />
+                                    View Portfolio
+                                  </a>
+                                )}
                               </div>
-                              <h3 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                                {inq.clientName}
-                              </h3>
-                              <span className="text-[11px] text-[#00c853] font-bold tracking-tight">{inq.projectName}</span>
-                            </div>
-                            <span className="text-xs text-slate-400 font-medium whitespace-nowrap">{inq.timeAgo}</span>
-                          </div>
+                            )}
 
-                          <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-xl border border-slate-100 dark:border-slate-700">
-                            <span className="block text-[9.5px] uppercase font-black text-slate-400 tracking-widest mb-1">
-                              {isFreelancerApp ? 'FREELANCER PROFILE & EXPERIENCE' : 'PROPOSAL SUMMARY'}
-                            </span>
-                            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-semibold">
-                              {inq.summary}
-                            </p>
-                          </div>
+                            <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                              <span className="text-xs font-black text-slate-800 dark:text-slate-200">Budget: {inq.budget || "₹3,50,000"}</span>
 
-                          {/* Contact info from DB */}
-                          {(inq.email || inq.mobile || portfolioUrl) && (
-                            <div className="flex flex-wrap gap-3 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                              {inq.email && (
-                                <span className="flex items-center gap-1">
-                                  <Mail className="w-3 h-3 text-[#00c853]" />
-                                  {inq.email}
-                                </span>
-                              )}
-                              {inq.mobile && (
-                                <span className="flex items-center gap-1">
-                                  <Phone className="w-3 h-3 text-[#00c853]" />
-                                  {inq.mobile}
-                                </span>
-                              )}
-                              {portfolioUrl && (
-                                <a
-                                  href={portfolioUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 text-purple-600 dark:text-purple-400 hover:underline font-bold"
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={async () => {
+                                    // Remove from local state immediately
+                                    setCrmInquiriesList(prev => prev.filter(i => i.id !== inq.id));
+                                    // Delete from Supabase DB
+                                    try {
+                                      const { error } = await supabase.from('inquiries').delete().eq('id', inq.id);
+                                      if (error) console.warn('Dismiss DB delete error:', error.message);
+                                    } catch (err: any) {
+                                      console.warn('Dismiss DB delete catch:', err.message);
+                                    }
+                                    triggerToast("🗑️ Dismissed inquiry successfully.");
+                                  }}
+                                  className="px-3 py-1.5 text-xs font-extrabold text-slate-500 hover:text-red-500 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer transition-colors"
                                 >
-                                  <ExternalLink className="w-3 h-3" />
-                                  View Portfolio
-                                </a>
-                              )}
-                            </div>
-                          )}
+                                  Dismiss
+                                </button>
 
-                          <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                            <span className="text-xs font-black text-slate-800 dark:text-slate-200">Budget: {inq.budget || "₹3,50,000"}</span>
-
-                            <div className="flex gap-2">
-                              <button
-                                onClick={async () => {
-                                  // Remove from local state immediately
-                                  setCrmInquiriesList(prev => prev.filter(i => i.id !== inq.id));
-                                  // Delete from Supabase DB
-                                  try {
-                                    const { error } = await supabase.from('inquiries').delete().eq('id', inq.id);
-                                    if (error) console.warn('Dismiss DB delete error:', error.message);
-                                  } catch (err: any) {
-                                    console.warn('Dismiss DB delete catch:', err.message);
-                                  }
-                                  triggerToast("🗑️ Dismissed inquiry successfully.");
-                                }}
-                                className="px-3 py-1.5 text-xs font-extrabold text-slate-500 hover:text-red-500 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer transition-colors"
-                              >
-                                Dismiss
-                              </button>
-
-                              <button
-                                onClick={async () => {
-                                  const keyId = `#PJ-${Math.floor(4000 + Math.random() * 999)}`;
-                                  const newProj: CRMProject = {
-                                    id: keyId,
-                                    name: inq.projectName,
-                                    leadName: inq.clientName.replace(" Team", "").replace(" Marketing", "").replace(" Tech", ""),
-                                    leadAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-                                    status: 'ON TRACK',
-                                    healthScore: 95,
-                                    budget: inq.budget || '₹3,00,000',
-                                    description: inq.summary,
-                                    progress: 5
-                                  };
-                                  // Update local state
-                                  setCrmProjectsList(prev => [newProj, ...prev]);
-                                  setCrmInquiriesList(prev => prev.filter(i => i.id !== inq.id));
-                                  setActiveProjectsCount(prev => prev + 1);
-                                  // Update DB: mark inquiry as 'converted' then insert into projects
-                                  try {
-                                    await supabase.from('inquiries').update({ status: 'converted' }).eq('id', inq.id);
-                                    await supabase.from('projects').insert({
+                                <button
+                                  onClick={async () => {
+                                    const keyId = `#PJ-${Math.floor(4000 + Math.random() * 999)}`;
+                                    const newProj: CRMProject = {
                                       id: keyId,
-                                      title: inq.projectName,
-                                      description: inq.summary,
-                                      category: 'Consulting',
-                                      tags: ['LEAD', 'CONVERTED'],
-                                      image_url: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=80',
-                                      client_name: inq.clientName,
-                                      budget: inq.budget || '₹3,00,000',
+                                      name: inq.projectName,
+                                      leadName: inq.clientName.replace(" Team", "").replace(" Marketing", "").replace(" Tech", ""),
+                                      leadAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
                                       status: 'ON TRACK',
-                                      progress: 5,
-                                      health_score: 95
-                                    });
-                                  } catch (dbErr: any) {
-                                    console.warn('Activate Contract DB error:', dbErr.message);
-                                  }
-                                  triggerToast(`🎉 Converted leads: Appended active pipeline project ${keyId}!`);
-                                }}
-                                className="px-3 py-1.5 text-xs font-black text-white bg-[#00c853] hover:bg-[#00af48] rounded-lg shadow-sm cursor-pointer transition-all uppercase"
-                              >
-                                ✓ Activate Contract
-                              </button>
+                                      healthScore: 95,
+                                      budget: inq.budget || '₹3,00,000',
+                                      description: inq.summary,
+                                      progress: 5
+                                    };
+                                    // Update local state
+                                    setCrmProjectsList(prev => [newProj, ...prev]);
+                                    setCrmInquiriesList(prev => prev.filter(i => i.id !== inq.id));
+                                    setActiveProjectsCount(prev => prev + 1);
+                                    // Update DB: mark inquiry as 'converted' then insert into projects
+                                    try {
+                                      await supabase.from('inquiries').update({ status: 'converted' }).eq('id', inq.id);
+                                      await supabase.from('projects').insert({
+                                        id: keyId,
+                                        title: inq.projectName,
+                                        description: inq.summary,
+                                        category: 'Consulting',
+                                        tags: ['LEAD', 'CONVERTED'],
+                                        image_url: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=600&q=80',
+                                        client_name: inq.clientName,
+                                        budget: inq.budget || '₹3,00,000',
+                                        status: 'ON TRACK',
+                                        progress: 5,
+                                        health_score: 95
+                                      });
+                                    } catch (dbErr: any) {
+                                      console.warn('Activate Contract DB error:', dbErr.message);
+                                    }
+                                    triggerToast(`🎉 Converted leads: Appended active pipeline project ${keyId}!`);
+                                  }}
+                                  className="px-3 py-1.5 text-xs font-black text-white bg-[#00c853] hover:bg-[#00af48] rounded-lg shadow-sm cursor-pointer transition-all uppercase"
+                                >
+                                  ✓ Activate Contract
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                     </div>
                   </motion.div>
                 )}
@@ -5429,7 +5526,7 @@ export default function App() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.3 }}
-                    className="flex-1 p-6 md:p-8 space-y-6 max-w-7xl mx-auto w-full"
+                    className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-5 max-w-7xl mx-auto w-full"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
                       <div>
@@ -7035,7 +7132,7 @@ export default function App() {
 
                               <div className="flex items-center justify-between gap-2">
                                 <span className="text-[10px] font-extrabold tracking-widest uppercase text-[#00c853] truncate">{proj.clientName}</span>
-                                
+
                                 {(isAdmin || panelMode === 'admin') && (
                                   <div className="flex items-center gap-1.5 shrink-0 z-20">
                                     <button
@@ -7549,9 +7646,9 @@ export default function App() {
                                   </div>
 
                                   <div className="space-y-1.5 cursor-pointer group" onClick={() => {
-                                      const slug = service.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and');
-                                      window.history.pushState({}, '', '/services/' + slug);
-                                      window.dispatchEvent(new PopStateEvent('popstate'));
+                                    const slug = service.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and');
+                                    window.history.pushState({}, '', '/services/' + slug);
+                                    window.dispatchEvent(new PopStateEvent('popstate'));
                                   }}>
                                     <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white group-hover:text-[#00c853] transition-colors flex items-center justify-between">
                                       <span>{service.title}</span>
@@ -7809,10 +7906,10 @@ export default function App() {
                     transition={{ duration: 0.3 }}
                     className="absolute inset-0 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-[#0d0d0d] z-50 pb-20"
                   >
-                    <ServiceDetailPage 
+                    <ServiceDetailPage
                       slug={activeServiceSlug}
                       service={servicesList.find(s => s.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and') === activeServiceSlug)}
-                      darkMode={darkMode} 
+                      darkMode={darkMode}
                       onBack={() => {
                         window.history.pushState({}, '', '/services');
                         window.dispatchEvent(new PopStateEvent('popstate'));
@@ -8144,9 +8241,8 @@ export default function App() {
                 initial={{ scale: 0.95, opacity: 0, y: 15 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 15 }}
-                className={`w-full max-w-lg rounded-2xl shadow-2xl border relative z-10 overflow-hidden ${
-                  darkMode ? 'bg-[#1a1a1a] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-                }`}
+                className={`w-full max-w-lg rounded-2xl shadow-2xl border relative z-10 overflow-hidden ${darkMode ? 'bg-[#1a1a1a] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  }`}
               >
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                   <h3 className="text-base font-bold flex items-center gap-2">
@@ -8220,29 +8316,92 @@ export default function App() {
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Image Thumbnail URL</label>
-                    <input
-                      type="text"
-                      value={projectFormImageUrl}
-                      onChange={(e) => setProjectFormImageUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/... or /logo.jpg"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold"
-                    />
+                  {/* DIRECT FILE UPLOAD DROPZONE */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      Upload Media File (Image / Video)
+                    </label>
+
+                    <div className="relative border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#00c853] dark:hover:border-[#00c853] rounded-2xl p-4 text-center bg-slate-50/50 dark:bg-slate-900/40 transition-all group cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*,video/*"
+                        onChange={handlePortfolioFileUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      />
+
+                      <div className="space-y-2 pointer-events-none">
+                        <div className="w-10 h-10 rounded-full bg-[#00c853]/10 border border-[#00c853]/30 flex items-center justify-center mx-auto text-[#00c853] group-hover:scale-110 transition-transform">
+                          <FileUp className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-extrabold text-slate-700 dark:text-slate-200">
+                            Click to upload file from mobile gallery or computer
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5 font-semibold">
+                            Supports Images (PNG, JPG, WEBP) & Videos (MP4, MOV, WebM)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {projectFormMediaType === 'video' && (
+                  {/* LIVE MEDIA PREVIEW BLOCK */}
+                  {(projectFormImageUrl || projectFormVideoUrl) && (
+                    <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-black aspect-video group/preview">
+                      {projectFormMediaType === 'video' && projectFormVideoUrl ? (
+                        <video
+                          src={projectFormVideoUrl}
+                          controls
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <img
+                          src={projectFormImageUrl}
+                          alt="Uploaded Media Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProjectFormImageUrl('');
+                          setProjectFormVideoUrl('');
+                        }}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg text-xs font-bold cursor-pointer transition-all z-20"
+                        title="Remove Media"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* OR PASTE MEDIA URL FALLBACK */}
+                  <div className="space-y-3 pt-1">
                     <div>
-                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Video Stream URL (MP4 / WebM)</label>
+                      <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Or Image Thumbnail URL</label>
                       <input
                         type="text"
-                        value={projectFormVideoUrl}
-                        onChange={(e) => setProjectFormVideoUrl(e.target.value)}
-                        placeholder="https://assets.mixkit.co/... or MP4 video URL"
+                        value={projectFormImageUrl}
+                        onChange={(e) => setProjectFormImageUrl(e.target.value)}
+                        placeholder="https://images.unsplash.com/... or /logo.jpg"
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold"
                       />
                     </div>
-                  )}
+
+                    {projectFormMediaType === 'video' && (
+                      <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Or Video Stream URL (MP4 / WebM)</label>
+                        <input
+                          type="text"
+                          value={projectFormVideoUrl}
+                          onChange={(e) => setProjectFormVideoUrl(e.target.value)}
+                          placeholder="https://assets.mixkit.co/... or MP4 video URL"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900 text-xs font-semibold"
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -8327,9 +8486,8 @@ export default function App() {
                 initial={{ scale: 0.95, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                className={`w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border relative z-10 max-h-[90vh] flex flex-col ${
-                  darkMode ? 'bg-[#181818] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-                }`}
+                className={`w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl border relative z-10 max-h-[90vh] flex flex-col ${darkMode ? 'bg-[#181818] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  }`}
               >
                 {/* Media Container */}
                 <div className="relative aspect-video bg-black shrink-0">
@@ -9338,7 +9496,7 @@ export default function App() {
                       className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${autoReplyEnabled
                         ? 'bg-red-500 text-white hover:bg-red-600'
                         : 'bg-[#00c853] text-white hover:bg-emerald-600'
-                      }`}
+                        }`}
                     >
                       {autoReplyEnabled ? 'Remove Auto-Reply' : 'Enable Auto-Reply'}
                     </button>
