@@ -6,10 +6,13 @@
 
 ## 🌐 1. Domain & SEO Configuration
 - **Official Live Domain**: `https://digiworku.in/`
-- **Canonical Domain**: `https://digiworku.in/` (defined in `index.html`, `robots.txt`, `sitemap.xml`)
-- **Google Search Console Property**: Must be set to `https://digiworku.in/` (not `.com`).
+- **Canonical Domain**: `https://digiworku.in/` (defined dynamically per route in `App.tsx` and pre-rendered in `scripts/prerender.js`)
+- **Google Search Console Property**: Set to `https://digiworku.in/`.
 - **Sitemap File Location**: `public/sitemap.xml`
-- **Robots File Location**: `public/robots.txt`
+- **Robots File Location**: `public/robots.txt` (syntax clean, non-standard `LLMs-txt:` directive converted to standard comment `# https://digiworku.in/llms.txt`).
+- **Structured Data Schemas**: JSON-LD `Organization`, `WebSite`, `ProfessionalService`, `FAQPage`, and `SiteNavigationElement` embedded in `index.html`.
+- **SEO Static Prerendering Script**: `scripts/prerender.js` (generates pre-rendered `index.html` files with exact `<title>`, `<meta description>`, and `<link rel="canonical">` for all 16+ public routes in `dist/` upon build).
+- **Dynamic Meta Engine**: React `useEffect` in `App.tsx` dynamically synchronizes `document.title`, `<meta name="description">`, `<link rel="canonical">`, OpenGraph, and Twitter tags per tab & legal slug transition.
 
 ---
 
@@ -47,6 +50,8 @@
 │   ├── robots.txt                        # Search engine crawler instructions
 │   ├── sitemap.xml                       # XML sitemap for SEO indexing
 │   └── logo.jpg                          # DigiWorku brand logo
+├── scripts/
+│   └── prerender.js                      # Static HTML SEO pre-renderer script for build
 └── src/
     ├── main.tsx                          # React entry point
     ├── App.tsx                           # Master monolithic React application file

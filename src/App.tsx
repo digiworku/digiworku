@@ -583,12 +583,40 @@ export default function App() {
       case 'chat': return '/chat';
       case 'settings': return '/settings';
       case 'analytics': return '/analytics';
+      case 'legal': return activeLegalSlug ? `/legal/${activeLegalSlug}` : '/legal/privacy-policy';
+      case 'serviceDetail': return activeServiceSlug ? `/services/${activeServiceSlug}` : '/services';
       default: return '/' + tab;
     }
   };
 
+  const parseLegalSlugFromPath = (path: string): LegalPageSlug => {
+    const cleanPath = path.replace(/\/$/, '') || '/';
+    const parts = cleanPath.split('/').filter(Boolean);
+    const slug = parts[1] as LegalPageSlug;
+    const validLegalSlugs: LegalPageSlug[] = [
+      'privacy-policy', 'terms-of-service', 'cookie-policy', 'refund-policy',
+      'cancellation-policy', 'disclaimer', 'acceptable-use-policy', 'security-policy',
+      'responsible-disclosure', 'help-center'
+    ];
+    return validLegalSlugs.includes(slug) ? slug : 'privacy-policy';
+  };
+
+  const parseServiceSlugFromPath = (path: string): string | null => {
+    const cleanPath = path.replace(/\/$/, '') || '/';
+    if (cleanPath.startsWith('/services/') && cleanPath !== '/services') {
+      return cleanPath.replace('/services/', '');
+    }
+    return null;
+  };
+
   const pathToTab = (path: string) => {
     const cleanPath = path.replace(/\/$/, '') || '/';
+    if (cleanPath.startsWith('/legal')) {
+      return 'legal' as const;
+    }
+    if (cleanPath.startsWith('/services/') && cleanPath !== '/services') {
+      return 'serviceDetail' as const;
+    }
     switch (cleanPath) {
       case '/': case '/home': return 'home' as const;
       case '/services': return 'services' as const;
@@ -608,7 +636,13 @@ export default function App() {
     return pathToTab(window.location.pathname);
   });
 
-  const [activeLegalSlug, setActiveLegalSlug] = useState<LegalPageSlug | null>(null);
+  const [activeLegalSlug, setActiveLegalSlug] = useState<LegalPageSlug | null>(() => {
+    return parseLegalSlugFromPath(window.location.pathname);
+  });
+
+  const [activeServiceSlug, setActiveServiceSlug] = useState<string | null>(() => {
+    return parseServiceSlugFromPath(window.location.pathname);
+  });
 
   const setActiveTab = (tab: 'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail' | 'legal') => {
     setActiveTabState(tab);
@@ -618,15 +652,40 @@ export default function App() {
     }
   };
 
+  const navigateToLegal = (slug: LegalPageSlug) => {
+    setActiveLegalSlug(slug);
+    setActiveTabState('legal');
+    const targetPath = `/legal/${slug}`;
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ tab: 'legal', legalSlug: slug }, '', targetPath);
+    }
+  };
+
+  const navigateToServiceDetail = (slug: string) => {
+    setActiveServiceSlug(slug);
+    setActiveTabState('serviceDetail');
+    const targetPath = `/services/${slug}`;
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ tab: 'serviceDetail', serviceSlug: slug }, '', targetPath);
+    }
+  };
+
   const activeTab = activeTabState;
 
   // Listen to browser Back / Forward buttons (popstate event)
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
-      if (event.state && event.state.tab) {
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/legal')) {
+        setActiveLegalSlug(parseLegalSlugFromPath(currentPath));
+        setActiveTabState('legal');
+      } else if (currentPath.startsWith('/services/') && currentPath !== '/services') {
+        setActiveServiceSlug(parseServiceSlugFromPath(currentPath));
+        setActiveTabState('serviceDetail');
+      } else if (event.state && event.state.tab) {
         setActiveTabState(event.state.tab);
       } else {
-        setActiveTabState(pathToTab(window.location.pathname));
+        setActiveTabState(pathToTab(currentPath));
       }
     };
     window.addEventListener('popstate', handlePopState);
@@ -646,8 +705,6 @@ export default function App() {
   const [editActiveVal, setEditActiveVal] = useState<string>(homeMetrics.active);
   const [editCompletedVal, setEditCompletedVal] = useState<string>(homeMetrics.completed);
   const [editPendingVal, setEditPendingVal] = useState<string>(homeMetrics.pending);
-
-  const [activeServiceSlug, setActiveServiceSlug] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   // Swipe gesture refs for sidebar open/close
@@ -779,7 +836,7 @@ export default function App() {
   // Monitor path changes or initial mount to switch mode to admin automatically when domain ends in /admin or hash has admin
   useEffect(() => {
     const checkPathnameAndRouteAdmin = () => {
-      const pathname = window.location.pathname.toLowerCase().replace(/\/$/, '');
+      const pathname = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
       const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '');
       const search = window.location.search.toLowerCase();
 
@@ -790,8 +847,15 @@ export default function App() {
         search.includes('admin')
       ) {
         setPanelMode('admin');
-        setActiveTab('home');
+        setActiveTabState('home');
         triggerToast("🔑 Routing to secure admin console node... Please authenticate.");
+        return;
+      }
+
+      if (pathname.startsWith('/legal')) {
+        const targetSlug = parseLegalSlugFromPath(pathname);
+        setActiveLegalSlug(targetSlug);
+        setActiveTabState('legal');
         return;
       }
 
@@ -799,16 +863,16 @@ export default function App() {
         'home', 'clients', 'projects', 'inquiries', 'chat', 'portfolio', 'reviews', 'team', 'analytics', 'settings', 'services', 'serviceDetail', 'legal'
       ];
 
-      if (pathname.startsWith('/services/') && pathname !== '/services' && pathname !== '/services/') {
+      if (pathname.startsWith('/services/') && pathname !== '/services') {
         const slug = pathname.replace('/services/', '');
-        setActiveTab('serviceDetail');
+        setActiveTabState('serviceDetail');
         setActiveServiceSlug(slug);
         return;
       }
 
       const targetTab = validTabs.find(tab => pathname === `/${tab}` || hash === tab);
       if (targetTab) {
-        setActiveTab(targetTab);
+        setActiveTabState(targetTab);
         if (targetTab !== 'serviceDetail') {
           setActiveServiceSlug(null);
         }
@@ -826,6 +890,148 @@ export default function App() {
       window.removeEventListener('popstate', checkPathnameAndRouteAdmin);
     };
   }, []);
+
+  // Dynamic SEO Meta Tags, Document Title & Canonical URL Management Engine
+  useEffect(() => {
+    let title = "DigiWorku | Top Digital Workforce & AI Agency Platform in India";
+    let description = "DigiWorku is India's leading digital workforce platform. Access and manage dedicated engineering, UI/UX design, marketing, and AI automation teams for your business.";
+    let path = "/";
+
+    if (activeTab === 'legal' && activeLegalSlug) {
+      path = `/legal/${activeLegalSlug}`;
+      const legalTitles: Record<string, string> = {
+        'privacy-policy': 'Privacy Policy | DigiWorku Legal & Data Security',
+        'terms-of-service': 'Terms of Service | DigiWorku Legal Agreement',
+        'cookie-policy': 'Cookie Policy | DigiWorku Data & Cookies Settings',
+        'refund-policy': 'Refund Policy | DigiWorku Payment & Billing Terms',
+        'cancellation-policy': 'Cancellation Policy | DigiWorku Service Cancellation',
+        'disclaimer': 'Disclaimer & Platform Usage Notice | DigiWorku',
+        'acceptable-use-policy': 'Acceptable Use Policy | DigiWorku Community Rules',
+        'security-policy': 'Security Policy & Data Protection | DigiWorku',
+        'responsible-disclosure': 'Responsible Vulnerability Disclosure | DigiWorku',
+        'help-center': 'Help Center & Support Docs | DigiWorku Platform'
+      };
+      const legalDescriptions: Record<string, string> = {
+        'privacy-policy': 'Read the official DigiWorku Privacy Policy to understand how we collect, handle, and safeguard your personal information and user data.',
+        'terms-of-service': 'Review the Terms of Service for accessing and using DigiWorku digital workforce services, software engineering, and design offerings.',
+        'cookie-policy': 'Learn about DigiWorku cookie management policies, performance analytics, and browser storage guidelines.',
+        'refund-policy': 'Comprehensive guidelines on refund eligibility, payment processing, and milestone fee adjustments at DigiWorku.',
+        'cancellation-policy': 'Read how to pause, modify, or cancel ongoing service subscriptions and project milestones on DigiWorku.',
+        'disclaimer': 'Important disclaimers and platform notices regarding DigiWorku services, software, and artificial intelligence tools.',
+        'acceptable-use-policy': 'Guidelines on acceptable behaviors, system security rules, and platform compliance policies for DigiWorku users.',
+        'security-policy': 'Our technical security architecture, data encryption standards, and enterprise cybersecurity safeguards.',
+        'responsible-disclosure': 'Guidelines for reporting security vulnerabilities responsibly to the DigiWorku technical security team.',
+        'help-center': 'Get instant answers to FAQs, account management guides, and client support resources on DigiWorku.'
+      };
+      title = legalTitles[activeLegalSlug] || `Legal Policy | DigiWorku`;
+      description = legalDescriptions[activeLegalSlug] || description;
+    } else if (activeTab === 'serviceDetail' && activeServiceSlug) {
+      path = `/services/${activeServiceSlug}`;
+      const foundService = servicesList.find(s => s.title.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and') === activeServiceSlug);
+      if (foundService) {
+        title = `${foundService.title} Services | DigiWorku India`;
+        description = foundService.description;
+      } else {
+        title = `Digital Services | DigiWorku Platform`;
+      }
+    } else {
+      switch (activeTab) {
+        case 'services':
+          path = '/services';
+          title = 'Digital Services & Solutions | DigiWorku';
+          description = 'Explore DigiWorku dedicated digital services: Web Development, Mobile Apps, UI/UX Design, Video Production, and AI Automation.';
+          break;
+        case 'portfolio':
+          path = '/portfolio';
+          title = 'Portfolio & Featured Client Case Studies | DigiWorku';
+          description = 'View live client projects, software engineering deliverables, and high-impact case studies delivered by DigiWorku teams.';
+          break;
+        case 'projects':
+          path = '/projects';
+          title = 'Client Projects & Milestone Tracker | DigiWorku';
+          description = 'Manage ongoing client project deliverables, milestone timelines, and development progress in real-time.';
+          break;
+        case 'team':
+          path = '/team';
+          title = 'Our Dedicated Engineering & Creative Team | DigiWorku';
+          description = 'Meet the expert engineers, UI/UX designers, marketing specialists, and AI developers at DigiWorku.';
+          break;
+        case 'inquiries':
+          path = '/inquiries';
+          title = 'Submit Project Inquiry & Get Instant Quote | DigiWorku';
+          description = 'Submit custom project requirements or request an instant proposal for web development, UI design, and AI automation.';
+          break;
+        case 'reviews':
+          path = '/reviews';
+          title = 'Client Testimonials & Verified Reviews | DigiWorku';
+          description = 'Read what founders and businesses say about working with DigiWorku digital teams and custom engineering services.';
+          break;
+        case 'chat':
+          path = '/chat';
+          title = 'Live Client Workspace & Support Chat | DigiWorku';
+          description = 'Connect directly with DigiWorku project managers and lead engineers in real-time.';
+          break;
+        case 'analytics':
+          path = '/analytics';
+          title = 'Platform Analytics & Growth Dashboard | DigiWorku';
+          description = 'View real-time performance analytics, client satisfaction metrics, and delivery health stats.';
+          break;
+        default:
+          path = '/';
+          title = 'DigiWorku | Top Digital Workforce & AI Agency Platform in India';
+          description = "DigiWorku is India's leading digital workforce platform. Access and manage dedicated engineering, UI/UX design, marketing, and AI automation teams for your business.";
+          break;
+      }
+    }
+
+    const fullCanonical = `https://digiworku.in${path}`;
+
+    // Update document title
+    document.title = title;
+
+    // Dynamic Meta Description
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute('content', description);
+    } else {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      metaDesc.setAttribute('content', description);
+      document.head.appendChild(metaDesc);
+    }
+
+    // Dynamic Canonical Link
+    let canonicalLink = document.querySelector('link[rel="canonical"]');
+    if (canonicalLink) {
+      canonicalLink.setAttribute('href', fullCanonical);
+    } else {
+      canonicalLink = document.createElement('link');
+      canonicalLink.setAttribute('rel', 'canonical');
+      canonicalLink.setAttribute('href', fullCanonical);
+      document.head.appendChild(canonicalLink);
+    }
+
+    // Dynamic Open Graph Tags
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', title);
+
+    const ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute('content', description);
+
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) ogUrl.setAttribute('content', fullCanonical);
+
+    // Dynamic Twitter Tags
+    const twTitle = document.querySelector('meta[property="twitter:title"]');
+    if (twTitle) twTitle.setAttribute('content', title);
+
+    const twDesc = document.querySelector('meta[property="twitter:description"]');
+    if (twDesc) twDesc.setAttribute('content', description);
+
+    const twUrl = document.querySelector('meta[property="twitter:url"]');
+    if (twUrl) twUrl.setAttribute('content', fullCanonical);
+
+  }, [activeTab, activeLegalSlug, activeServiceSlug]);
 
   // Safe exit translation helper restoring public domain clean of /admin
   const exitAdminPanelMode = () => {
@@ -4478,13 +4684,17 @@ export default function App() {
                             ['responsible-disclosure', 'Responsible Disclosure'],
                             ['help-center', 'Help Center'],
                           ] as [LegalPageSlug, string][]).map(([slug, label]) => (
-                            <button
+                            <a
                               key={slug}
-                              onClick={() => { setActiveLegalSlug(slug); setActiveTab('legal'); }}
+                              href={`/legal/${slug}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigateToLegal(slug);
+                              }}
                               className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:text-[#00c853] dark:hover:text-[#00c853] transition-colors cursor-pointer underline-offset-2 hover:underline"
                             >
                               {label}
-                            </button>
+                            </a>
                           ))}
                         </div>
                         <p className="text-center text-[10px] text-slate-400 dark:text-slate-600 font-medium">
