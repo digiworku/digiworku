@@ -2,12 +2,14 @@
 User-agent: *
 Allow: /
 
-# Disallow private API endpoints
+# Disallow private API endpoints & Admin CRM routes
 Disallow: /api/
-
-# Disallow Admin Panel routes and query parameters
 Disallow: /admin
 Disallow: /admin/
+Disallow: /inquiries
+Disallow: /clients
+Disallow: /analytics
+Disallow: /projects
 Disallow: /*?mode=admin
 Disallow: /*?panel=admin
 

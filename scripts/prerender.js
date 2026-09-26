@@ -36,13 +36,6 @@ const routes = [
     content: 'Access India top 1% digital talent across software development, graphic design, video editing, and artificial intelligence.'
   },
   {
-    path: '/inquiries',
-    title: 'Submit Project Inquiry & Get Instant Quote | DigiWorku',
-    description: 'Submit custom project requirements or request an instant proposal for web development, UI design, and AI automation on DigiWorku.',
-    h1: 'Submit Project Requirements & Get Project Proposals',
-    content: 'Connect with DigiWorku technical directors to receive instant quotes, timeline estimates, and team allocation plans.'
-  },
-  {
     path: '/reviews',
     title: 'Client Testimonials & Verified Reviews | DigiWorku India',
     description: 'Read what founders and businesses say about working with DigiWorku digital teams and custom engineering services.',

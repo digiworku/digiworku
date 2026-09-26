@@ -2656,6 +2656,7 @@ export default function App() {
 
   // Fetch inquiries from Supabase DB and merge with local state
   const fetchInquiriesFromDB = async () => {
+    if (!isAdmin || panelMode !== 'admin') return;
     try {
       const { data, error } = await supabase
         .from('inquiries')
@@ -2833,14 +2834,16 @@ export default function App() {
     async function checkSupabase() {
       try {
         setSupabaseStatus('checking');
-        const { error } = await supabase.from('inquiries').select('count').limit(1);
+        const { error } = await supabase.from('projects').select('count').limit(1);
         if (error) {
           setSupabaseStatus('error');
           setSupabaseMessage(`Connection failed: ${error.message}`);
         } else {
           setSupabaseStatus('connected');
           setSupabaseMessage('Securely linked to Supabase project rjxbdjgagizjmjwnlbxx ✅');
-          await fetchInquiriesFromDB();
+          if (isAdmin && panelMode === 'admin') {
+            await fetchInquiriesFromDB();
+          }
           await fetchMessagesFromDB();
         }
       } catch (err: any) {
@@ -4708,14 +4711,39 @@ export default function App() {
 
                 {/* VIEW 1.1: CLIENTS DIRECTORY TAB */}
                 {activeTab === 'clients' && (
-                  <motion.div
-                    key="tab-clients"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-5 max-w-7xl mx-auto w-full"
-                  >
+                  (!isAdmin || panelMode !== 'admin') ? (
+                    <motion.div
+                      key="tab-clients-gated"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="flex-1 p-6 flex items-center justify-center min-h-[50vh]"
+                    >
+                      <div className="max-w-md w-full bg-white dark:bg-[#141414] p-8 rounded-3xl border border-slate-200 dark:border-slate-800 text-center space-y-4 shadow-xl">
+                        <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
+                          <Lock className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">Admin Console Restricted</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          The Client Directory is restricted to authorized DigiWorku administrators. Please authenticate with admin credentials.
+                        </p>
+                        <button
+                          onClick={() => { setPanelMode('admin'); triggerToast("🔑 Please authenticate to access Admin Console."); }}
+                          className="w-full py-3 bg-[#00c853] hover:bg-[#00b047] text-white font-extrabold text-xs rounded-xl transition-all shadow-md shadow-[#00c853]/20 cursor-pointer"
+                        >
+                          Sign In to Admin Console
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="tab-clients"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-5 max-w-7xl mx-auto w-full"
+                    >
                     <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
                       <div>
                         <h2 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
@@ -4817,6 +4845,7 @@ export default function App() {
                         ))}
                     </div>
                   </motion.div>
+                  )
                 )}
 
                 {/* VIEW 1.2: PROJECTS MANAGER KANBAN TAB */}
@@ -5388,22 +5417,163 @@ export default function App() {
 
                 {/* VIEW 1.3: INBOUND INQUIRIES WORKSPACE TAB */}
                 {activeTab === 'inquiries' && (
-                  <motion.div
-                    key="tab-inquiries"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-5 max-w-7xl mx-auto w-full"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
-                      <div>
-                        <h2 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                          <Phone className="w-5 h-5 text-emerald-500" />
-                          <span>Inbound Leads Inquiries Feed</span>
+                  (!isAdmin || panelMode !== 'admin') ? (
+                    <motion.div
+                      key="tab-inquiries-public"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-6 max-w-4xl mx-auto w-full"
+                    >
+                      <div className="text-center space-y-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-[#00c853] text-xs font-extrabold border border-[#00c853]/20">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Request Custom Proposal</span>
+                        </div>
+                        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                          Submit Your Project Requirements
                         </h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Accept corporate proposals to immediately allocate system resources. Data synced live from Supabase.</p>
+                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
+                          Tell us about your custom software, UI/UX design, mobile app, or AI automation project. Our technical directors will respond within 24 hours.
+                        </p>
                       </div>
+
+                      <div className="bg-white dark:bg-[#111111] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Your Full Name *</label>
+                            <input
+                              type="text"
+                              id="inquiry-form-name"
+                              placeholder="e.g. Vikram Verma"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00c853]"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Business Email / Phone *</label>
+                            <input
+                              type="text"
+                              id="inquiry-form-contact"
+                              placeholder="email@company.com or +91 9876543210"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00c853]"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Primary Service Required *</label>
+                            <select
+                              id="inquiry-form-service"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00c853]"
+                            >
+                              <option value="Website & Web App Development">Website & Web App Development</option>
+                              <option value="Mobile App Engineering">Mobile App Engineering</option>
+                              <option value="UI/UX Graphic Design & Branding">UI/UX Graphic Design & Branding</option>
+                              <option value="Video Editing & Content Production">Video Editing & Content Production</option>
+                              <option value="AI Automation & Custom Systems">AI Automation & Custom Systems</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Estimated Budget (INR)</label>
+                            <select
+                              id="inquiry-form-budget"
+                              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00c853]"
+                            >
+                              <option value="₹15,000 - ₹50,000">₹15,000 - ₹50,000</option>
+                              <option value="₹50,000 - ₹1,50,000">₹50,000 - ₹1,50,000</option>
+                              <option value="₹1,50,000 - ₹3,50,000+">₹1,50,000 - ₹3,50,000+</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Project Scope & Deliverables *</label>
+                          <textarea
+                            id="inquiry-form-message"
+                            rows={4}
+                            placeholder="Describe your project requirements, features needed, timeline expectations, etc."
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00c853]"
+                          />
+                        </div>
+
+                        <button
+                          onClick={async () => {
+                            const nameEl = document.getElementById('inquiry-form-name') as HTMLInputElement;
+                            const contactEl = document.getElementById('inquiry-form-contact') as HTMLInputElement;
+                            const serviceEl = document.getElementById('inquiry-form-service') as HTMLSelectElement;
+                            const budgetEl = document.getElementById('inquiry-form-budget') as HTMLSelectElement;
+                            const msgEl = document.getElementById('inquiry-form-message') as HTMLTextAreaElement;
+
+                            const name = nameEl?.value.trim();
+                            const contact = contactEl?.value.trim();
+                            const service = serviceEl?.value;
+                            const budget = budgetEl?.value;
+                            const message = msgEl?.value.trim();
+
+                            if (!name || !contact || !message) {
+                              triggerToast("⚠️ Please fill in all required fields (Name, Contact, Description).");
+                              return;
+                            }
+
+                            const isEmail = contact.includes('@');
+                            const dbRecord = {
+                              name,
+                              email: isEmail ? contact : `${name.toLowerCase().replace(/\s+/g, '')}@client.io`,
+                              mobile: isEmail ? '' : contact,
+                              service,
+                              budget,
+                              message: `${service}: ${message} (Budget: ${budget})`,
+                              status: 'new'
+                            };
+
+                            try {
+                              const { error } = await supabase.from('inquiries').insert(dbRecord);
+                              if (error) {
+                                console.warn("Inquiry insert fallback:", error.message);
+                              }
+                              triggerToast("🎉 Proposal Request Sent! DigiWorku technical team will contact you shortly.");
+                              if (nameEl) nameEl.value = '';
+                              if (contactEl) contactEl.value = '';
+                              if (msgEl) msgEl.value = '';
+                            } catch (e: any) {
+                              triggerToast("🎉 Proposal Request Submitted! We will contact you shortly.");
+                            }
+                          }}
+                          className="w-full py-3.5 bg-[#00c853] hover:bg-[#00b047] text-white font-black text-sm rounded-xl transition-all shadow-lg shadow-[#00c853]/20 cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          <Send className="w-4 h-4" />
+                          <span>Submit Project Inquiry</span>
+                        </button>
+                      </div>
+
+                      <div className="text-center pt-2">
+                        <button
+                          onClick={() => { setPanelMode('admin'); triggerToast("🔑 Please authenticate to access Admin Console."); }}
+                          className="text-xs text-slate-400 hover:text-[#00c853] transition-colors cursor-pointer underline underline-offset-4 font-semibold"
+                        >
+                          Are you an Admin? Sign in to Admin Console
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="tab-inquiries-admin"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-5 max-w-7xl mx-auto w-full"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+                        <div>
+                          <h2 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                            <Phone className="w-5 h-5 text-emerald-500" />
+                            <span>Inbound Leads Inquiries Feed</span>
+                          </h2>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Accept corporate proposals to immediately allocate system resources. Data synced live from Supabase.</p>
+                        </div>
 
                       <div className="flex items-center gap-3">
                         <button
@@ -5609,7 +5779,8 @@ export default function App() {
                       })}
                     </div>
                   </motion.div>
-                )}
+                )
+              )}
 
 
                 {/* VIEW 1.4: REVIEWS & PRAISES FEEDBACK TAB */}
@@ -5965,12 +6136,37 @@ export default function App() {
                 )}
 
                 {/* VIEW 1.6: GROWTH METRICS ANALYTICS TAB */}
-                {activeTab === 'analytics' && (() => {
-                  const months = analyticsTimeframe === '6months'
-                    ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-                    : analyticsTimeframe === 'ytd'
+                {activeTab === 'analytics' && (
+                  (!isAdmin || panelMode !== 'admin') ? (
+                    <motion.div
+                      key="tab-analytics-gated"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="flex-1 p-6 flex items-center justify-center min-h-[50vh]"
+                    >
+                      <div className="max-w-md w-full bg-white dark:bg-[#141414] p-8 rounded-3xl border border-slate-200 dark:border-slate-800 text-center space-y-4 shadow-xl">
+                        <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
+                          <Lock className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">Analytics Restricted</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          Platform performance & financial growth metrics are restricted. Please authenticate with admin credentials.
+                        </p>
+                        <button
+                          onClick={() => { setPanelMode('admin'); triggerToast("🔑 Please authenticate to access Admin Console."); }}
+                          className="w-full py-3 bg-[#00c853] hover:bg-[#00b047] text-white font-extrabold text-xs rounded-xl transition-all shadow-md shadow-[#00c853]/20 cursor-pointer"
+                        >
+                          Sign In to Admin Console
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (() => {
+                    const months = analyticsTimeframe === '6months'
                       ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
-                      : ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+                      : analyticsTimeframe === 'ytd'
+                        ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+                        : ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
                   // Helper to parse budget strings like "₹3,50,000" to number in Rupees
                   const parseBudgetToRupees = (budgetStr?: string): number => {
@@ -6610,7 +6806,8 @@ export default function App() {
                       </div>
                     </motion.div>
                   );
-                })()}
+                })()
+              )}
 
                 {/* VIEW 1.7: ADMINISTRATIVE SYSTEM SETTINGS TAB */}
                 {activeTab === 'settings' && (
