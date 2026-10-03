@@ -5,7 +5,7 @@
 ## About DigiWorku
 - Company: DigiWorku
 - Website: https://digiworku.in
-- Type: IT & AI Agency / Digital Workforce Platform
+- Type: IT & AI Ecosystem / Digital Workforce Platform
 - Founded in India; serving clients globally
 - Price Range: ₹8,000 – ₹3,50,000 per project
 
@@ -21,12 +21,11 @@
 - `/` — Homepage (hero, overview, stats)
 - `/services` — All services offered
 - `/portfolio` — Selected client work and case studies
-- `/inquiries` — Contact / inquiry submission
 - `/reviews` — Client testimonials and ratings
 - `/team` — Dedicated team members
 
 ## Contact
-- Inquiries: Submit via https://digiworku.in/inquiries
+- Inquiries: Submit via https://digiworku.in (use the inquiry form on the platform)
 - Live Chat: Available on the platform portal
 
 ## Sitemap

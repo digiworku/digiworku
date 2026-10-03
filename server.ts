@@ -33,6 +33,29 @@ async function startServer() {
   const app = express();
   app.use(express.json());
 
+  // Security Headers (SEO audit fixes)
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader(
+      'Content-Security-Policy',
+      [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://fonts.gstatic.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "img-src 'self' data: blob: https:",
+        "connect-src 'self' https://rjxbdjgagizjmjwnlbxx.supabase.co wss://rjxbdjgagizjmjwnlbxx.supabase.co https://generativelanguage.googleapis.com",
+        "media-src 'self' blob: data: https:",
+        "frame-ancestors 'self'",
+        "base-uri 'self'",
+        "form-action 'self'"
+      ].join('; ')
+    );
+    next();
+  });
+
   // 1. CHAT ENDPOINT (Stateless multi-turn)
   app.post('/api/chat', async (req, res) => {
     try {

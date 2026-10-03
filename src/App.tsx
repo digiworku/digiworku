@@ -893,7 +893,7 @@ export default function App() {
 
   // Dynamic SEO Meta Tags, Document Title & Canonical URL Management Engine
   useEffect(() => {
-    let title = "DigiWorku | Top Digital Workforce & AI Agency Platform in India";
+    let title = "DigiWorku | Top Digital Workforce & AI Ecosystem Platform in India";
     let description = "DigiWorku is India's leading digital workforce platform. Access and manage dedicated engineering, UI/UX design, marketing, and AI automation teams for your business.";
     let path = "/";
 
@@ -978,7 +978,7 @@ export default function App() {
           break;
         default:
           path = '/';
-          title = 'DigiWorku | Top Digital Workforce & AI Agency Platform in India';
+          title = 'DigiWorku | Top Digital Workforce & AI Ecosystem Platform in India';
           description = "DigiWorku is India's leading digital workforce platform. Access and manage dedicated engineering, UI/UX design, marketing, and AI automation teams for your business.";
           break;
       }
@@ -4155,7 +4155,7 @@ export default function App() {
 
                         {/* Massive Bold Header matching Image 1 */}
                         <h1 className={`text-4xl md:text-5xl lg:text-5.5xl font-black tracking-tight leading-[1.08] font-display ${darkMode ? 'text-white' : 'text-[#00311F]'}`}>
-                          Top IT & AI Agency in India: Build Faster With <span className="text-[#00c853] underline decoration-[#00c853]/20 decoration-wavy">DigiWorku</span>
+                          Top IT & AI Ecosystem in India: Build Faster With <span className="text-[#00c853] underline decoration-[#00c853]/20 decoration-wavy">DigiWorku</span>
                         </h1>
 
                         {/* Paragraph */}
@@ -4850,14 +4850,39 @@ export default function App() {
 
                 {/* VIEW 1.2: PROJECTS MANAGER KANBAN TAB */}
                 {activeTab === 'projects' && (
-                  <motion.div
-                    key="tab-projects"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-5 max-w-7xl mx-auto w-full"
-                  >
+                  (!isAdmin || panelMode !== 'admin') ? (
+                    <motion.div
+                      key="tab-projects-gated"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="flex-1 p-6 flex items-center justify-center min-h-[50vh]"
+                    >
+                      <div className="max-w-md w-full bg-white dark:bg-[#141414] p-8 rounded-3xl border border-slate-200 dark:border-slate-800 text-center space-y-4 shadow-xl">
+                        <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
+                          <Lock className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">Admin Console Restricted</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          The Projects Control Pipeline is restricted to authorized DigiWorku administrators. Please authenticate with admin credentials.
+                        </p>
+                        <button
+                          onClick={() => { setPanelMode('admin'); triggerToast("🔑 Please authenticate to access Admin Console."); }}
+                          className="w-full py-3 bg-[#00c853] hover:bg-[#00b047] text-white font-extrabold text-xs rounded-xl transition-all shadow-md shadow-[#00c853]/20 cursor-pointer"
+                        >
+                          Sign In to Admin Console
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="tab-projects"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-5 max-w-7xl mx-auto w-full"
+                    >
                     <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
                       <div>
                         <h2 className="text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
@@ -5413,147 +5438,32 @@ export default function App() {
                       </div>
                     )}
                   </motion.div>
+                  )
                 )}
 
                 {/* VIEW 1.3: INBOUND INQUIRIES WORKSPACE TAB */}
                 {activeTab === 'inquiries' && (
                   (!isAdmin || panelMode !== 'admin') ? (
                     <motion.div
-                      key="tab-inquiries-public"
+                      key="tab-inquiries-gated"
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.3 }}
-                      className="flex-1 p-3.5 sm:p-6 md:p-8 space-y-6 max-w-4xl mx-auto w-full"
+                      className="flex-1 p-6 flex items-center justify-center min-h-[50vh]"
                     >
-                      <div className="text-center space-y-3 pb-4 border-b border-slate-200 dark:border-slate-800">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-[#00c853] text-xs font-extrabold border border-[#00c853]/20">
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>Request Custom Proposal</span>
+                      <div className="max-w-md w-full bg-white dark:bg-[#141414] p-8 rounded-3xl border border-slate-200 dark:border-slate-800 text-center space-y-4 shadow-xl">
+                        <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
+                          <Lock className="w-7 h-7" />
                         </div>
-                        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                          Submit Your Project Requirements
-                        </h2>
-                        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
-                          Tell us about your custom software, UI/UX design, mobile app, or AI automation project. Our technical directors will respond within 24 hours.
+                        <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">Admin Console Restricted</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          The Inbound Leads Inquiries Feed is restricted to authorized DigiWorku administrators. Please authenticate with admin credentials.
                         </p>
-                      </div>
-
-                      <div className="bg-white dark:bg-[#111111] p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl space-y-5">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Your Full Name *</label>
-                            <input
-                              type="text"
-                              id="inquiry-form-name"
-                              placeholder="e.g. Vikram Verma"
-                              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00c853]"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Business Email / Phone *</label>
-                            <input
-                              type="text"
-                              id="inquiry-form-contact"
-                              placeholder="email@company.com or +91 9876543210"
-                              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00c853]"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Primary Service Required *</label>
-                            <select
-                              id="inquiry-form-service"
-                              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00c853]"
-                            >
-                              <option value="Website & Web App Development">Website & Web App Development</option>
-                              <option value="Mobile App Engineering">Mobile App Engineering</option>
-                              <option value="UI/UX Graphic Design & Branding">UI/UX Graphic Design & Branding</option>
-                              <option value="Video Editing & Content Production">Video Editing & Content Production</option>
-                              <option value="AI Automation & Custom Systems">AI Automation & Custom Systems</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Estimated Budget (INR)</label>
-                            <select
-                              id="inquiry-form-budget"
-                              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00c853]"
-                            >
-                              <option value="₹15,000 - ₹50,000">₹15,000 - ₹50,000</option>
-                              <option value="₹50,000 - ₹1,50,000">₹50,000 - ₹1,50,000</option>
-                              <option value="₹1,50,000 - ₹3,50,000+">₹1,50,000 - ₹3,50,000+</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Project Scope & Deliverables *</label>
-                          <textarea
-                            id="inquiry-form-message"
-                            rows={4}
-                            placeholder="Describe your project requirements, features needed, timeline expectations, etc."
-                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-medium bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00c853]"
-                          />
-                        </div>
-
-                        <button
-                          onClick={async () => {
-                            const nameEl = document.getElementById('inquiry-form-name') as HTMLInputElement;
-                            const contactEl = document.getElementById('inquiry-form-contact') as HTMLInputElement;
-                            const serviceEl = document.getElementById('inquiry-form-service') as HTMLSelectElement;
-                            const budgetEl = document.getElementById('inquiry-form-budget') as HTMLSelectElement;
-                            const msgEl = document.getElementById('inquiry-form-message') as HTMLTextAreaElement;
-
-                            const name = nameEl?.value.trim();
-                            const contact = contactEl?.value.trim();
-                            const service = serviceEl?.value;
-                            const budget = budgetEl?.value;
-                            const message = msgEl?.value.trim();
-
-                            if (!name || !contact || !message) {
-                              triggerToast("⚠️ Please fill in all required fields (Name, Contact, Description).");
-                              return;
-                            }
-
-                            const isEmail = contact.includes('@');
-                            const dbRecord = {
-                              name,
-                              email: isEmail ? contact : `${name.toLowerCase().replace(/\s+/g, '')}@client.io`,
-                              mobile: isEmail ? '' : contact,
-                              service,
-                              budget,
-                              message: `${service}: ${message} (Budget: ${budget})`,
-                              status: 'new'
-                            };
-
-                            try {
-                              const { error } = await supabase.from('inquiries').insert(dbRecord);
-                              if (error) {
-                                console.warn("Inquiry insert fallback:", error.message);
-                              }
-                              triggerToast("🎉 Proposal Request Sent! DigiWorku technical team will contact you shortly.");
-                              if (nameEl) nameEl.value = '';
-                              if (contactEl) contactEl.value = '';
-                              if (msgEl) msgEl.value = '';
-                            } catch (e: any) {
-                              triggerToast("🎉 Proposal Request Submitted! We will contact you shortly.");
-                            }
-                          }}
-                          className="w-full py-3.5 bg-[#00c853] hover:bg-[#00b047] text-white font-black text-sm rounded-xl transition-all shadow-lg shadow-[#00c853]/20 cursor-pointer flex items-center justify-center gap-2"
-                        >
-                          <Send className="w-4 h-4" />
-                          <span>Submit Project Inquiry</span>
-                        </button>
-                      </div>
-
-                      <div className="text-center pt-2">
                         <button
                           onClick={() => { setPanelMode('admin'); triggerToast("🔑 Please authenticate to access Admin Console."); }}
-                          className="text-xs text-slate-400 hover:text-[#00c853] transition-colors cursor-pointer underline underline-offset-4 font-semibold"
+                          className="w-full py-3 bg-[#00c853] hover:bg-[#00b047] text-white font-extrabold text-xs rounded-xl transition-all shadow-md shadow-[#00c853]/20 cursor-pointer"
                         >
-                          Are you an Admin? Sign in to Admin Console
+                          Sign In to Admin Console
                         </button>
                       </div>
                     </motion.div>
