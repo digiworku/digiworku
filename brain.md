@@ -17,7 +17,9 @@
   - Legal (10): all `/legal/*` routes
   - Each pre-rendered page has: correct `<title>` (≤60 chars), `<meta description>` (≤155 chars), canonical, OG tags, **H1 distinct from title**, **H2 subheading**, **200+ word body content**
 - **Dynamic Meta Engine**: React `useEffect` in `App.tsx` dynamically synchronizes `document.title`, `<meta name="description">`, `<link rel="canonical">`, OpenGraph, and Twitter tags per tab & legal slug transition.
-- **Home page (`index.html`)**: Title `DigiWorku — India's Top Digital Workforce Platform` (50 chars), H1 `India's Leading Digital Workforce & AI Agency` (distinct from title), 3× H2s with rich body content (~200 words).
+- **Home page (`index.html`)**: Title `DigiWorku — India's Top Digital Workforce Platform` (50 chars), H1 distinct from title, 3× H2s + WebPage schema + BreadcrumbList schema in `<head>`.
+- **SEO/AEO/GEO Content Section in App.tsx**: Rich section rendered by React in the home tab containing: top summary paragraph, 4× H2 FAQ question-answer blocks ("What is DigiWorku?", "What services?", "How does it work?", "Why choose DigiWorku?"), bullet + numbered lists, and 4 internal navigation link cards to /services, /portfolio, /team, /reviews. Boosts word count from 140 to ~600+, fixes H2 count (was 0), and satisfies AEO question-style headings requirement.
+- **Dynamic title** (App.tsx): `DigiWorku — India's Digital Workforce & AI Ecosystem` (52 chars, ≤60).
 
 ---
 

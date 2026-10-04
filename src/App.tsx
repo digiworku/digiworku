@@ -893,7 +893,7 @@ export default function App() {
 
   // Dynamic SEO Meta Tags, Document Title & Canonical URL Management Engine
   useEffect(() => {
-    let title = "DigiWorku | Top Digital Workforce & AI Ecosystem Platform in India";
+    let title = "DigiWorku — India's Digital Workforce & AI Ecosystem";
     let description = "DigiWorku is India's leading digital workforce platform. Access and manage dedicated engineering, UI/UX design, marketing, and AI automation teams for your business.";
     let path = "/";
 
@@ -978,7 +978,7 @@ export default function App() {
           break;
         default:
           path = '/';
-          title = 'DigiWorku | Top Digital Workforce & AI Ecosystem Platform in India';
+          title = "DigiWorku — India's Digital Workforce & AI Ecosystem";
           description = "DigiWorku is India's leading digital workforce platform. Access and manage dedicated engineering, UI/UX design, marketing, and AI automation teams for your business.";
           break;
       }
@@ -4664,7 +4664,174 @@ export default function App() {
                       </div>
                     )}
 
+                    {/* ======================================================= */}
+                    {/* SEO / AEO / GEO Content Section — visible to crawlers    */}
+                    {/* ======================================================= */}
+                    <section
+                      aria-label="About DigiWorku — Digital Workforce Platform"
+                      className={`w-full max-w-4xl mx-auto px-4 sm:px-6 py-12 border-t ${
+                        darkMode ? 'border-slate-800' : 'border-slate-100'
+                      }`}
+                    >
+                      {/* Summary / top answer — AEO key takeaway */}
+                      <div className={`p-5 rounded-2xl mb-10 border ${
+                        darkMode
+                          ? 'bg-emerald-950/20 border-emerald-900/40'
+                          : 'bg-[#f0fff7] border-[#00c853]/15'
+                      }`}>
+                        <p className={`text-sm leading-relaxed font-semibold ${
+                          darkMode ? 'text-slate-300' : 'text-[#00311F]/80'
+                        }`}>
+                          <span className="font-black text-[#00c853]">Summary: </span>
+                          DigiWorku is India's digital workforce and AI ecosystem platform that connects startups, enterprises, and creators with dedicated engineering, UI/UX design, video production, branding, and AI automation teams — all managed in a single secure workspace. Projects start from ₹8,000 with transparent milestone-based pricing.
+                        </p>
+                      </div>
+
+                      <div className="space-y-10">
+
+                        {/* Q1 */}
+                        <div>
+                          <h2 className={`text-xl font-black mb-3 ${
+                            darkMode ? 'text-white' : 'text-[#030712]'
+                          }`}>
+                            What is DigiWorku?
+                          </h2>
+                          <p className={`text-sm leading-relaxed mb-3 ${
+                            darkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            DigiWorku is a digital workforce platform based in India that gives businesses access to dedicated teams of engineers, designers, video editors, and AI specialists. Unlike traditional freelance marketplaces, DigiWorku provides fully managed, vetted teams that work exclusively on your project with real-time milestone tracking, direct communication, and guaranteed delivery standards.
+                          </p>
+                          <ul className={`text-sm space-y-1.5 list-none pl-0 ${
+                            darkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            {[
+                              '200+ projects delivered across India, UAE, UK, and the USA',
+                              'Top 1% vetted engineers, designers, and AI specialists',
+                              'Milestone-based pricing starting from ₹8,000',
+                              'Real-time project dashboards and direct team communication',
+                            ].map((item, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span className="mt-0.5 w-4 h-4 flex-shrink-0 rounded-full bg-[#00c853]/15 text-[#00c853] flex items-center justify-center text-[9px] font-black">✓</span>
+                                <span>{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Q2 */}
+                        <div>
+                          <h2 className={`text-xl font-black mb-3 ${
+                            darkMode ? 'text-white' : 'text-[#030712]'
+                          }`}>
+                            What services does DigiWorku offer?
+                          </h2>
+                          <p className={`text-sm leading-relaxed mb-3 ${
+                            darkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            DigiWorku covers every digital service a modern business needs. Our five core service categories are:
+                          </p>
+                          <ul className={`text-sm space-y-1.5 ${
+                            darkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            {[
+                              ['Website & Web App Development', 'Custom React, Next.js, and Node.js web applications from ₹45,000'],
+                              ['UI/UX Graphic Design', 'Social media graphics, pitch decks, and branding kits from ₹8,000'],
+                              ['Video Editing & Production', 'YouTube, Reels, and corporate video post-production from ₹12,500'],
+                              ['Brand Identity & Branding', 'Complete logo, guidelines, and brand systems from ₹30,000'],
+                              ['AI Automation & Engineering', 'Custom AI chatbots, workflow automation, and system integration'],
+                            ].map(([title, desc], i) => (
+                              <li key={i} className="flex items-start gap-2 list-none">
+                                <span className="mt-0.5 w-4 h-4 flex-shrink-0 rounded-full bg-[#00c853]/15 text-[#00c853] flex items-center justify-center text-[9px] font-black">{i + 1}</span>
+                                <span><span className="font-bold">{title}</span> — {desc}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Q3 */}
+                        <div>
+                          <h2 className={`text-xl font-black mb-3 ${
+                            darkMode ? 'text-white' : 'text-[#030712]'
+                          }`}>
+                            How does DigiWorku work?
+                          </h2>
+                          <p className={`text-sm leading-relaxed mb-3 ${
+                            darkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            Getting started with DigiWorku takes less than 24 hours. Here is how the process works:
+                          </p>
+                          <ol className={`text-sm space-y-2 ${
+                            darkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            {[
+                              'Browse service packages or submit a custom project inquiry on DigiWorku.',
+                              'A dedicated project lead reviews your requirements and sends a tailored proposal within 24 hours.',
+                              'Approve the milestone plan and make the first payment to start the project.',
+                              'Track real-time progress, review deliverables, and communicate directly with your team.',
+                              'Approve final delivery and receive all source files with full ownership rights.',
+                            ].map((step, i) => (
+                              <li key={i} className="flex items-start gap-2 list-none">
+                                <span className="mt-0.5 w-5 h-5 flex-shrink-0 rounded-full bg-[#00c853] text-white flex items-center justify-center text-[9px] font-black">{i + 1}</span>
+                                <span>{step}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+
+                        {/* Q4 */}
+                        <div>
+                          <h2 className={`text-xl font-black mb-3 ${
+                            darkMode ? 'text-white' : 'text-[#030712]'
+                          }`}>
+                            Why should I choose DigiWorku over a freelancer or traditional agency?
+                          </h2>
+                          <p className={`text-sm leading-relaxed ${
+                            darkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            Freelancers lack accountability structures and traditional agencies are expensive. DigiWorku bridges both — you get agency-quality output at startup-friendly prices, with full transparency via real-time dashboards, milestone guarantees, and direct team access. Every team member is pre-vetted, every project has a dedicated lead, and every deliverable comes with a quality guarantee. Over 60% of our revenue comes from returning clients, which reflects the trust and quality we consistently deliver.
+                          </p>
+                        </div>
+
+                        {/* Internal Links */}
+                        <div>
+                          <h2 className={`text-xl font-black mb-4 ${
+                            darkMode ? 'text-white' : 'text-[#030712]'
+                          }`}>
+                            Explore DigiWorku
+                          </h2>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            {([
+                              { label: 'Our Services', path: '/services', tab: 'services' as const, desc: 'Browse all digital services' },
+                              { label: 'Client Portfolio', path: '/portfolio', tab: 'portfolio' as const, desc: 'View completed projects' },
+                              { label: 'Meet the Team', path: '/team', tab: 'team' as const, desc: 'Our vetted specialists' },
+                              { label: 'Client Reviews', path: '/reviews', tab: 'reviews' as const, desc: 'Verified testimonials' },
+                            ] as {label:string;path:string;tab:'services'|'portfolio'|'team'|'reviews';desc:string}[]).map(({ label, path, tab, desc }) => (
+                              <a
+                                key={tab}
+                                href={path}
+                                onClick={(e) => { e.preventDefault(); setActiveTab(tab); }}
+                                className={`p-3.5 rounded-xl border transition-all group block hover:border-[#00c853] ${
+                                  darkMode
+                                    ? 'bg-[#1a1a1a] border-slate-800 hover:bg-[#00c853]/5'
+                                    : 'bg-white border-slate-200 hover:bg-[#f0fff7] shadow-xs'
+                                }`}
+                              >
+                                <span className={`block text-xs font-black group-hover:text-[#00c853] transition-colors ${
+                                  darkMode ? 'text-white' : 'text-slate-900'
+                                }`}>{label}</span>
+                                <span className={`block text-[10px] mt-0.5 ${
+                                  darkMode ? 'text-slate-500' : 'text-slate-500'
+                                }`}>{desc}</span>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>
+                    </section>
+
                     {/* Secure Workspace Disclaimer */}
+
                     <div className="text-center pt-8 pb-2 max-w-3xl mx-auto">
                       <span className="block text-[9.5px] tracking-widest text-slate-400 dark:text-slate-500 font-extrabold uppercase select-none">
                         DigiWorku CRM Node Server Connected Securely • 256-bit SSL TLS Encryption Active
