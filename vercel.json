@@ -15,6 +15,16 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/admin",         "destination": "/", "permanent": false },
+    { "source": "/admin/(.*)",    "destination": "/", "permanent": false },
+    { "source": "/wp-admin",      "destination": "/", "permanent": false },
+    { "source": "/wp-admin/(.*)", "destination": "/", "permanent": false },
+    { "source": "/wp-login.php",  "destination": "/", "permanent": false },
+    { "source": "/.env",          "destination": "/", "permanent": false },
+    { "source": "/.git",          "destination": "/", "permanent": false },
+    { "source": "/.git/(.*)",     "destination": "/", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

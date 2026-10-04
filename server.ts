@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from "@google/genai";
+import rateLimit from 'express-rate-limit';
 
 dotenv.config();
 
@@ -29,9 +30,47 @@ function getAI() {
   return aiInstance;
 }
 
+// ─── Rate Limiters ────────────────────────────────────────────────────────────
+
+// 1. Global limiter — sab routes pe: 200 requests/15 min per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests from this IP. Please try again after 15 minutes.' },
+});
+
+// 2. Admin login — strict: 5 attempts/15 min per IP (brute-force blocker)
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Please try again after 15 minutes.' },
+  skipSuccessfulRequests: true, // successful login attempts count nahi hote
+});
+
+// 3. AI endpoints — Gemini API bill protect: 30 requests/min per IP
+const aiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'AI request limit reached. Please wait 1 minute.' },
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 async function startServer() {
   const app = express();
-  app.use(express.json());
+
+  // Body size limit — bade payload attacks se protection (default 100kb)
+  app.use(express.json({ limit: '100kb' }));
+  app.use(express.urlencoded({ extended: false, limit: '100kb' }));
+
+  // Global rate limit — sab routes pe apply
+  app.use(globalLimiter);
 
   // Security Headers (SEO audit fixes)
   app.use((_req, res, next) => {
@@ -56,8 +95,38 @@ async function startServer() {
     next();
   });
 
-  // 1. CHAT ENDPOINT (Stateless multi-turn)
-  app.post('/api/chat', async (req, res) => {
+  // 0. ADMIN LOGIN ENDPOINT (Strict rate limit — brute-force protection)
+  app.post('/api/admin-login', adminLoginLimiter, (req, res) => {
+    try {
+      const { email, password } = req.body || {};
+      if (!email || !password) {
+        res.status(400).json({ error: 'Email and password are required.' });
+        return;
+      }
+
+      // Credentials live ONLY on the server — never shipped to the browser
+      const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'digiworku55@gmail.com,virkanwlia@gmail.com')
+        .split(',')
+        .map((e: string) => e.trim().toLowerCase());
+
+      const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'DigiWorku55@';
+
+      const cleanEmail = email.trim().toLowerCase();
+
+      if (ADMIN_EMAILS.includes(cleanEmail) && password === ADMIN_PASSWORD) {
+        res.json({ success: true });
+        return;
+      }
+
+      res.status(401).json({ error: 'Access Denied: Invalid credentials.' });
+    } catch (err: any) {
+      console.error('Error in /api/admin-login:', err);
+      res.status(500).json({ error: 'Internal server error.' });
+    }
+  });
+
+  // 1. CHAT ENDPOINT (AI rate limited)
+  app.post('/api/chat', aiLimiter, async (req, res) => {
     try {
       const { history = [], message, systemInstruction = "You are a helpful creative assistant." } = req.body;
       if (!message) {
@@ -110,7 +179,7 @@ async function startServer() {
   });
 
   // 2. FLASHCARDS ENDPOINT (Structured JSON)
-  app.post('/api/flashcards', async (req, res) => {
+  app.post('/api/flashcards', aiLimiter, async (req, res) => {
     try {
       const { topic, count = 6 } = req.body;
       if (!topic) {
@@ -179,7 +248,7 @@ async function startServer() {
   });
 
   // 3. MIND MAP ENDPOINT (Structured JSON Graph)
-  app.post('/api/mindmap', async (req, res) => {
+  app.post('/api/mindmap', aiLimiter, async (req, res) => {
     try {
       const { topic } = req.body;
       if (!topic) {
@@ -271,7 +340,7 @@ async function startServer() {
   });
 
   // 4. COMPOSE DOC ENDPOINT (Creative text styling)
-  app.post('/api/compose', async (req, res) => {
+  app.post('/api/compose', aiLimiter, async (req, res) => {
     try {
       const { prompt, style = "Professional", format = "Markdown Report" } = req.body;
       if (!prompt) {

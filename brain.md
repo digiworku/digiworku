@@ -35,6 +35,15 @@ All 4 previously-missing security headers are now set on **every response** via:
 - **`vercel.json`** routing: Uses `cleanUrls: true` + **`rewrites`** (NOT `routes` — `routes` is the old API that ignores cleanUrls and static files). With `cleanUrls + rewrites`, Vercel serves each pre-rendered `dist/*/index.html` directly for crawlers, then falls back to SPA root `index.html` only for unmatched paths.
 - **Branding**: All occurrences of "Agency" replaced with **"Ecosystem"** across: `index.html` (H1 + keywords), `App.tsx` (dynamic title + hero H1), `manifest.json`, `llms.txt`.
 
+## 🛡️ 2b. DDoS & Rate Limiting Protection (Oct 2026)
+**Package**: `express-rate-limit` installed.
+**3-layer protection in `server.ts`**:
+1. **Global limiter** — `200 req / 15 min / IP` on ALL routes
+2. **Admin login limiter** — `5 attempts / 15 min / IP` on `/api/admin-login` (brute-force blocker)
+3. **AI endpoints limiter** — `30 req / min / IP` on `/api/chat`, `/api/flashcards`, `/api/mindmap`, `/api/compose` (Gemini API bill protection)
+**Body size limit**: `100kb` max payload (blocks large payload injection attacks)
+**Vercel function (`api/admin-login.ts`)**: In-memory IP-based rate limit (5 attempts / 15 min).
+
 ---
 
 ## 🔑 3. Administrative Security & Credentials
@@ -45,7 +54,10 @@ All 4 previously-missing security headers are now set on **every response** via:
 - **State Management**:
   - `isAdmin` (boolean): `localStorage.getItem('digiworku-is-admin') === 'true'`
   - `panelMode` ('user' | 'admin'): `localStorage.getItem('digiworku-panel-mode')`
-- **Admin Routes (ALL GATED)**: `/projects`, `/inquiries`, `/clients`, `/analytics`, `/chat`, `/settings` — when accessed by non-admin or non-authenticated users, ALL show the **"Admin Console Restricted"** lock screen with a "Sign In to Admin Console" button. None are in sitemap or prerendered as public pages.
+- **Admin Routes (ALL GATED)**: `/projects`, `/inquiries`, `/clients`, `/analytics`, `/chat`, `/settings`, `/team` — when accessed by non-admin or non-authenticated users, ALL show the **"Admin Console Restricted"** lock screen with a "Sign In to Admin Console" button. None are in sitemap or prerendered as public pages.
+- **Admin Auth Flow (SECURE)**: Frontend sends `email+password` to **`/api/admin-login`** backend endpoint. Credentials are validated **server-side only** using `process.env.ADMIN_EMAILS` and `process.env.ADMIN_PASSWORD` — **never exposed in browser JS bundle**.
+- **New Backend File**: `api/admin-login.ts` — Vercel serverless function handling admin credential verification.
+- **Env Vars Required**: `ADMIN_EMAILS` (comma-separated), `ADMIN_PASSWORD` — set in Vercel project environment variables.
 
 ---
 
@@ -149,3 +161,4 @@ These routes are STRICTLY admin-only. Non-authenticated visitors see the "Admin 
 | /projects in sitemap.xml | ✅ Fixed | `public/sitemap.xml` — removed |
 | Vercel serving all routes via single index.html | ✅ Fixed | `vercel.json` — `cleanUrls` + `handle: filesystem` |
 | Service detail pages not pre-rendered | ✅ Fixed | `prerender.js` — 4 service detail pages added |
+| 404 NOT_FOUND on `/admin` / `/wp-admin` | ✅ Fixed | `vercel.json` — added `redirects` block to `/` |

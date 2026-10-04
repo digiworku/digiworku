@@ -10,6 +10,7 @@ Disallow: /inquiries
 Disallow: /clients
 Disallow: /analytics
 Disallow: /projects
+Disallow: /team
 Disallow: /*?mode=admin
 Disallow: /*?panel=admin
 

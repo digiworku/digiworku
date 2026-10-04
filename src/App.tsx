@@ -1054,29 +1054,41 @@ export default function App() {
   };
 
   // Admin Login Handle function
-  const handleAdminLoginSubmit = (e: React.FormEvent) => {
+  const handleAdminLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsAdminAuthLoading(true);
     setAdminAuthError(null);
 
-    const allowedAdminEmails = ['digiworku55@gmail.com', 'virkanwlia@gmail.com'];
-    const cleanEmail = adminEmailInput.trim().toLowerCase();
+    try {
+      const response = await fetch('/api/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: adminEmailInput.trim(),
+          password: adminPasswordInput,
+        }),
+      });
 
-    setTimeout(() => {
-      if (allowedAdminEmails.includes(cleanEmail) && adminPasswordInput === 'DigiWorku55@') {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         setIsAdmin(true);
         localStorage.setItem('digiworku-is-admin', 'true');
         setAdminEmailInput('');
         setAdminPasswordInput('');
-        setIsAdminAuthLoading(false);
         triggerToast("🔑 Admin Console Authenticated Successfully! Access Granted.");
       } else {
-        setAdminAuthError("Access Denied: The email or passphrase does not match administrative records.");
+        setAdminAuthError(data.error || "Access Denied: The email or passphrase does not match administrative records.");
         setAdminPasswordInput('');
-        setIsAdminAuthLoading(false);
         triggerToast("❌ Authentication Failed: Please check your console keys.");
       }
-    }, 900);
+    } catch {
+      setAdminAuthError("Network error: Could not reach authentication server.");
+      setAdminPasswordInput('');
+      triggerToast("❌ Authentication Failed: Network error.");
+    } finally {
+      setIsAdminAuthLoading(false);
+    }
   };
 
   // CRM Admin Panel Live States
@@ -4799,13 +4811,12 @@ export default function App() {
                           }`}>
                             Explore DigiWorku
                           </h2>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             {([
                               { label: 'Our Services', path: '/services', tab: 'services' as const, desc: 'Browse all digital services' },
                               { label: 'Client Portfolio', path: '/portfolio', tab: 'portfolio' as const, desc: 'View completed projects' },
-                              { label: 'Meet the Team', path: '/team', tab: 'team' as const, desc: 'Our vetted specialists' },
                               { label: 'Client Reviews', path: '/reviews', tab: 'reviews' as const, desc: 'Verified testimonials' },
-                            ] as {label:string;path:string;tab:'services'|'portfolio'|'team'|'reviews';desc:string}[]).map(({ label, path, tab, desc }) => (
+                            ] as {label:string;path:string;tab:'services'|'portfolio'|'reviews';desc:string}[]).map(({ label, path, tab, desc }) => (
                               <a
                                 key={tab}
                                 href={path}
@@ -5978,6 +5989,31 @@ export default function App() {
 
                 {/* VIEW 1.5: ACTIVE TEAM GRID TAB */}
                 {activeTab === 'team' && (
+                  (!isAdmin || panelMode !== 'admin') ? (
+                    <motion.div
+                      key="tab-team-gated"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="flex-1 p-6 flex items-center justify-center min-h-[50vh]"
+                    >
+                      <div className="max-w-md w-full bg-white dark:bg-[#141414] p-8 rounded-3xl border border-slate-200 dark:border-slate-800 text-center space-y-4 shadow-xl">
+                        <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto">
+                          <Lock className="w-7 h-7" />
+                        </div>
+                        <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">Admin Console Restricted</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          The Workforce Team directory is restricted to authorized DigiWorku administrators. Please authenticate with admin credentials.
+                        </p>
+                        <button
+                          onClick={() => { setPanelMode('admin'); triggerToast("🔑 Please authenticate to access Admin Console."); }}
+                          className="w-full py-3 bg-[#00c853] hover:bg-[#00b047] text-white font-extrabold text-xs rounded-xl transition-all shadow-md shadow-[#00c853]/20 cursor-pointer"
+                        >
+                          Sign In to Admin Console
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
                   <motion.div
                     key="tab-team"
                     initial={{ opacity: 0, y: 12 }}
@@ -6210,6 +6246,7 @@ export default function App() {
 
                     </div>
                   </motion.div>
+                  )
                 )}
 
                 {/* VIEW 1.6: GROWTH METRICS ANALYTICS TAB */}
