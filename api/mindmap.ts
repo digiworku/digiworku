@@ -69,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const prompt = `Deconstruct the topic "${topic}" into a logical node graph (5 to 8 nodes total) for visualization. Provide a central root node, and connecting branch nodes. Connect children to parents or sibling nodes.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are an expert system mapping consultant. Structure information into a hierarchical node graph with clear text and connected nodes. Nodes must have brief descriptions (10 words max). Connections must refer to node IDs.",

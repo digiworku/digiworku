@@ -43,12 +43,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
-    // Credentials live ONLY on the server — never shipped to the browser
-    const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'digiworku55@gmail.com,virkanwlia@gmail.com')
+    // Credentials come ONLY from environment variables — never hardcoded
+    if (!process.env.ADMIN_EMAILS || !process.env.ADMIN_PASSWORD) {
+      console.error('[admin-login] ADMIN_EMAILS or ADMIN_PASSWORD env vars are not set.');
+      return res.status(503).json({ error: 'Admin login is not configured. Set ADMIN_EMAILS and ADMIN_PASSWORD environment variables.' });
+    }
+
+    const ADMIN_EMAILS = process.env.ADMIN_EMAILS
       .split(',')
       .map((e: string) => e.trim().toLowerCase());
 
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'DigiWorku55@';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
     const cleanEmail = email.trim().toLowerCase();
 

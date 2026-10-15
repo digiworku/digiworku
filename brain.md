@@ -94,6 +94,7 @@ All 4 previously-missing security headers are now set on **every response** via:
     └── components/
         ├── ServiceDetailPage.tsx         # Detailed service detail page & proposal builder
         ├── LegalPages.tsx                # Privacy Policy, Terms of Service, Cancellation Policy
+        ├── CaseStudies.tsx               # Case Studies listing + 3 detail layouts (Web App, Design, AI)
         └── ErrorBoundary.tsx             # React error fallback component
 ```
 
@@ -133,6 +134,16 @@ These routes are STRICTLY admin-only. Non-authenticated visitors see the "Admin 
 - `/chat` — Chat Support Hub
 - `/settings` — Platform Settings
 
+### 📋 F. Case Studies (Public)
+- **Listing page**: `/case-studies` — filter by All / Web Apps / Design / Video / Branding / AI Automation
+- **Detail pages**: `/case-studies/[slug]` — three distinct layouts (Web App, Design/Brand/Video, AI Automation)
+- **Data**: `CaseStudies.tsx` → `CASE_STUDIES` array — 1 internal demo (DigiWorku platform) + 2 anonymised placeholders
+- **CTA**: All CTAs trigger `handleOpenServiceRequestModal()` (existing inquiry modal)
+- **Routing**: Wired in `App.tsx` via `navigateToCaseStudy()` / `navigateToCaseStudyListing()` helpers
+- **Sidebar nav**: Added to both user sidebar and admin sidebar in `App.tsx`
+- **SEO**: Dynamic meta title/description in `App.tsx` useEffect; `/case-studies` and `/case-studies/digiworku-platform` in `sitemap.xml`
+- **URL format**: `digiworku.in/case-studies/[slug]`
+
 ---
 
 ## 🛠️ 7. Useful Shell Commands & Maintenance
@@ -162,3 +173,23 @@ These routes are STRICTLY admin-only. Non-authenticated visitors see the "Admin 
 | Vercel serving all routes via single index.html | ✅ Fixed | `vercel.json` — `cleanUrls` + `handle: filesystem` |
 | Service detail pages not pre-rendered | ✅ Fixed | `prerender.js` — 4 service detail pages added |
 | 404 NOT_FOUND on `/admin` / `/wp-admin` | ✅ Fixed | `vercel.json` — added `redirects` block to `/` |
+| Case Studies section missing | ✅ Added | `CaseStudies.tsx` + `App.tsx` routing + `sitemap.xml` |
+
+---
+
+## 🛠️ 9. Full Audit Fixes Log (Oct 2026 — Comprehensive Bug Fix Pass)
+
+| Issue | Severity | Status | Fix Location |
+|-------|----------|--------|--------------|
+| Invalid AI model name `gemini-3.5-flash` (does not exist) — all AI endpoints 500'd | Critical | ✅ Fixed | `server.ts` (×4) + `api/chat.ts` + `api/flashcards.ts` + `api/mindmap.ts` + `api/compose.ts` — replaced with `gemini-2.0-flash` |
+| Offline detection broken — `removeEventListener` called BEFORE `addEventListener` | High | ✅ Fixed | `src/App.tsx` line 799 — removed stray `removeEventListener` call |
+| Hindi text in English-only admin panel UI (`"Jab user msg karta hai..."`) | High | ✅ Fixed | `src/App.tsx` line 2165 — translated to English |
+| Admin email addresses exposed as login form placeholder hint | High | ✅ Fixed | `src/App.tsx` line 4168 — placeholder changed to neutral `"Enter your admin email address"` |
+| Same Hindi phrase in chat endpoint fallback response | High | ✅ Fixed | `server.ts` line 145 + `api/chat.ts` line 42 — removed Hindi fragment |
+| `'clients'` tab missing from `tabToPath()` and `pathToTab()` routing functions | Medium | ✅ Fixed | `src/App.tsx` — added `/clients` case to both switch statements |
+| SEO meta `useEffect` missing `activeCaseStudySlug` dependency | Medium | ✅ Fixed | `src/App.tsx` line 1087 — added `activeCaseStudySlug` to dependency array |
+| Hardcoded fallback admin credentials in source code (`DigiWorku55@`) | High | ✅ Fixed | `server.ts` + `api/admin-login.ts` — hardcoded fallbacks removed; returns 503 if env vars not set |
+| `triggerToast` completely disabled — all button/action feedback silently swallowed | Medium | ✅ Fixed | `src/App.tsx` — wired to `setCopiedText()` with 3s auto-clear; all 50+ toast calls now work |
+| 2.5s polling for chat (24 API calls/min per session) | Medium | ✅ Fixed | `src/App.tsx` — replaced with Supabase Realtime `postgres_changes` subscription + 10s fallback poll |
+
+> **⚠️ Important:** Admin login now **requires** `ADMIN_EMAILS` and `ADMIN_PASSWORD` to be set as env vars. In local dev, copy `.env.example` to `.env` and fill in values. On Vercel, add them in Project Settings → Environment Variables.

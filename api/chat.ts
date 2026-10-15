@@ -39,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       } else if (message.toLowerCase().includes('brand') || message.toLowerCase().includes('logo') || message.toLowerCase().includes('design')) {
         reply = "We have mapped out 3 fresh aesthetic options for your custom branding. Let's schedule a call tomorrow with our Lead visual director to finalize.";
       } else if (message.toLowerCase().includes('status') || message.toLowerCase().includes('help') || message.toLowerCase().includes('who')) {
-        reply = "As your DigiWorku Client Partner, I am here to help you coordinate design, dev, and analytics tasks. We ensure: 'Results jo aapki growth ko define karein'.";
+        reply = "As your DigiWorku Client Partner, I am here to help you coordinate design, dev, and analytics tasks.";
       }
       return res.json({ text: reply });
     }
@@ -55,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.0-flash",
       contents,
       config: {
         systemInstruction,

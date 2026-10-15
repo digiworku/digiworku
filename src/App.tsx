@@ -83,6 +83,7 @@ import { AuthForm } from './components/AuthForm';
 import { AnimatedGridBackground } from './components/AnimatedGridBackground';
 import { ServiceDetailPage } from './components/ServiceDetailPage';
 import { LegalPages, type LegalPageSlug } from './components/LegalPages';
+import { CaseStudies } from './components/CaseStudies';
 import { supabase } from './supabase';
 // Helper to consistently get the unique user ID for chat, even for guests
 export const getChatUserId = (currentUser: any) => {
@@ -577,6 +578,7 @@ export default function App() {
       case 'services': return '/services';
       case 'portfolio': return '/portfolio';
       case 'projects': return '/projects';
+      case 'clients': return '/clients';
       case 'team': return '/team';
       case 'inquiries': return '/inquiries';
       case 'reviews': return '/reviews';
@@ -585,6 +587,8 @@ export default function App() {
       case 'analytics': return '/analytics';
       case 'legal': return activeLegalSlug ? `/legal/${activeLegalSlug}` : '/legal/privacy-policy';
       case 'serviceDetail': return activeServiceSlug ? `/services/${activeServiceSlug}` : '/services';
+      case 'caseStudies': return '/case-studies';
+      case 'caseStudyDetail': return activeCaseStudySlug ? `/case-studies/${activeCaseStudySlug}` : '/case-studies';
       default: return '/' + tab;
     }
   };
@@ -609,6 +613,14 @@ export default function App() {
     return null;
   };
 
+  const parseCaseStudySlugFromPath = (path: string): string | null => {
+    const cleanPath = path.replace(/\/$/, '') || '/';
+    if (cleanPath.startsWith('/case-studies/') && cleanPath !== '/case-studies') {
+      return cleanPath.replace('/case-studies/', '');
+    }
+    return null;
+  };
+
   const pathToTab = (path: string) => {
     const cleanPath = path.replace(/\/$/, '') || '/';
     if (cleanPath.startsWith('/legal')) {
@@ -617,22 +629,27 @@ export default function App() {
     if (cleanPath.startsWith('/services/') && cleanPath !== '/services') {
       return 'serviceDetail' as const;
     }
+    if (cleanPath.startsWith('/case-studies/') && cleanPath !== '/case-studies') {
+      return 'caseStudyDetail' as const;
+    }
     switch (cleanPath) {
       case '/': case '/home': return 'home' as const;
       case '/services': return 'services' as const;
       case '/portfolio': return 'portfolio' as const;
       case '/projects': return 'projects' as const;
+      case '/clients': return 'clients' as const;
       case '/team': return 'team' as const;
       case '/inquiries': return 'inquiries' as const;
       case '/reviews': return 'reviews' as const;
       case '/chat': return 'chat' as const;
       case '/settings': return 'settings' as const;
       case '/analytics': return 'analytics' as const;
+      case '/case-studies': return 'caseStudies' as const;
       default: return 'home' as const;
     }
   };
 
-  const [activeTabState, setActiveTabState] = useState<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail' | 'legal'>(() => {
+  const [activeTabState, setActiveTabState] = useState<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail' | 'legal' | 'caseStudies' | 'caseStudyDetail'>(() => {
     return pathToTab(window.location.pathname);
   });
 
@@ -644,7 +661,11 @@ export default function App() {
     return parseServiceSlugFromPath(window.location.pathname);
   });
 
-  const setActiveTab = (tab: 'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail' | 'legal') => {
+  const [activeCaseStudySlug, setActiveCaseStudySlug] = useState<string | null>(() => {
+    return parseCaseStudySlugFromPath(window.location.pathname);
+  });
+
+  const setActiveTab = (tab: 'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail' | 'legal' | 'caseStudies' | 'caseStudyDetail') => {
     setActiveTabState(tab);
     const targetPath = tabToPath(tab);
     if (window.location.pathname !== targetPath) {
@@ -670,6 +691,24 @@ export default function App() {
     }
   };
 
+  const navigateToCaseStudy = (slug: string) => {
+    setActiveCaseStudySlug(slug);
+    setActiveTabState('caseStudyDetail');
+    const targetPath = `/case-studies/${slug}`;
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ tab: 'caseStudyDetail', caseStudySlug: slug }, '', targetPath);
+    }
+  };
+
+  const navigateToCaseStudyListing = () => {
+    setActiveCaseStudySlug(null);
+    setActiveTabState('caseStudies');
+    const targetPath = '/case-studies';
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ tab: 'caseStudies' }, '', targetPath);
+    }
+  };
+
   const activeTab = activeTabState;
 
   // Listen to browser Back / Forward buttons (popstate event)
@@ -682,6 +721,12 @@ export default function App() {
       } else if (currentPath.startsWith('/services/') && currentPath !== '/services') {
         setActiveServiceSlug(parseServiceSlugFromPath(currentPath));
         setActiveTabState('serviceDetail');
+      } else if (currentPath.startsWith('/case-studies/') && currentPath !== '/case-studies') {
+        setActiveCaseStudySlug(parseCaseStudySlugFromPath(currentPath));
+        setActiveTabState('caseStudyDetail');
+      } else if (currentPath === '/case-studies') {
+        setActiveCaseStudySlug(null);
+        setActiveTabState('caseStudies');
       } else if (event.state && event.state.tab) {
         setActiveTabState(event.state.tab);
       } else {
@@ -753,7 +798,6 @@ export default function App() {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
     window.addEventListener('online', handleOnline);
-    window.removeEventListener('offline', handleOffline);
     window.addEventListener('offline', handleOffline);
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -976,6 +1020,16 @@ export default function App() {
           title = 'Platform Analytics & Growth Dashboard | DigiWorku';
           description = 'View real-time performance analytics, client satisfaction metrics, and delivery health stats.';
           break;
+        case 'caseStudies':
+          path = '/case-studies';
+          title = 'Case Studies — Real Projects, Real Results | DigiWorku';
+          description = 'Detailed case studies from DigiWorku: web app development, branding, video production, and AI automation projects with verified metrics and client quotes.';
+          break;
+        case 'caseStudyDetail':
+          path = activeCaseStudySlug ? `/case-studies/${activeCaseStudySlug}` : '/case-studies';
+          title = `Case Study${activeCaseStudySlug ? ` — ${activeCaseStudySlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}` : ''} | DigiWorku`;
+          description = 'A detailed DigiWorku case study covering project challenges, approach, technology, and real measurable outcomes.';
+          break;
         default:
           path = '/';
           title = "DigiWorku — India's Digital Workforce & AI Ecosystem";
@@ -1031,7 +1085,7 @@ export default function App() {
     const twUrl = document.querySelector('meta[property="twitter:url"]');
     if (twUrl) twUrl.setAttribute('content', fullCanonical);
 
-  }, [activeTab, activeLegalSlug, activeServiceSlug]);
+  }, [activeTab, activeLegalSlug, activeServiceSlug, activeCaseStudySlug]);
 
   // Safe exit translation helper restoring public domain clean of /admin
   const exitAdminPanelMode = () => {
@@ -2109,7 +2163,7 @@ export default function App() {
               </div>
 
               <p className="text-[10.5px] text-[#00311F]/80 dark:text-slate-300 font-medium leading-relaxed">
-                Jab user msg karta hai to auto reply <strong>10 second</strong> baad receive hota hai. Aap yahan se text edit/remove kar sakte hain.
+                When a user sends a message, an auto-reply is sent after a <strong>10-second</strong> delay. You can edit or remove the message text below.
               </p>
 
               <div className="space-y-1">
@@ -2661,9 +2715,10 @@ export default function App() {
     localStorage.setItem('digiworku-theme', !darkMode ? 'dark' : 'light');
   };
 
-  // Toast confirmation feedback trigger
+  // Toast confirmation feedback trigger — shows the existing toast UI for 3 seconds
   const triggerToast = (text: string) => {
-    // Disabled as requested: no toast popups should show up anywhere on clicking any button or icon
+    setCopiedText(text);
+    setTimeout(() => setCopiedText(null), 3000);
   };
 
   // Fetch inquiries from Supabase DB and merge with local state
@@ -2841,7 +2896,7 @@ export default function App() {
     }
   };
 
-  // Validate Supabase Connection on Component Mount & start Chat Polling
+  // Validate Supabase Connection on Component Mount & set up Realtime chat sync
   useEffect(() => {
     async function checkSupabase() {
       try {
@@ -2865,11 +2920,28 @@ export default function App() {
     }
     checkSupabase();
 
-    // Live Chat polling interval every 2.5 seconds
-    const interval = setInterval(() => {
+    // Supabase Realtime subscription — receive new messages via push (no polling overhead)
+    const realtimeChannel = supabase
+      .channel('messages-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        (_payload: any) => {
+          // A new message was inserted — sync immediately
+          fetchMessagesFromDB();
+        }
+      )
+      .subscribe();
+
+    // 10-second fallback poll — safety net if Realtime websocket drops
+    const fallbackInterval = setInterval(() => {
       fetchMessagesFromDB();
-    }, 2500);
-    return () => clearInterval(interval);
+    }, 10000);
+
+    return () => {
+      supabase.removeChannel(realtimeChannel);
+      clearInterval(fallbackInterval);
+    };
   }, [currentUser]);
 
   // Manual Supabase connection check trigger
@@ -3602,6 +3674,19 @@ export default function App() {
                 </button>
 
                 <button
+                  onClick={() => { navigateToCaseStudyListing(); setIsSidebarOpen(false); }}
+                  className={`w-full flex items-center justify-between p-3 px-4 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${(activeTab === 'caseStudies' || activeTab === 'caseStudyDetail')
+                    ? 'bg-[#00c853] text-white shadow-lg shadow-[#00c853]/15 font-bold'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-[#00c853] dark:hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <BarChart3 className="w-5 h-5" />
+                    <span>Case Studies</span>
+                  </div>
+                </button>
+
+                <button
                   onClick={() => { setActiveTab('services'); setIsSidebarOpen(false); }}
                   className={`w-full flex items-center justify-between p-3 px-4 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${activeTab === 'services'
                     ? 'bg-[#00c853] text-white shadow-lg shadow-[#00c853]/15 font-bold'
@@ -3752,6 +3837,19 @@ export default function App() {
                       <span className="text-[10px] font-black bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-full">
                         {projectsList.length}
                       </span>
+                    </button>
+
+                    <button
+                      onClick={() => { navigateToCaseStudyListing(); setIsSidebarOpen(false); }}
+                      className={`w-full flex items-center justify-between p-3 px-4 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${(activeTab === 'caseStudies' || activeTab === 'caseStudyDetail')
+                        ? 'bg-[#00c853] text-white shadow-lg shadow-[#00c853]/15 font-bold'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-[#00c853] dark:hover:text-[#00c853] hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <BarChart3 className="w-5 h-5" />
+                        <span>Case Studies</span>
+                      </div>
                     </button>
 
                     <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
@@ -4086,7 +4184,7 @@ export default function App() {
                         <input
                           type="email"
                           required
-                          placeholder="digiworku55@gmail.com / virkanwlia@gmail.com"
+                          placeholder="Enter your admin email address"
                           value={adminEmailInput}
                           onChange={(e) => setAdminEmailInput(e.target.value)}
                           className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-850 bg-slate-55 dark:bg-[#202020]/40 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none transition-all font-semibold"
@@ -8461,6 +8559,26 @@ export default function App() {
                         setActiveLegalSlug(null);
                         window.history.pushState({}, '', '/');
                       }}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Case Studies Listing + Detail */}
+                {(activeTab === 'caseStudies' || activeTab === 'caseStudyDetail') && (
+                  <motion.div
+                    key={`tab-case-studies-${activeCaseStudySlug ?? 'listing'}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-[#0d0d0d] z-50"
+                  >
+                    <CaseStudies
+                      darkMode={darkMode}
+                      activeSlug={activeCaseStudySlug}
+                      onNavigateToSlug={(slug) => navigateToCaseStudy(slug)}
+                      onBackToListing={() => navigateToCaseStudyListing()}
+                      onCTA={() => handleOpenServiceRequestModal()}
                     />
                   </motion.div>
                 )}

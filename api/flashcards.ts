@@ -57,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const prompt = `Generate a set of ${count} high-quality educational flashcards about: "${topic}". Make sure the target audience gets intuitive and clear answers.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
         systemInstruction: "You are an elite educator. Create deep learning flashcards with questions, concise answers, and sub-topic categories.",

@@ -104,12 +104,18 @@ async function startServer() {
         return;
       }
 
-      // Credentials live ONLY on the server — never shipped to the browser
-      const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'digiworku55@gmail.com,virkanwlia@gmail.com')
+      // Credentials come ONLY from environment variables — never hardcoded
+      if (!process.env.ADMIN_EMAILS || !process.env.ADMIN_PASSWORD) {
+        console.error('[admin-login] ADMIN_EMAILS or ADMIN_PASSWORD env vars are not set.');
+        res.status(503).json({ error: 'Admin login is not configured on this server. Set ADMIN_EMAILS and ADMIN_PASSWORD environment variables.' });
+        return;
+      }
+
+      const ADMIN_EMAILS = process.env.ADMIN_EMAILS
         .split(',')
         .map((e: string) => e.trim().toLowerCase());
 
-      const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'DigiWorku55@';
+      const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
       const cleanEmail = email.trim().toLowerCase();
 
@@ -142,7 +148,7 @@ async function startServer() {
         } else if (message.toLowerCase().includes('brand') || message.toLowerCase().includes('logo') || message.toLowerCase().includes('design')) {
           reply = "We have mapped out 3 fresh aesthetic options for your custom branding. Let's schedule a call tomorrow with our Lead visual director to finalize.";
         } else if (message.toLowerCase().includes('status') || message.toLowerCase().includes('help') || message.toLowerCase().includes('who')) {
-          reply = "As your DigiWorku Client Partner, I am here to help you coordinate design, dev, and analytics tasks. We ensure: 'Results jo aapki growth ko define karein'.";
+          reply = "As your DigiWorku Client Partner, I am here to help you coordinate design, dev, and analytics tasks.";
         }
         res.json({ text: reply });
         return;
@@ -163,7 +169,7 @@ async function startServer() {
       });
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         contents,
         config: {
           systemInstruction,
@@ -214,7 +220,7 @@ async function startServer() {
       const prompt = `Generate a set of ${count} high-quality educational flashcards about: "${topic}". Make sure the target audience gets intuitive and clear answers.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         contents: prompt,
         config: {
           systemInstruction: "You are an elite educator. Create deep learning flashcards with questions, concise answers, and sub-topic categories.",
@@ -295,7 +301,7 @@ async function startServer() {
       const prompt = `Deconstruct the topic "${topic}" into a logical node graph (5 to 8 nodes total) for visualization. Provide a central root node, and connecting branch nodes. Connect children to parents or sibling nodes.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         contents: prompt,
         config: {
           systemInstruction: "You are an expert system mapping consultant. Structure information into a hierarchical node graph with clear text and connected nodes. Nodes must have brief descriptions (10 words max). Connections must refer to node IDs.",
@@ -382,7 +388,7 @@ Format: "${format}".
 Make it expansive, clean, and extremely polished. Use Markdown headlines, lists, and quotes nicely. Do not use conversational preambles.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         contents: userPrompt,
         config: {
           systemInstruction: "You are an elite creative writer, author, and professional summarizer. Produce stellar typography-friendly content directly without apologies or introductions.",

@@ -64,7 +64,7 @@ Format: "${format}".
 Make it expansive, clean, and extremely polished. Use Markdown headlines, lists, and quotes nicely. Do not use conversational preambles.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-2.0-flash",
       contents: userPrompt,
       config: {
         systemInstruction: "You are an elite creative writer, author, and professional summarizer. Produce stellar typography-friendly content directly without apologies or introductions.",
