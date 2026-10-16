@@ -200,143 +200,10 @@ interface ChatMessage {
   };
 }
 
-const INITIAL_PROJECTS: ProjectItem[] = [
-  {
-    id: 'proj-ugc-1',
-    title: 'Viral D2C E-Commerce UGC Reel',
-    description: 'High-converting Instagram & TikTok UGC short video featuring product unboxing, aesthetic lifestyle framing, and trending audio voiceover.',
-    category: 'UGC Videos',
-    tags: ['UGC', 'INSTAGRAM', 'REELS', 'D2C'],
-    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
-    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-lighting-1230-large.mp4',
-    mediaType: 'video',
-    clientName: 'GlowSkin Organics',
-    impactResult: '2.4M Views & +58% Direct Purchase Conversion Rate'
-  },
-  {
-    id: 'proj-gfx-1',
-    title: 'Brand Identity & Visual Graphics Suite',
-    description: 'Complete brand graphics package including vector logo mark, social media promotion banners, typography system, and product packaging vector files.',
-    category: 'Graphics Design',
-    tags: ['GRAPHICS', 'BRANDING', 'PACKAGING'],
-    imageUrl: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80',
-    mediaType: 'image',
-    clientName: 'Aura Premium Beverages',
-    impactResult: '100% Brand Guidelines Standard & Retail Handoff'
-  },
-  {
-    id: 'proj-1',
-    title: 'EliteCommerce UI/UX',
-    description: 'A complete overhaul of the shopping experience for a luxury fashion house, focusing on micro-interactions and seamless checkout flows.',
-    category: 'UI/UX Design',
-    tags: ['DESIGN', 'RETAIL'],
-    imageUrl: 'https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=80',
-    mediaType: 'image',
-    clientName: 'EliteCommerce',
-    impactResult: '+45% conversion optimization with modern design standards'
-  },
-  {
-    id: 'proj-3',
-    title: 'Nexus Cloud Architecture',
-    description: 'Scalable serverless infrastructure designed for high-concurrency real-time digital communication and transactional stability.',
-    category: 'Web Development',
-    tags: ['DEVELOPMENT', 'CLOUD'],
-    imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80',
-    mediaType: 'image',
-    clientName: 'Nexus Inc.',
-    impactResult: 'Zero outages under extreme 100k+ concurrent requests peak'
-  }
-];
+// ─── All initial data starts EMPTY — fetched from Supabase on mount ───
+// No hardcoded/fake data. Admin adds real content through the CRM panel.
 
-// Initial Service Offerings matching Image 4
-const INITIAL_SERVICES: ServiceItem[] = [
-  {
-    id: 'serv-1',
-    title: 'Website Development',
-    description: 'Scalable, responsive, and high-performance web applications built with modern frameworks and robust security setups.',
-    category: 'Development',
-    price: '₹45,000',
-    icon: 'Globe',
-    content: `### Deep Dive: Comprehensive Website & Web Application Engineering
-
-At DigiWorku, our Web Development methodology combines cutting-edge modern technologies (React, Next.js, TypeScript, Tailwind CSS, Node.js) with robust serverless architecture to deliver lightning-fast, SEO-optimized, and secure digital products.
-
-#### What's Included in This Package:
-- **Custom UI/UX Implementation**: Bespoke responsive designs tailored to your brand identity without clunky template dependencies.
-- **Full-Stack Integration**: High-speed REST/GraphQL API connections, server-side rendering, and scalable database schemas (Supabase, PostgreSQL, MongoDB).
-- **Performance & Security Suite**: 95+ Google Lighthouse speed scoring, SSL/TLS encryption, automated backups, and DDoS protection.
-- **CMS & Admin Portal**: Easy-to-use content management dashboards allowing non-technical team members to update content instantly.
-
-#### Development Lifecycle & Milestones:
-1. **Discovery & Architecture Mapping** (Days 1-3): Wireframing, database schema planning, and technical specification lock.
-2. **Sprint Execution & Prototype Review** (Days 4-14): Iterative frontend & backend engineering with live staging server updates.
-3. **Quality Assurance & Security Audits** (Days 15-18): Cross-browser testing, penetration testing, and load testing.
-4. **Deployment & Post-Launch Support** (Days 19-21): Production rollout, DNS configuration, and 30-day post-launch warranty.`
-  },
-  {
-    id: 'serv-2',
-    title: 'Graphic Design',
-    description: 'Stunning visual assets, from social media graphics to corporate presentations that captivate your target audience.',
-    category: 'Design & Branding',
-    price: '₹8,000',
-    icon: 'Palette',
-    content: `### Deep Dive: High-Impact Visual Graphic Design & Brand Communication
-
-Elevate your visual presence across all digital and print touchpoints with DigiWorku's elite graphic design suite. We craft eye-catching visual narratives that capture audience attention and drive conversion.
-
-#### What's Included in This Package:
-- **Social Media & Campaign Assets**: Premium custom templates, carousel graphics, promotional banners, and ad creatives formatted for all major platforms.
-- **Corporate & Pitch Decks**: High-converting investor presentation decks, sales brochures, and annual report layouts.
-- **Marketing Materials**: Print-ready flyers, business cards, billboards, vector icon sets, and custom illustrations.
-- **Vector Source Files**: Full ownership of scalable vector files (.AI, .EPS, .SVG, .PNG, .PDF, Figma links).
-
-#### Design Process:
-1. **Brand Questionnaire & Moodboarding**: Aligning on color psychology, typography hierarchy, and competitive positioning.
-2. **Concept Iterations**: Presenting 3 distinct visual directions within 48 hours.
-3. **Refinement & Export**: Unlimited revisions on selected concept and multi-format asset export.`
-  },
-  {
-    id: 'serv-3',
-    title: 'Video Editing',
-    description: 'Professional post-production for commercials, YouTube, and corporate videos with seamless transitions and motion graphics.',
-    category: 'Video Production',
-    price: '₹12,500',
-    icon: 'Film',
-    content: `### Deep Dive: Cinematic Video Post-Production & Motion Graphics
-
-Transform raw footage into compelling cinematic visual stories. Our video engineering workflow produces broadcast-ready content optimized for social media feeds, YouTube, TV commercials, and corporate keynotes.
-
-#### What's Included in This Package:
-- **Precise Storyboarding & Cutting**: Expert pacing, dialogue trimming, multi-camera angle synchronization, and narrative structuring.
-- **Color Grading & Visual FX**: Cinematic LUT color correction, custom motion graphic callouts, sound design, and audio mastering.
-- **Multi-Format Export**: Rendered in crisp 4K UHD and optimized ratios for Instagram Reels (9:16), YouTube (16:9), and LinkedIn (1:1).
-- **Subtitles & Captions**: Animated kinetic typography captions for high engagement on silent mobile feeds.
-
-#### Production Timeline:
-- Draft Cut delivery within 72 hours.
-- 2 rounds of feedback implementation included.`
-  },
-  {
-    id: 'serv-4',
-    title: 'Branding',
-    description: 'Complete brand identity kits including logo design, typography, color palettes, guidelines, and localized brand positioning.',
-    category: 'Design & Branding',
-    price: '₹30,000',
-    icon: 'Palette',
-    content: `### Deep Dive: Complete Brand Identity Strategy & Visual Ecosystem
-
-A brand is more than just a logo—it's your market footprint. DigiWorku crafts unified, future-proof brand identities that convey trust, premium quality, and emotional connection.
-
-#### What's Included in This Package:
-- **Logo Design Architecture**: Primary logo, secondary mark, sub-mark, and favicon kit.
-- **Comprehensive Brand Guidelines (Brand Book)**: 25+ page PDF documenting clear guidelines for logo usage, clear space, brand color palette (HEX, RGB, CMYK, Pantone), and typography pairings.
-- **Tone of Voice & Messaging Rules**: Core brand values, slogan, elevator pitch, and communication style.
-- **Stationery & Mockups**: Business card designs, letterheads, social media profile banners, and merchandise mockups.
-
-#### Delivery Guarantee:
-- 100% original custom visual artwork with full legal trademark assignment rights.`
-  }
-];
+const INITIAL_PROJECTS: ProjectItem[] = [];
 
 export interface CRMProject {
   id: string;
@@ -360,7 +227,6 @@ export interface CRMInquiry {
   unread: boolean;
   budget?: string;
   status: 'new' | 'reviewed' | 'converted';
-  // DB-mapped fields (from Supabase inquiries table)
   email?: string;
   mobile?: string;
 }
@@ -394,138 +260,6 @@ export interface TeamMember {
   blocked?: boolean;
 }
 
-const INITIAL_TEAM_MEMBERS: TeamMember[] = [
-  {
-    id: 'team-1',
-    name: 'Ananya Sharma',
-    role: 'System Administrator',
-    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    status: 'ONLINE',
-    blocked: false
-  },
-  {
-    id: 'team-2',
-    name: 'Kabir Rao',
-    role: 'Lead prompt Engineer',
-    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    status: 'ONLINE',
-    blocked: false
-  },
-  {
-    id: 'team-3',
-    name: 'Neha Patel',
-    role: 'UI/UX Craft Architect',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    status: 'OFF SHIFT',
-    blocked: false
-  },
-  {
-    id: 'team-4',
-    name: 'Aarav Kapoor',
-    role: 'React D3 Specialist',
-    avatarUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    status: 'ONLINE',
-    blocked: false
-  }
-];
-
-const INITIAL_CRM_PROJECTS: CRMProject[] = [
-  {
-    id: 'proj-1',
-    name: 'EliteCommerce UI Revamp',
-    leadName: 'Neha Gupta',
-    leadAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    status: 'ON TRACK',
-    healthScore: 98,
-    budget: '₹4,50,000',
-    description: 'Complete UI/UX redesign and Next.js frontend rebuild.',
-    progress: 75
-  },
-  {
-    id: 'proj-2',
-    name: 'FinTrust Mobile App Security',
-    leadName: 'Kabir Rao',
-    leadAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    status: 'STABLE',
-    healthScore: 95,
-    budget: '₹2,80,000',
-    description: 'Biometric MFA & End-to-end encrypted transaction gateway.',
-    progress: 90
-  },
-  {
-    id: 'proj-3',
-    name: 'Nexus Cloud Infrastructure',
-    leadName: 'Aarav Kapoor',
-    leadAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    status: 'IN REVIEW',
-    healthScore: 88,
-    budget: '₹6,00,000',
-    description: 'Kubernetes orchestration and Supabase backend sync.',
-    progress: 60
-  }
-];
-
-const INITIAL_CRM_INQUIRIES: CRMInquiry[] = [
-  {
-    id: 'inq-1',
-    clientName: 'Rahul Verma (VermaTech Solutions)',
-    projectName: 'Custom AI Chatbot & Customer Portal',
-    timeAgo: '10 mins ago',
-    summary: 'Need a custom AI Assistant integrated into our customer portal to handle tier-1 support queries automatically.',
-    unread: true,
-    budget: '₹1,50,000 - ₹3,00,000',
-    status: 'new'
-  },
-  {
-    id: 'inq-2',
-    clientName: 'Siddharth Mehta (GrowthSpark)',
-    projectName: 'E-commerce Mobile App Development',
-    timeAgo: '2 hours ago',
-    summary: 'Looking for a dedicated React Native engineering squad to build a cross-platform mobile app in 6 weeks.',
-    unread: false,
-    budget: '₹3,50,000',
-    status: 'reviewed'
-  },
-  {
-    id: 'inq-3',
-    clientName: 'Kavita Sundaram (Bloom Studio)',
-    projectName: 'Brand Identity & Corporate Design Suite',
-    timeAgo: '1 day ago',
-    summary: 'Full brand guidelines, vector logo package, and animated social media kit for our new product launch.',
-    unread: false,
-    budget: '₹85,000',
-    status: 'converted'
-  }
-];
-
-const INITIAL_CHAT_THREADS: ChatThread[] = [
-  {
-    id: 'alex',
-    name: 'Alex Rivera',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-    companyName: 'Rivera Tech',
-    status: 'online',
-    lastMessageText: "Checking the new feature build right now. Give me 5 minutes.",
-    lastMessageTime: '12:32 PM',
-    tag: 'WORKFLOW AUTOMATION',
-    unreadCount: 0,
-    email: 'alex.rivera@riveratech.com',
-    phone: '+1 555-0199',
-    activeProjectName: 'Workflow Automation',
-    activeProjectBudget: '₹3,50,000',
-    activeProjectProgress: 80,
-    adminNotes: 'Alex is evaluating workflow features.',
-    messages: [
-      {
-        id: 'msg-1',
-        role: 'assistant',
-        content: 'Welcome to DigiWorku! How can our engineering and design teams assist your project today?',
-        timestamp: '12:00 PM'
-      }
-    ]
-  }
-];
-
 export interface ReviewItem {
   id: string;
   name: string;
@@ -535,36 +269,6 @@ export interface ReviewItem {
   avatarInitials: string;
   createdAt: string;
 }
-
-const INITIAL_REVIEWS: ReviewItem[] = [
-  {
-    id: 'rev-1',
-    name: 'Aditya Sen',
-    role: 'Chief Architect, TechPulse',
-    rating: 5,
-    text: "Primacy in delivery parameters. The Indian development unit scaled our backend with extreme efficiency. Zero-mock pipelines built elegantly!",
-    avatarInitials: 'AS',
-    createdAt: '2 days ago'
-  },
-  {
-    id: 'rev-2',
-    name: 'Priya Kothari',
-    role: 'Product Lead, Elevate Commerce',
-    rating: 5,
-    text: "Highly polished custom UI results. They did exactly what was described! Very communicative and responsive to our needs.",
-    avatarInitials: 'PK',
-    createdAt: '4 days ago'
-  },
-  {
-    id: 'rev-3',
-    name: 'Rohan Deshmukh',
-    role: 'CTO, FinEdge Systems',
-    rating: 5,
-    text: "Outstanding turnaround time and code cleanliness. The Supabase integration and AI chat automation exceeded our expectations.",
-    avatarInitials: 'RD',
-    createdAt: '1 week ago'
-  }
-];
 
 export default function App() {
   // Navigation & Screen Control
@@ -857,7 +561,10 @@ export default function App() {
   });
 
   // Admin Authentication State variables (digiworku55@gmail.com / virkanwlia@gmail.com)
-  const [adminEmailInput, setAdminEmailInput] = useState<string>('');
+  const [adminEmailInput, setAdminEmailInput] = useState<string>(() => {
+    // Restore saved admin email so profile panel shows correct identity after refresh
+    return localStorage.getItem('digiworku-admin-email') || '';
+  });
   const [adminPasswordInput, setAdminPasswordInput] = useState<string>('');
   const [adminAuthError, setAdminAuthError] = useState<string | null>(null);
   const [isAdminAuthLoading, setIsAdminAuthLoading] = useState<boolean>(false);
@@ -1128,7 +835,8 @@ export default function App() {
       if (response.ok && data.success) {
         setIsAdmin(true);
         localStorage.setItem('digiworku-is-admin', 'true');
-        setAdminEmailInput('');
+        localStorage.setItem('digiworku-admin-email', adminEmailInput.trim());
+        setAdminEmailInput(adminEmailInput.trim()); // keep email in state for profile display
         setAdminPasswordInput('');
         triggerToast("🔑 Admin Console Authenticated Successfully! Access Granted.");
       } else {
@@ -1148,17 +856,12 @@ export default function App() {
   // CRM Admin Panel Live States
   const [crmProjectsList, setCrmProjectsList] = useState<CRMProject[]>(() => {
     const saved = localStorage.getItem('digiworku-crm-projects-v2');
-    let projects: CRMProject[] = saved ? JSON.parse(saved) : INITIAL_CRM_PROJECTS;
-
-    // Hard remove specific users
-    projects = projects.map(p => p.leadName === 'Priya Sharma' ? { ...p, leadName: 'Neha Gupta' } : p);
-
-    return projects;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => {
     const saved = localStorage.getItem('digiworku-team-members-v1');
-    return saved ? JSON.parse(saved) : INITIAL_TEAM_MEMBERS;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
@@ -1179,12 +882,12 @@ export default function App() {
 
   const [crmInquiriesList, setCrmInquiriesList] = useState<CRMInquiry[]>(() => {
     const saved = localStorage.getItem('digiworku-crm-inquiries-v2');
-    return saved ? JSON.parse(saved) : INITIAL_CRM_INQUIRIES;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [servicesList, setServicesList] = useState<ServiceItem[]>(() => {
     const saved = localStorage.getItem('digiworku-services-v2');
-    return saved ? JSON.parse(saved) : INITIAL_SERVICES;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [isAddingService, setIsAddingService] = useState<boolean>(false);
@@ -1210,7 +913,7 @@ export default function App() {
   // Client Reviews List State
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>(() => {
     const saved = localStorage.getItem('digiworku-reviews-v1');
-    return saved ? JSON.parse(saved) : INITIAL_REVIEWS;
+    return saved ? JSON.parse(saved) : [];
   });
 
   // Service Booking / Request Modal States
@@ -1395,7 +1098,7 @@ export default function App() {
 
   const [chatThreadsList, setChatThreadsList] = useState<ChatThread[]>(() => {
     const saved = localStorage.getItem('digiworku-crm-threads-v2');
-    let threads: ChatThread[] = saved ? JSON.parse(saved) : [...INITIAL_CHAT_THREADS];
+    let threads: ChatThread[] = saved ? JSON.parse(saved) : [];
 
     // Hard remove specific users
     threads = threads.filter(t => !['aditya', 'priya', 'rajiv'].includes(t.id));
@@ -1753,17 +1456,10 @@ export default function App() {
                         console.warn("Failed deleting messages from Supabase:", err?.message || err);
                       }
 
-                      // 2. Clear thread messages locally
-                      setChatThreadsList(prev => prev.map(t => {
-                        if (t.id === activeThread.id || t.id === targetUserId) {
-                          return {
-                            ...t,
-                            lastMessageText: 'Chat cleared by Admin',
-                            messages: []
-                          };
-                        }
-                        return t;
-                      }));
+                      // 2. Fully remove thread from list (not just clear messages) + re-sync from DB
+                      setChatThreadsList(prev => prev.filter(t =>
+                        t.id !== activeThread.id && t.id !== targetUserId && t.email !== targetUserId
+                      ));
 
                       // 3. Clear chatHistory if active thread is current logged-in user
                       if (targetUserId === getChatUserId(currentUser)) {
@@ -1771,8 +1467,12 @@ export default function App() {
                       }
                       localStorage.removeItem(`digiworku-messages-${targetUserId}`);
                       localStorage.removeItem('digiworku-messages');
+                      setActiveThreadId(null);
 
-                      triggerToast(`🗑️ Deleted all messages for "${activeThread.name}" on both sides!`);
+                      // 4. Re-fetch from DB to confirm deletion
+                      setTimeout(() => fetchMessagesFromDB(), 500);
+
+                      triggerToast(`🗑️ Thread for "${activeThread.name}" deleted permanently.`);
                     }
                   }}
                   className="px-3 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-600 dark:text-red-400 hover:text-white transition-all text-xs font-bold flex items-center gap-1.5 cursor-pointer ml-1"
@@ -2367,7 +2067,7 @@ export default function App() {
   // Portfolio items and filters
   const [projectsList, setProjectsList] = useState<ProjectItem[]>(() => {
     const saved = localStorage.getItem('digiworku-projects');
-    return saved ? JSON.parse(saved) : INITIAL_PROJECTS;
+    return saved ? JSON.parse(saved) : [];
   });
   const [portfolioFilter, setPortfolioFilter] = useState<string>('All');
   const [searchProjectQuery, setSearchProjectQuery] = useState<string>('');
@@ -2405,7 +2105,7 @@ export default function App() {
             description: item.description,
             category: item.category,
             tags: Array.isArray(item.tags) ? item.tags : (typeof item.tags === 'string' ? item.tags.split(',') : []),
-            imageUrl: item.image_url || item.imageUrl || 'https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=80',
+            imageUrl: item.image_url || item.imageUrl || '',
             videoUrl: item.video_url || item.videoUrl || undefined,
             mediaType: item.media_type || item.mediaType || (item.video_url || item.videoUrl ? 'video' : 'image'),
             clientName: item.client_name || item.clientName || 'DigiWorku Client',
@@ -2455,7 +2155,7 @@ export default function App() {
     setIsProjectModalOpen(true);
   };
 
-  const handlePortfolioFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePortfolioFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -2465,26 +2165,54 @@ export default function App() {
     }
 
     const isVid = file.type.startsWith('video');
-    const reader = new FileReader();
+    triggerToast(isVid ? "⏳ Uploading video to cloud..." : "⏳ Uploading image to cloud...");
 
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
+    try {
+      // Upload to Supabase Storage
+      const ext = file.name.split('.').pop() || (isVid ? 'mp4' : 'jpg');
+      const filename = `portfolio/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const { data, error } = await supabase.storage
+        .from('digiworku-uploads')
+        .upload(filename, file, { contentType: file.type, upsert: false });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from('digiworku-uploads')
+        .getPublicUrl(data.path);
+
+      const publicUrl = urlData.publicUrl;
+
       if (isVid) {
         setProjectFormMediaType('video');
-        setProjectFormVideoUrl(result);
-        if (!projectFormImageUrl) {
-          setProjectFormImageUrl('https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80');
-        }
-        triggerToast("🎥 Video file loaded successfully!");
+        setProjectFormVideoUrl(publicUrl);
+        triggerToast("🎥 Video uploaded to cloud successfully!");
       } else {
         setProjectFormMediaType('image');
-        setProjectFormImageUrl(result);
-        triggerToast("🖼️ Image file loaded successfully!");
+        setProjectFormImageUrl(publicUrl);
+        triggerToast("🖼️ Image uploaded to cloud successfully!");
       }
-    };
-
-    reader.readAsDataURL(file);
+    } catch (err: any) {
+      // Fallback to local base64 preview if Storage not configured yet
+      console.warn('Supabase Storage upload failed, using local preview:', err.message);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        if (isVid) {
+          setProjectFormMediaType('video');
+          setProjectFormVideoUrl(result);
+          triggerToast("🎥 Video loaded (local preview — configure Storage bucket for cloud upload).");
+        } else {
+          setProjectFormMediaType('image');
+          setProjectFormImageUrl(result);
+          triggerToast("🖼️ Image loaded (local preview — configure Storage bucket for cloud upload).");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
+
 
   const handleSaveProject = async () => {
     const title = projectFormTitle.trim();
@@ -2497,7 +2225,7 @@ export default function App() {
     }
 
     const tagsArray = projectFormTags.split(',').map(t => t.trim().toUpperCase()).filter(Boolean);
-    const fallbackImage = 'https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=80';
+    const fallbackImage = '';
 
     const newProjItem: ProjectItem = {
       id: editingProject ? editingProject.id : `proj-${Date.now()}`,
@@ -2721,7 +2449,170 @@ export default function App() {
     setTimeout(() => setCopiedText(null), 3000);
   };
 
+  // ─── Supabase Auth Session Restore on Mount ───────────────────────────────
+  // Restores the client login session using Supabase Auth on page reload
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const u = session.user;
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', u.id)
+          .single();
+
+        const displayName = profile?.name || u.user_metadata?.name || u.email?.split('@')[0] || 'Client';
+        const avatarUrl = profile?.avatar_url ||
+          `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=00c853&color=fff&bold=true&size=256`;
+
+        setCurrentUser({
+          name: displayName,
+          email: u.email!,
+          mobile: profile?.mobile || '',
+          avatarUrl,
+          registered: true
+        });
+      }
+    });
+
+    // Listen to auth state changes (sign in / sign out)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        setCurrentUser(null);
+        localStorage.removeItem('digiworku-user-session');
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // ─── Fetch Team from Supabase ──────────────────────────────────────────────
+  const fetchTeamFromDB = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('team')
+        .select('*')
+        .order('sort_order', { ascending: true });
+      if (error) { console.warn('fetchTeamFromDB:', error.message); return; }
+      if (data && data.length > 0) {
+        const mapped: TeamMember[] = data.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          role: r.role,
+          avatarUrl: r.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(r.name)}&background=00c853&color=fff&bold=true&size=256`,
+          status: r.status || 'ONLINE',
+          blocked: r.blocked || false
+        }));
+        setTeamMembers(mapped);
+        localStorage.setItem('digiworku-team-members-v1', JSON.stringify(mapped));
+      }
+    } catch (err: any) { console.warn('fetchTeamFromDB catch:', err.message); }
+  };
+
+  // ─── Fetch Services from Supabase ─────────────────────────────────────────
+  const fetchServicesFromDB = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .order('sort_order', { ascending: true });
+      if (error) { console.warn('fetchServicesFromDB:', error.message); return; }
+      if (data && data.length > 0) {
+        const mapped: ServiceItem[] = data.map((r: any) => ({
+          id: r.id,
+          title: r.title,
+          description: r.description || '',
+          category: r.category || 'Development',
+          price: r.price || '',
+          icon: r.icon || 'Globe',
+          content: r.content || '',
+          overview: r.overview || '',
+          offerings: r.offerings || [],
+          process: r.process || [],
+          features: r.features || [],
+          whyUs: r.why_us || [],
+          deliverables: r.deliverables || [],
+          faqs: r.faqs || []
+        }));
+        setServicesList(mapped);
+        localStorage.setItem('digiworku-services-v2', JSON.stringify(mapped));
+      }
+    } catch (err: any) { console.warn('fetchServicesFromDB catch:', err.message); }
+  };
+
+  // ─── Fetch Reviews from Supabase ──────────────────────────────────────────
+  const fetchReviewsFromDB = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('approved', true)
+        .order('created_at', { ascending: false });
+      if (error) { console.warn('fetchReviewsFromDB:', error.message); return; }
+      if (data && data.length > 0) {
+        const mapped: ReviewItem[] = data.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          role: r.role || '',
+          rating: r.rating || 5,
+          text: r.text,
+          avatarInitials: r.avatar_initials || r.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
+          createdAt: (() => {
+            const d = new Date(r.created_at);
+            const now = new Date();
+            const diff = Math.floor((now.getTime() - d.getTime()) / 86400000);
+            return diff === 0 ? 'Today' : diff === 1 ? '1 day ago' : `${diff} days ago`;
+          })()
+        }));
+        setReviewsList(mapped);
+        localStorage.setItem('digiworku-reviews-v1', JSON.stringify(mapped));
+      }
+    } catch (err: any) { console.warn('fetchReviewsFromDB catch:', err.message); }
+  };
+
+  // ─── Fetch CRM Projects from Supabase ────────────────────────────────────
+  const fetchCrmProjectsFromDB = async () => {
+    if (!isAdmin || panelMode !== 'admin') return;
+    try {
+      const { data, error } = await supabase
+        .from('crm_projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) { console.warn('fetchCrmProjectsFromDB:', error.message); return; }
+      if (data && data.length > 0) {
+        const mapped: CRMProject[] = data.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          leadName: r.lead_name || '',
+          leadAvatar: r.lead_avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(r.lead_name || 'Lead')}&background=00c853&color=fff&bold=true&size=256`,
+          status: r.status || 'ON TRACK',
+          healthScore: r.health_score || 100,
+          budget: r.budget || '',
+          description: r.description || '',
+          progress: r.progress || 0,
+          email: r.email || ''
+        }));
+        setCrmProjectsList(mapped);
+        localStorage.setItem('digiworku-crm-projects-v2', JSON.stringify(mapped));
+      }
+    } catch (err: any) { console.warn('fetchCrmProjectsFromDB catch:', err.message); }
+  };
+
+  // ─── Load all public data on mount ───────────────────────────────────────
+  useEffect(() => {
+    fetchTeamFromDB();
+    fetchServicesFromDB();
+    fetchReviewsFromDB();
+  }, []);
+
+  // ─── Load admin data when admin panel opens ───────────────────────────────
+  useEffect(() => {
+    if (isAdmin && panelMode === 'admin') {
+      fetchCrmProjectsFromDB();
+    }
+  }, [isAdmin, panelMode]);
+
   // Fetch inquiries from Supabase DB and merge with local state
+
   const fetchInquiriesFromDB = async () => {
     if (!isAdmin || panelMode !== 'admin') return;
     try {
@@ -2878,7 +2769,7 @@ export default function App() {
                 tag: 'CLIENT',
                 unreadCount: threadMsgs.filter(m => m.role === 'user').length > 0 ? 1 : 0,
                 email: resolvedEmail,
-                phone: currentUser?.mobile || '+91 98765 43210',
+                phone: currentUser?.mobile || '',
                 activeProjectName: matchingInquiry ? matchingInquiry.projectName : 'Digital Engagement',
                 activeProjectBudget: matchingInquiry ? (matchingInquiry.budget || '₹45,000') : '₹45,000',
                 activeProjectProgress: 25,
@@ -3424,6 +3315,27 @@ export default function App() {
     };
 
     setServicesList(prev => [...prev, newService]);
+
+    // Save to Supabase
+    supabase.from('services').insert({
+      id: newService.id,
+      title: newService.title,
+      description: newService.description,
+      category: newService.category,
+      price: newService.price,
+      icon: newService.icon,
+      content: newService.content || null,
+      overview: newService.overview || null,
+      offerings: newService.offerings || [],
+      process: newService.process || [],
+      features: newService.features || [],
+      why_us: newService.whyUs || [],
+      deliverables: newService.deliverables || [],
+      faqs: newService.faqs || []
+    }).then(({ error }) => {
+      if (error) console.warn('Service insert error:', error.message);
+    });
+
     setIsAddingService(false);
     resetServiceForm();
     triggerToast(`🚀 Added new service "${serviceFormTitle}" successfully!`);
@@ -3464,11 +3376,37 @@ export default function App() {
 
     setEditingServiceId(null);
     resetServiceForm();
+
+    // Save to Supabase
+    const whyUsArr2 = serviceFormWhyUs.split('\n').map(s => s.trim()).filter(Boolean);
+    const delivArr2 = serviceFormDeliverables.split('\n').map(s => s.trim()).filter(Boolean);
+    supabase.from('services').update({
+      title: serviceFormTitle,
+      description: serviceFormDescription,
+      category: serviceFormCategory,
+      price: serviceFormPrice,
+      icon: serviceFormIcon,
+      content: serviceFormContent.trim() || null,
+      overview: serviceFormOverview.trim() || null,
+      offerings: serviceFormOfferings || [],
+      process: serviceFormProcess || [],
+      features: serviceFormFeatures || [],
+      why_us: whyUsArr2,
+      deliverables: delivArr2,
+      faqs: serviceFormFaqs || []
+    }).eq('id', editingServiceId!).then(({ error }) => {
+      if (error) console.warn('Service update error:', error.message);
+    });
+
     triggerToast(`✨ Service updated successfully!`);
   };
 
   const handleDeleteService = (id: string, title: string) => {
     setServicesList(prev => prev.filter(s => s.id !== id));
+    // Delete from Supabase
+    supabase.from('services').delete().eq('id', id).then(({ error }) => {
+      if (error) console.warn('Service delete error:', error.message);
+    });
     triggerToast(`🗑️ Deleted service "${title}"`);
   };
 
@@ -3964,6 +3902,8 @@ export default function App() {
                     onClick={() => {
                       setIsAdmin(false);
                       localStorage.removeItem('digiworku-is-admin');
+                      localStorage.removeItem('digiworku-admin-email');
+                      setAdminEmailInput('');
                       exitAdminPanelMode();
                       triggerToast("🔓 Admin session closed safely.");
                     }}
@@ -4754,6 +4694,20 @@ export default function App() {
                                           progress: 10
                                         };
                                         setCrmProjectsList(prev => [newProj, ...prev]);
+                                        // Save to Supabase
+                                        supabase.from('crm_projects').insert({
+                                          id: newProj.id,
+                                          name: newProj.name,
+                                          lead_name: newProj.leadName || '',
+                                          lead_avatar: newProj.leadAvatar || null,
+                                          status: newProj.status,
+                                          health_score: newProj.healthScore,
+                                          budget: newProj.budget || '',
+                                          description: newProj.description || '',
+                                          progress: newProj.progress || 0
+                                        }).then(({ error }) => {
+                                          if (error) console.warn('CRM project insert error:', error.message);
+                                        });
                                         setCrmInquiriesList(prev => prev.filter(i => i.id !== inq.id));
                                         setActiveProjectsCount(prev => prev + 1);
                                         triggerToast(`🎉 Dynamic Activation: Inquiry from ${inq.clientName} is now active under pipeline project ID ${keyId}!`);
@@ -5931,6 +5885,20 @@ export default function App() {
                                     };
                                     // Update local state
                                     setCrmProjectsList(prev => [newProj, ...prev]);
+                                        // Save to Supabase
+                                        supabase.from('crm_projects').insert({
+                                          id: newProj.id,
+                                          name: newProj.name,
+                                          lead_name: newProj.leadName || '',
+                                          lead_avatar: newProj.leadAvatar || null,
+                                          status: newProj.status,
+                                          health_score: newProj.healthScore,
+                                          budget: newProj.budget || '',
+                                          description: newProj.description || '',
+                                          progress: newProj.progress || 0
+                                        }).then(({ error }) => {
+                                          if (error) console.warn('CRM project insert error:', error.message);
+                                        });
                                     setCrmInquiriesList(prev => prev.filter(i => i.id !== inq.id));
                                     setActiveProjectsCount(prev => prev + 1);
                                     // Update DB: mark inquiry as 'converted' then insert into projects
@@ -6067,6 +6035,18 @@ export default function App() {
                                   createdAt: 'Just now'
                                 };
                                 setReviewsList(prev => [newReview, ...prev]);
+                                // Save to Supabase
+                                supabase.from('reviews').insert({
+                                  id: newReview.id,
+                                  name: newReview.name,
+                                  role: newReview.role,
+                                  rating: newReview.rating,
+                                  text: newReview.text,
+                                  avatar_initials: newReview.avatarInitials,
+                                  approved: true
+                                }).then(({ error }) => {
+                                  if (error) console.warn('Review insert error:', error.message);
+                                });
                                 triggerToast(`🌟 Feedback Log Approved: Thank you ${nameEl.value}!`);
                                 nameEl.value = '';
                                 textEl.value = '';
@@ -6169,6 +6149,9 @@ export default function App() {
                                   <button
                                     onClick={() => {
                                       setTeamMembers(prev => prev.filter(m => m.id !== member.id));
+                                      supabase.from('team').delete().eq('id', member.id).then(({ error }) => {
+                                        if (error) console.warn('Team delete error:', error.message);
+                                      });
                                       triggerToast(`🗑️ Erased team member: ${member.name}`);
                                       setDeleteConfirmId(null);
                                     }}
@@ -6230,6 +6213,9 @@ export default function App() {
                               <button
                                 onClick={() => {
                                   setTeamMembers(prev => prev.map(m => m.id === member.id ? { ...m, blocked: !m.blocked } : m));
+                                      supabase.from('team').update({ blocked: !member.blocked }).eq('id', member.id).then(({ error }) => {
+                                        if (error) console.warn('Team block error:', error.message);
+                                      });
                                   triggerToast(isBlocked ? `🔓 Unblocked workforce partner: ${member.name}` : `🔒 Blocked workforce partner: ${member.name}`);
                                 }}
                                 className={`p-1.5 rounded-lg border text-[10px] transition-colors cursor-pointer ${isBlocked
@@ -6312,6 +6298,9 @@ export default function App() {
                                 <button
                                   onClick={() => {
                                     setTeamMembers(prev => prev.map(m => m.id === member.id ? { ...m, blocked: !m.blocked } : m));
+                                      supabase.from('team').update({ blocked: !member.blocked }).eq('id', member.id).then(({ error }) => {
+                                        if (error) console.warn('Team block error:', error.message);
+                                      });
                                     triggerToast(isBlocked ? `🔓 Unblocked: ${member.name}` : `🔒 Blocked: ${member.name}`);
                                   }}
                                   className="text-[9px] font-extrabold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
@@ -9591,8 +9580,8 @@ export default function App() {
                       <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex flex-col items-center text-center space-y-3">
                         <div className="relative">
                           <img
-                            src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                            alt="Ananya Sharma"
+                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(adminEmailInput ? adminEmailInput.split('@')[0] : 'Admin')}&background=00c853&color=fff&bold=true&size=256`}
+                            alt="Admin Avatar"
                             className="w-20 h-20 rounded-full object-cover border-2 border-[#00c853] shadow-md"
                           />
                           <span className="absolute bottom-0 right-0 w-5 h-5 bg-[#00c853] rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center">
@@ -9600,10 +9589,10 @@ export default function App() {
                           </span>
                         </div>
                         <div>
-                          <h4 className="text-sm font-black text-slate-900 dark:text-white">Ananya Sharma</h4>
-                          <p className="text-xs text-slate-400 mt-0.5">ananya.sharma@digiworku.com</p>
+                          <h4 className="text-sm font-black text-slate-900 dark:text-white">{adminEmailInput ? adminEmailInput.split('@')[0].replace(/[._]/g, ' ').replace(/\w/g, (l: string) => l.toUpperCase()) : 'Administrator'}</h4>
+                          <p className="text-xs text-slate-400 mt-0.5">{adminEmailInput || 'admin@digiworku.in'}</p>
                           <span className="inline-block text-[9px] px-2 py-0.5 rounded-full bg-[#00c853]/10 text-[#00c853] font-bold uppercase tracking-wider mt-2">
-                            Lead PM & Operator Console Admin
+                            Admin Console — Full Access
                           </span>
                         </div>
                       </div>
@@ -9655,21 +9644,35 @@ export default function App() {
                           id="profile-avatar-file-input"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              if (file.size > 2 * 1024 * 1024) {
-                                triggerToast("⚠️ Image size should be less than 2MB.");
+                              if (file.size > 5 * 1024 * 1024) {
+                                triggerToast("⚠️ Image size should be less than 5MB.");
                                 return;
                               }
-                              const reader = new FileReader();
-                              reader.onload = (event) => {
-                                if (event.target?.result) {
-                                  setEditProfileAvatar(event.target.result as string);
-                                  triggerToast("📸 Custom profile photo loaded! Click Save to apply changes.");
-                                }
-                              };
-                              reader.readAsDataURL(file);
+                              triggerToast("⏳ Uploading avatar...");
+                              try {
+                                const ext = file.name.split('.').pop() || 'jpg';
+                                const filename = `avatars/${Date.now()}.${ext}`;
+                                const { data, error } = await supabase.storage
+                                  .from('digiworku-uploads')
+                                  .upload(filename, file, { contentType: file.type, upsert: true });
+                                if (error) throw error;
+                                const { data: urlData } = supabase.storage.from('digiworku-uploads').getPublicUrl(data.path);
+                                setEditProfileAvatar(urlData.publicUrl);
+                                triggerToast("📸 Avatar uploaded! Click Save to apply.");
+                              } catch (err: any) {
+                                // Fallback to base64 preview
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  if (event.target?.result) {
+                                    setEditProfileAvatar(event.target.result as string);
+                                    triggerToast("📸 Avatar loaded locally. Configure Supabase Storage for cloud upload.");
+                                  }
+                                };
+                                reader.readAsDataURL(file);
+                              }
                             }
                           }}
                         />
@@ -9745,22 +9748,37 @@ export default function App() {
 
                         {/* Save Button */}
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             if (!editProfileName.trim() || !editProfileEmail.trim()) {
                               triggerToast("⚠️ Name and Email cannot be empty.");
                               return;
                             }
                             const cleanEmail = editProfileEmail.trim().toLowerCase();
-                            const fallbackAvatarUrl = `https://unavatar.io/${encodeURIComponent(cleanEmail)}?fallback=https://ui-avatars.com/api/?name=${encodeURIComponent(editProfileName)}&background=00c853&color=fff&bold=true&size=256`;
+                            const fallbackAvatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(editProfileName)}&background=00c853&color=fff&bold=true&size=256`;
                             const updatedUser = {
                               ...currentUser,
                               name: editProfileName,
-                              email: editProfileEmail,
+                              email: cleanEmail,
                               mobile: editProfileMobile,
                               avatarUrl: editProfileAvatar || fallbackAvatarUrl
                             };
                             setCurrentUser(updatedUser);
                             localStorage.setItem('digiworku-user-session', JSON.stringify(updatedUser));
+
+                            // Save to Supabase user_profiles
+                            const { data: { session } } = await supabase.auth.getSession();
+                            if (session?.user?.id) {
+                              await supabase.from('user_profiles').upsert({
+                                id: session.user.id,
+                                name: editProfileName,
+                                mobile: editProfileMobile,
+                                avatar_url: editProfileAvatar || fallbackAvatarUrl,
+                                updated_at: new Date().toISOString()
+                              });
+                              // Also update Supabase Auth metadata
+                              await supabase.auth.updateUser({ data: { name: editProfileName } });
+                            }
+
                             triggerToast("✨ Profile updated successfully!");
                           }}
                           className="w-full py-3 rounded-xl bg-[#00c853] hover:bg-[#00b54b] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-[#00c853]/10 active:scale-98"
@@ -9821,11 +9839,12 @@ export default function App() {
                   {currentUser && (
                     <div className="border-t border-slate-200/60 dark:border-slate-800/80 pt-5">
                       <button
-                        onClick={() => {
+                        onClick={async () => {
+                          await supabase.auth.signOut();
                           localStorage.removeItem('digiworku-user-session');
                           setCurrentUser(null);
                           setIsProfileOpen(false);
-                          triggerToast("🔒 Logged out securely. Client session terminated.");
+                          triggerToast("🔒 Logged out securely. Session ended.");
                         }}
                         className="w-full py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
                       >
@@ -9937,6 +9956,20 @@ export default function App() {
                       };
 
                       setCrmProjectsList(prev => [newProj, ...prev]);
+                                        // Save to Supabase
+                                        supabase.from('crm_projects').insert({
+                                          id: newProj.id,
+                                          name: newProj.name,
+                                          lead_name: newProj.leadName || '',
+                                          lead_avatar: newProj.leadAvatar || null,
+                                          status: newProj.status,
+                                          health_score: newProj.healthScore,
+                                          budget: newProj.budget || '',
+                                          description: newProj.description || '',
+                                          progress: newProj.progress || 0
+                                        }).then(({ error }) => {
+                                          if (error) console.warn('CRM project insert error:', error.message);
+                                        });
                       setIsAddProjectModalOpen(false);
                       setNewProjectForm({ name: '', client: '', budget: '', desc: '' });
                     }}
@@ -10011,16 +10044,12 @@ export default function App() {
                       />
                       <button
                         onClick={() => {
-                          const randoms = [
-                            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-                            'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-                            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-                            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-                            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-                          ];
-                          const chosen = randoms[Math.floor(Math.random() * randoms.length)];
-                          setNewMemberForm({ ...newMemberForm, avatarUrl: chosen });
-                          triggerToast("🎲 Assigned randomized stock portrait URL!");
+                          const name = newMemberForm.name.trim() || 'Team';
+                          const colors = ['00c853', '3b82f6', '8b5cf6', 'f59e0b', 'ef4444'];
+                          const color = colors[Math.floor(Math.random() * colors.length)];
+                          const generated = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${color}&color=fff&bold=true&size=256`;
+                          setNewMemberForm({ ...newMemberForm, avatarUrl: generated });
+                          triggerToast("🎨 Generated avatar from name!");
                         }}
                         className="px-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-xs font-black text-slate-700 dark:text-slate-300 transition-colors"
                         title="Generate random profile image"
@@ -10068,9 +10097,22 @@ export default function App() {
                       };
 
                       setTeamMembers(prev => [...prev, newMember]);
+
+                      // Save to Supabase
+                      supabase.from('team').insert({
+                        id: newMember.id,
+                        name: newMember.name,
+                        role: newMember.role,
+                        avatar_url: newMember.avatarUrl,
+                        status: newMember.status,
+                        blocked: false
+                      }).then(({ error }) => {
+                        if (error) console.warn('Team insert error:', error.message);
+                      });
+
                       setIsAddMemberModalOpen(false);
                       setNewMemberForm({ name: '', role: '', avatarUrl: '', status: 'ONLINE' });
-                      triggerToast(`👥 Team Joined: ${newMemberForm.name} is now in workforce database!`);
+                      triggerToast(`\ud83d\udc65 Team Joined: ${newMemberForm.name} is now in workforce database!`);
                     }}
                     className="flex-1 py-2.5 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors"
                   >

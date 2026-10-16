@@ -193,3 +193,15 @@ These routes are STRICTLY admin-only. Non-authenticated visitors see the "Admin 
 | 2.5s polling for chat (24 API calls/min per session) | Medium | ✅ Fixed | `src/App.tsx` — replaced with Supabase Realtime `postgres_changes` subscription + 10s fallback poll |
 
 > **⚠️ Important:** Admin login now **requires** `ADMIN_EMAILS` and `ADMIN_PASSWORD` to be set as env vars. In local dev, copy `.env.example` to `.env` and fill in values. On Vercel, add them in Project Settings → Environment Variables.
+
+---
+
+## 🏗️ 10. Production-Readiness Fixes (Oct 2026 — Round 3)
+
+| Issue | Severity | Status | Fix Location |
+|-------|----------|--------|--------------|
+| Admin profile showed hardcoded fake person "Ananya Sharma" with fake email/avatar | High | ✅ Fixed | `src/App.tsx` — profile now shows actual logged-in admin email + dynamic letter avatar |
+| Admin email cleared from state immediately after login → profile panel showed empty | High | ✅ Fixed | `src/App.tsx` — email kept in state + persisted to `localStorage('digiworku-admin-email')` |
+| Admin logout didn't clear `digiworku-admin-email` from localStorage | Medium | ✅ Fixed | `src/App.tsx` — both header logout button and profile drawer logout now clear it |
+| Chat thread "Clear Chat" only emptied messages but thread stayed in list forever | High | ✅ Fixed | `src/App.tsx` — delete now fully removes thread from list using `.filter()`, resets `activeThreadId`, re-fetches from Supabase |
+| Hardcoded fake phone number `+91 98765 43210` in thread creation | Medium | ✅ Fixed | `src/App.tsx` — replaced with empty string (no fake data) |
