@@ -205,3 +205,36 @@ These routes are STRICTLY admin-only. Non-authenticated visitors see the "Admin 
 | Admin logout didn't clear `digiworku-admin-email` from localStorage | Medium | ✅ Fixed | `src/App.tsx` — both header logout button and profile drawer logout now clear it |
 | Chat thread "Clear Chat" only emptied messages but thread stayed in list forever | High | ✅ Fixed | `src/App.tsx` — delete now fully removes thread from list using `.filter()`, resets `activeThreadId`, re-fetches from Supabase |
 | Hardcoded fake phone number `+91 98765 43210` in thread creation | Medium | ✅ Fixed | `src/App.tsx` — replaced with empty string (no fake data) |
+
+---
+
+## 🛠️ 11. Chat Auto-Reply Removal (Oct 2026)
+
+| Issue | Severity | Status | Fix Location |
+|-------|----------|--------|--------------|
+| Auto-reply block sent automatic bot message 1.5s after user's first chat message | High | ✅ Fixed | `src/App.tsx` ~line 3017 — entire auto-reply trigger block removed from `sendMessage` function |
+
+---
+
+## 🛠️ 12. Founder Page (Oct 2026)
+
+**Route**: `/founder`  
+**Access**: Public — linked from footer alongside legal pages  
+**Photo**: `public/founder-vir.jpg` (uploaded by user)
+
+### Page Sections:
+1. **Hero** — Full photo, name "Vir", title "Founder & CEO", intro bio, 4 quick stats (Age, Class, Founded, Platform)
+2. **Skills & Expertise** — 9 animated skill cards with progress bars: Web Dev, SEO, Business Strategy, UI/UX, AI & Automation, Commerce, Cybersecurity, Digital Marketing, Leadership
+3. **The Journey** — Timeline from 2022 → 2026 (first code → DigiWorku founded → platform live → scaling)
+4. **Education** — Class XI Commerce with Math, self-taught developer, subjects listed
+5. **Founder's Philosophy** — Blockquote CTA card
+6. **CTA** — "Start a Project with DigiWorku" button (opens inquiry modal)
+
+### Technical:
+- Tab type: `'founder'` added to union in `activeTabState` and `setActiveTab`
+- Routing: `tabToPath('founder') → '/founder'`, `pathToTab('/founder') → 'founder'`
+- Navigation: `navigateToFounder()` helper function
+- SEO meta: `title = 'Vir — Founder & CEO | DigiWorku'`, matching description
+- Footer link: "👤 Meet the Founder" added first in footer legal links list
+- `vercel.json`: Existing catch-all rewrite handles `/founder` automatically
+
