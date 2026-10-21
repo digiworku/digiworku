@@ -260,6 +260,32 @@ New clients can find step-by-step onboarding guides explaining how to submit a p
 For billing questions, our Help Center covers payment methods accepted, invoice generation, milestone release procedures, and how to request a refund or cancel a service subscription in accordance with our policies.
 
 If you cannot find an answer in our Help Center documentation, you can contact the DigiWorku support team directly via the live chat widget on the platform or by emailing our client success team. We aim to respond to all support queries within 4 business hours during Monday to Friday, 9 AM to 6 PM IST.`
+  },
+  {
+    path: '/founder',
+    title: 'Vir — Founder & CEO | DigiWorku',
+    description: 'Meet Vir, founder and CEO of DigiWorku, building a digital workforce platform for startups, businesses, and creators.',
+    h1: 'Vir — Founder & CEO of DigiWorku',
+    h2: 'Building DigiWorku from First Principles',
+    content: `Vir is the founder and CEO of DigiWorku, a digital workforce platform connecting startups, businesses, and creators with dedicated engineering, design, marketing, and AI specialists.
+
+As a self-taught technologist and entrepreneur, Vir leads DigiWorku with a focus on practical product development, clear communication, and measurable client outcomes. The platform combines digital services, project coordination, and AI-assisted workflows in one workspace.
+
+DigiWorku supports clients through dedicated teams, milestone-based delivery, direct communication, and structured project tracking. Its services include web development, UI/UX design, video production, branding, and AI automation.
+
+The founder page introduces Vir’s role, vision, and approach while preserving the existing interactive application interface for visitors.`
+  },
+  {
+    path: '/admin',
+    title: 'Admin Console | DigiWorku',
+    description: 'Secure DigiWorku administrator console.',
+    h1: 'DigiWorku Admin Console',
+    h2: 'Secure Administrator Access',
+    content: `The DigiWorku administrator console provides authorized administrators with secure access to client management, project pipelines, inquiries, team operations, analytics, portfolio management, and workspace settings.
+
+Access to administrative features requires authentication through the protected admin login flow. Credentials are validated by the server using environment-configured administrator settings.
+
+The admin console uses the same application shell and preserves the existing DigiWorku interface while switching the workspace into administrator mode.`
   }
 ];
 

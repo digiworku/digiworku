@@ -619,8 +619,8 @@ export default function App() {
         return;
       }
 
-      const validTabs: Array<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail' | 'legal'> = [
-        'home', 'clients', 'projects', 'inquiries', 'chat', 'portfolio', 'reviews', 'team', 'analytics', 'settings', 'services', 'serviceDetail', 'legal'
+      const validTabs: Array<'home' | 'clients' | 'projects' | 'inquiries' | 'chat' | 'portfolio' | 'reviews' | 'team' | 'analytics' | 'settings' | 'services' | 'serviceDetail' | 'legal' | 'founder'> = [
+        'home', 'clients', 'projects', 'inquiries', 'chat', 'portfolio', 'reviews', 'team', 'analytics', 'settings', 'services', 'serviceDetail', 'legal', 'founder'
       ];
 
       if (pathname.startsWith('/services/') && pathname !== '/services') {

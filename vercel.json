@@ -24,6 +24,8 @@
     { "source": "/.git/(.*)",     "destination": "/", "permanent": false }
   ],
   "rewrites": [
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/admin/", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
