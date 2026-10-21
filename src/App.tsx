@@ -8561,15 +8561,8 @@ export default function App() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.35, ease: 'easeOut' }}
-                    className="absolute inset-0 overflow-y-auto overflow-x-hidden z-50 bg-gradient-to-br from-slate-950 via-[#0a120a] to-slate-950"
+                    className={`founder-page absolute inset-0 overflow-y-auto overflow-x-hidden z-50 ${darkMode ? 'founder-page-dark bg-gradient-to-br from-slate-950 via-[#0a120a] to-slate-950' : 'founder-page-light bg-gradient-to-br from-[#fffdf0] via-[#f7f3e8] to-[#fffdf0]'}`}
                   >
-                    {/* Back button */}
-                    <button
-                      onClick={() => { setActiveTab('home'); window.history.pushState({}, '', '/'); }}
-                      className="fixed top-4 left-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-white text-xs font-bold hover:bg-white/20 transition-all cursor-pointer"
-                    >
-                      ← Back
-                    </button>
 
                     <div className="min-h-screen w-full">
 

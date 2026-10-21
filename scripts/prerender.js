@@ -324,6 +324,28 @@ function prerender() {
     html = html.replace(/<meta property="twitter:description" content=".*?" \/>/g, `<meta property="twitter:description" content="${route.description}" />`);
     html = html.replace(/<meta property="twitter:url" content=".*?" \/>/g, `<meta property="twitter:url" content="${fullCanonical}" />`);
 
+    if (route.path === '/founder') {
+      const founderSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'ProfilePage',
+        name: 'Vir — Founder & CEO of DigiWorku',
+        url: fullCanonical,
+        mainEntity: {
+          '@type': 'Person',
+          name: 'Vir',
+          jobTitle: 'Founder & CEO',
+          worksFor: {
+            '@type': 'Organization',
+            name: 'DigiWorku',
+            url: 'https://digiworku.in'
+          },
+          image: 'https://digiworku.in/founder-vir.jpg',
+          description: route.description
+        }
+      };
+      html = html.replace('</head>', `    <script type="application/ld+json">${JSON.stringify(founderSchema)}</script>\n  </head>`);
+    }
+
     // Build rich crawler-readable HTML (H1 + H2 + 200+ word content + footer nav)
     const contentParas = route.content
       .trim()
@@ -347,6 +369,7 @@ ${contentParas}
             <a href="/services" style="color: #00c853; text-decoration: underline;">Services &amp; Solutions</a>
             <a href="/portfolio" style="color: #00c853; text-decoration: underline;">Portfolio</a>
             <a href="/team" style="color: #00c853; text-decoration: underline;">Team</a>
+            <a href="/founder" style="color: #00c853; text-decoration: underline;">Founder</a>
             <a href="/reviews" style="color: #00c853; text-decoration: underline;">Reviews</a>
             <a href="/legal/privacy-policy" style="color: #00c853; text-decoration: underline;">Privacy Policy</a>
             <a href="/legal/terms-of-service" style="color: #00c853; text-decoration: underline;">Terms of Service</a>

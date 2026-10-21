@@ -14,6 +14,9 @@ Disallow: /team
 Disallow: /*?mode=admin
 Disallow: /*?panel=admin
 
+# Public founder profile is crawlable; private admin routes remain blocked.
+Allow: /founder
+
 # Sitemap reference
 Sitemap: https://digiworku.in/sitemap.xml
 

@@ -23,6 +23,7 @@
 - `/portfolio` — Selected client work and case studies
 - `/reviews` — Client testimonials and ratings
 - `/team` — Dedicated team members
+- `/founder` — Vir, Founder & CEO of DigiWorku
 
 ## Contact
 - Inquiries: Submit via https://digiworku.in (use the inquiry form on the platform)
