@@ -16,8 +16,6 @@
     }
   ],
   "redirects": [
-    { "source": "/admin",         "destination": "/", "permanent": false },
-    { "source": "/admin/(.*)",    "destination": "/", "permanent": false },
     { "source": "/wp-admin",      "destination": "/", "permanent": false },
     { "source": "/wp-admin/(.*)", "destination": "/", "permanent": false },
     { "source": "/wp-login.php",  "destination": "/", "permanent": false },
