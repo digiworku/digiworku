@@ -686,3 +686,5 @@ const Rocket = ({ className }: { className?: string }) => (
   </svg>
 );
 
+export default ServiceDetailPage;
+

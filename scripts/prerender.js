@@ -274,18 +274,6 @@ As a self-taught technologist and entrepreneur, Vir leads DigiWorku with a focus
 DigiWorku supports clients through dedicated teams, milestone-based delivery, direct communication, and structured project tracking. Its services include web development, UI/UX design, video production, branding, and AI automation.
 
 The founder page introduces Vir’s role, vision, and approach while preserving the existing interactive application interface for visitors.`
-  },
-  {
-    path: '/admin',
-    title: 'Admin Console | DigiWorku',
-    description: 'Secure DigiWorku administrator console.',
-    h1: 'DigiWorku Admin Console',
-    h2: 'Secure Administrator Access',
-    content: `The DigiWorku administrator console provides authorized administrators with secure access to client management, project pipelines, inquiries, team operations, analytics, portfolio management, and workspace settings.
-
-Access to administrative features requires authentication through the protected admin login flow. Credentials are validated by the server using environment-configured administrator settings.
-
-The admin console uses the same application shell and preserves the existing DigiWorku interface while switching the workspace into administrator mode.`
   }
 ];
 
@@ -354,7 +342,8 @@ function prerender() {
       .join('\n');
 
     const crawlerContent = `<div id="root">
-      <main style="font-family: system-ui, sans-serif; padding: 2rem; max-width: 900px; margin: 0 auto; color: #0f172a;">
+      <div class="app-loader" role="status" aria-label="Loading DigiWorku"><span class="app-loader__circle"></span></div>
+      <main style="display: none; font-family: system-ui, sans-serif; padding: 2rem; max-width: 900px; margin: 0 auto; color: #0f172a;">
         <header>
           <h1 style="font-size: 2rem; font-weight: 900; letter-spacing: -0.025em; color: #030712;">${route.h1}</h1>
           <p style="font-size: 1.125rem; color: #475569; line-height: 1.6; margin-top: 0.75rem;">${route.description}</p>

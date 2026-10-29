@@ -6,11 +6,11 @@ Allow: /
 Disallow: /api/
 Disallow: /admin
 Disallow: /admin/
+Disallow: /dw-portal
+Disallow: /dw-portal/
 Disallow: /inquiries
 Disallow: /clients
 Disallow: /analytics
-Disallow: /projects
-Disallow: /team
 Disallow: /*?mode=admin
 Disallow: /*?panel=admin
 

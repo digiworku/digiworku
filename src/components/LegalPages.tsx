@@ -25,10 +25,17 @@ interface LegalPagesProps {
 }
 
 const effectiveDate = '1 July 2026';
-const companyName = 'DigiWorku';
+const companyName = 'DigiWorku Technologies';
 const companyEmail = 'hello@digiworku.in';
 const companyWebsite = 'https://digiworku.in';
-const companyAddress = 'India';
+const companyAddress = 'Connaught Place, New Delhi 110001, India';
+const grievanceOfficer = {
+  name: 'Vir (Designated Grievance & Compliance Officer)',
+  email: 'grievance@digiworku.in',
+  backupEmail: 'digiworku55@gmail.com',
+  jurisdiction: 'New Delhi, India',
+  responseWindow: '36 hours acknowledgment, resolution within 15 days under IT Rules 2021 & DPDP Act 2023',
+};
 
 /* ─── Shared Section Component ─── */
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -132,8 +139,18 @@ const PrivacyPolicy = () => (
     <Section title="8. Data Security">
       <p>We implement industry-standard security measures including AES-256 encryption, TLS for data in transit, and regular security audits.</p>
     </Section>
-    <Section title="9. Contact">
-      <p>For privacy-related queries, email us at <strong>{companyEmail}</strong>.</p>
+    <Section title="9. Compliance with DPDP Act 2023 & Indian IT Act 2000">
+      <p>DigiWorku complies strictly with the Digital Personal Data Protection Act, 2023 (DPDP Act) and the Information Technology Act, 2000. Data fiduciaries collect your information solely on explicit lawful consent, for specified service delivery and communication. You retain the right to summary, correction, grievance redressal, and total erasure of personal data.</p>
+    </Section>
+    <Section title="10. Registered Entity & Grievance Redressal Officer">
+      <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-2">
+        <p><strong>Registered Legal Entity:</strong> {companyName}</p>
+        <p><strong>Registered Address:</strong> {companyAddress}</p>
+        <p><strong>Designated Grievance Officer:</strong> {grievanceOfficer.name}</p>
+        <p><strong>Direct Grievance Contact:</strong> <a href={`mailto:${grievanceOfficer.email}`} className="text-[#00c853] underline">{grievanceOfficer.email}</a> (CC: {grievanceOfficer.backupEmail})</p>
+        <p><strong>Jurisdiction:</strong> {grievanceOfficer.jurisdiction}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">In compliance with Rule 3(2) of the IT (Intermediary Guidelines and Digital Media Ethics Code) Rules, 2021, all complaints are acknowledged within 36 hours and resolved within 15 days.</p>
+      </div>
     </Section>
   </>
 );
@@ -570,3 +587,4 @@ export const LegalPages: React.FC<LegalPagesProps> = ({ slug, darkMode, onBack }
     </motion.div>
   );
 };
+export default LegalPages;

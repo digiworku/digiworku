@@ -903,3 +903,4 @@ export function CaseStudies({ darkMode, activeSlug, onNavigateToSlug, onBackToLi
     </div>
   );
 }
+export default CaseStudies;
