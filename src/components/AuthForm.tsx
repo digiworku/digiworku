@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, CheckCircle, AlertCircle, Loader2, Phone, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../supabase';
+import { saveUserProfileToDB, fetchUserProfileFromDB } from '../services/userService';
 
 interface AuthFormProps {
   authMode: 'signin' | 'signup';
@@ -52,10 +53,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ authMode, darkMode, onSucces
         if (error) throw error;
         if (!data.user) throw new Error('Signup failed. Please try again.');
 
-        // Save additional profile info
-        await supabase.from('user_profiles').upsert({
+        // Save profile to database
+        await saveUserProfileToDB({
           id: data.user.id,
           name: name.trim(),
+          email: email.trim().toLowerCase(),
           mobile: mobileNumber.trim(),
           avatar_url: null
         });
@@ -82,12 +84,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({ authMode, darkMode, onSucces
 
         if (!data.user) throw new Error('Sign in failed. Please try again.');
 
-        // Fetch profile
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
+        // Fetch profile from database
+        const profile = await fetchUserProfileFromDB(data.user.id);
 
         const displayName = profile?.name || data.user.user_metadata?.name || email.split('@')[0];
         const avatarUrl = profile?.avatar_url ||

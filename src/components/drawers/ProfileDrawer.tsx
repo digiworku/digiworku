@@ -16,6 +16,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { supabase } from '../../supabase';
+import { saveUserProfileToDB } from '../../services/userService';
 
 interface ProfileDrawerProps {
   isOpen: boolean;
@@ -311,12 +312,12 @@ export const ProfileDrawer: React.FC<ProfileDrawerProps> = ({
 
                         const { data: { session } } = await supabase.auth.getSession();
                         if (session?.user?.id) {
-                          await supabase.from('user_profiles').upsert({
+                          await saveUserProfileToDB({
                             id: session.user.id,
                             name: editProfileName,
+                            email: cleanEmail,
                             mobile: editProfileMobile,
-                            avatar_url: editProfileAvatar || fallbackAvatarUrl,
-                            updated_at: new Date().toISOString()
+                            avatar_url: editProfileAvatar || fallbackAvatarUrl
                           });
                           await supabase.auth.updateUser({ data: { name: editProfileName } });
                         }

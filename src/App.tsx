@@ -90,6 +90,10 @@ import { AddProjectModal } from './components/modals/AddProjectModal';
 import { AddMemberModal } from './components/modals/AddMemberModal';
 import { AutoReplyModal } from './components/modals/AutoReplyModal';
 import { ServiceRequestModal } from './components/modals/ServiceRequestModal';
+import { AddClientModal } from './components/modals/AddClientModal';
+import { QuotationModal } from './components/modals/QuotationModal';
+import { DEFAULT_SERVICES, DEFAULT_TEAM, DEFAULT_REVIEWS, DEFAULT_PROJECTS, DEFAULT_CRM_PROJECTS } from './data/defaults';
+import { saveUserProfileToDB, fetchUserProfileFromDB } from './services/userService';
 
 // Helper to consistently get the unique user ID for chat, even for guests
 export const getChatUserId = (currentUser: any) => {
@@ -501,6 +505,22 @@ export default function App() {
   });
 
   const [isAutoReplyModalOpen, setIsAutoReplyModalOpen] = useState<boolean>(false);
+  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState<boolean>(false);
+  const [newClientForm, setNewClientForm] = useState({
+    name: '',
+    company: '',
+    email: '',
+    phone: '',
+    projectName: '',
+    budget: ''
+  });
+  const [isQuotationModalOpen, setIsQuotationModalOpen] = useState<boolean>(false);
+  const [quotationForm, setQuotationForm] = useState({
+    projectName: 'Enterprise Web Application Sprint',
+    scope: 'Full-stack Next.js 14 engineering, Supabase database, responsive UI/UX system, and 30-day warranty.',
+    budget: '250000',
+    timeline: '2-4 weeks'
+  });
   const [hasAutoReplied, setHasAutoReplied] = useState<boolean>(() => {
     // Always treat as already replied so auto-message never appears
     return true;
@@ -876,12 +896,12 @@ export default function App() {
   // CRM Admin Panel Live States
   const [crmProjectsList, setCrmProjectsList] = useState<CRMProject[]>(() => {
     const saved = localStorage.getItem('digiworku-crm-projects-v2');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : DEFAULT_CRM_PROJECTS;
   });
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => {
     const saved = localStorage.getItem('digiworku-team-members-v1');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : DEFAULT_TEAM;
   });
 
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
@@ -907,7 +927,7 @@ export default function App() {
 
   const [servicesList, setServicesList] = useState<ServiceItem[]>(() => {
     const saved = localStorage.getItem('digiworku-services-v2');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : DEFAULT_SERVICES;
   });
 
   const [isAddingService, setIsAddingService] = useState<boolean>(false);
@@ -933,7 +953,7 @@ export default function App() {
   // Client Reviews List State
   const [reviewsList, setReviewsList] = useState<ReviewItem[]>(() => {
     const saved = localStorage.getItem('digiworku-reviews-v1');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : DEFAULT_REVIEWS;
   });
 
   // Service Booking / Request Modal States
@@ -1021,6 +1041,19 @@ export default function App() {
       if (dbError) {
         console.warn('Supabase inquiry insert failed:', dbError.message);
       }
+      // Fire-and-forget background alert notification
+      fetch('/api/notify-inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: requestFormClientName.trim(),
+          email: requestFormEmail.trim(),
+          mobile: requestFormPhone.trim(),
+          service: selectedRequestServiceTitle,
+          budget: requestFormBudget || '₹45,000',
+          message: summaryText
+        })
+      }).catch(err => console.log('Notify inquiry notice:', err));
     } catch (dbErr: any) {
       console.warn('Supabase inquiry push error:', dbErr.message);
     }
@@ -1098,6 +1131,19 @@ export default function App() {
       if (dbError) {
         console.warn('Supabase freelancer inquiry insert failed:', dbError.message);
       }
+      // Fire-and-forget background alert notification
+      fetch('/api/notify-inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: freelancerFormName.trim(),
+          email: freelancerFormEmail.trim(),
+          mobile: freelancerFormPhone.trim(),
+          service: `Freelancer Application (${freelancerFormSkill})`,
+          budget: 'Talent Network',
+          message: summaryText
+        })
+      }).catch(err => console.log('Notify inquiry notice:', err));
     } catch (dbErr: any) {
       console.warn('Supabase freelancer inquiry push error:', dbErr.message);
     }
@@ -1213,11 +1259,21 @@ export default function App() {
   };
 
   const handleSendQuotationMessage = () => {
+    setIsQuotationModalOpen(true);
+  };
+
+  const handleDispatchCustomQuotation = async () => {
+    const formattedBudget = quotationForm.budget.startsWith('₹')
+      ? quotationForm.budget
+      : `₹${Number(quotationForm.budget.replace(/[^0-9]/g, '') || 250000).toLocaleString('en-IN')}`;
     const timeFormatted = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-    const quotationMsg = {
-      id: `m-quote-${Date.now()}`,
-      role: 'assistant' as const,
-      content: "📄 [QUOTATION GENERATED]\n\nProject: Enterprise E-commerce UI Refresh\nScope: Interactive charts (D3.js) + full UI/UX revamp\nFinal Quotation: ₹4,50,000\nExecution Timeline: 4 weeks\n\nPlease let us know if you accept so we can start the onboarding sprint!",
+    const content = `📄 [OFFICIAL DIGIWORKU QUOTATION & SCOPE]\n\nProject: ${quotationForm.projectName}\nScope: ${quotationForm.scope}\nBudget: ${formattedBudget}\nExecution Timeline: ${quotationForm.timeline}\n\nInvoice ID: #INV-${Date.now().toString().slice(-6)}\nStatus: Pending Client Acceptance\n\nTo accept and lock in this sprint schedule, reply here or confirm with your dedicated lead partner!`;
+
+    const newMsgId = `m-quote-${Date.now()}`;
+    const quotationMsg: ChatMessage = {
+      id: newMsgId,
+      role: 'assistant',
+      content,
       timestamp: timeFormatted
     };
 
@@ -1225,7 +1281,7 @@ export default function App() {
       if (t.id === activeThreadId) {
         return {
           ...t,
-          lastMessageText: "Quotation Generated (₹4,50,000)",
+          lastMessageText: `Quotation: ${formattedBudget}`,
           lastMessageTime: timeFormatted,
           messages: [...t.messages, quotationMsg]
         };
@@ -1233,10 +1289,27 @@ export default function App() {
       return t;
     }));
 
-    if (activeThreadId === getChatUserId(currentUser)) {
+    const userId = getChatUserId(currentUser);
+    if (activeThreadId === userId) {
       setChatHistory(prev => [...prev, quotationMsg]);
     }
-    triggerToast("📄 Quotation generated & shared in client channel!");
+
+    try {
+      const activeThread = chatThreadsList.find(t => t.id === activeThreadId);
+      const threadUserId = activeThread?.email || activeThreadId;
+      await supabase.from('messages').insert([{
+        id: newMsgId,
+        role: 'admin',
+        content,
+        user_id: threadUserId,
+        created_at: new Date().toISOString()
+      }]);
+    } catch (err: any) {
+      console.warn("Failed saving quotation to Supabase:", err?.message || err);
+    }
+
+    setIsQuotationModalOpen(false);
+    triggerToast("📄 Official quotation dispatched to client thread!");
   };
 
   const handleApproveProject = () => {
@@ -2087,7 +2160,7 @@ export default function App() {
   // Portfolio items and filters
   const [projectsList, setProjectsList] = useState<ProjectItem[]>(() => {
     const saved = localStorage.getItem('digiworku-projects');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : DEFAULT_PROJECTS;
   });
   const [portfolioFilter, setPortfolioFilter] = useState<string>('All');
   const [searchProjectQuery, setSearchProjectQuery] = useState<string>('');
@@ -2472,34 +2545,35 @@ export default function App() {
   // ─── Supabase Auth Session Restore on Mount ───────────────────────────────
   // Restores the client login session using Supabase Auth on page reload
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    const syncUserFromAuth = async (u: any) => {
+      if (!u) return;
+      const profile = await fetchUserProfileFromDB(u.id);
+      const displayName = profile?.name || u.user_metadata?.name || u.email?.split('@')[0] || 'Client';
+      const avatarUrl = profile?.avatar_url ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=00c853&color=fff&bold=true&size=256`;
+
+      setCurrentUser({
+        name: displayName,
+        email: u.email!,
+        mobile: profile?.mobile || '',
+        avatarUrl,
+        registered: true
+      });
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const u = session.user;
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', u.id)
-          .single();
-
-        const displayName = profile?.name || u.user_metadata?.name || u.email?.split('@')[0] || 'Client';
-        const avatarUrl = profile?.avatar_url ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=00c853&color=fff&bold=true&size=256`;
-
-        setCurrentUser({
-          name: displayName,
-          email: u.email!,
-          mobile: profile?.mobile || '',
-          avatarUrl,
-          registered: true
-        });
+        syncUserFromAuth(session.user);
       }
     });
 
-    // Listen to auth state changes (sign in / sign out)
+    // Listen to auth state changes (sign in / sign out / token refreshed)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
         localStorage.removeItem('digiworku-user-session');
+      } else if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
+        syncUserFromAuth(session.user);
       }
     });
     return () => subscription.unsubscribe();
@@ -3018,6 +3092,34 @@ export default function App() {
       }]);
     } catch (err: any) {
       console.warn("Failed saving user message to Supabase:", err?.message || err);
+    }
+
+    // 10-second Automated Admin Reply Dispatcher
+    if (autoReplyEnabled && autoReplyText.trim()) {
+      setTimeout(async () => {
+        const replyText = autoReplyText.trim();
+        const autoMsgId = `msg_autoreply_${Date.now()}`;
+        const autoTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        const autoMsg: ChatMessage = {
+          id: autoMsgId,
+          role: 'assistant',
+          content: replyText,
+          timestamp: autoTime
+        };
+        setChatHistory(prev => [...prev, autoMsg]);
+
+        try {
+          await supabase.from('messages').insert([{
+            id: autoMsgId,
+            role: 'admin',
+            content: replyText,
+            user_id: userId,
+            created_at: new Date().toISOString()
+          }]);
+        } catch (e) {
+          console.warn("Auto-reply DB save notice:", e);
+        }
+      }, 10000);
     }
 
     // Update Admin thread list state for this specific user
@@ -5012,9 +5114,7 @@ export default function App() {
                           />
                         </div>
                         <button
-                          onClick={() => {
-                            triggerToast("👤 Creating simulated clients requires corporate identity tokens.");
-                          }}
+                          onClick={() => setIsAddClientModalOpen(true)}
                           className="px-3 py-2 text-xs font-black text-white bg-[#00c853] hover:bg-emerald-600 rounded-xl flex items-center gap-1 cursor-pointer transition-all"
                         >
                           <span>+ Create Client</span>
@@ -10031,15 +10131,15 @@ export default function App() {
                             setCurrentUser(updatedUser);
                             localStorage.setItem('digiworku-user-session', JSON.stringify(updatedUser));
 
-                            // Save to Supabase user_profiles
+                            // Save to Supabase users database
                             const { data: { session } } = await supabase.auth.getSession();
                             if (session?.user?.id) {
-                              await supabase.from('user_profiles').upsert({
+                              await saveUserProfileToDB({
                                 id: session.user.id,
                                 name: editProfileName,
+                                email: cleanEmail,
                                 mobile: editProfileMobile,
-                                avatar_url: editProfileAvatar || fallbackAvatarUrl,
-                                updated_at: new Date().toISOString()
+                                avatar_url: editProfileAvatar || fallbackAvatarUrl
                               });
                               // Also update Supabase Auth metadata
                               await supabase.auth.updateUser({ data: { name: editProfileName } });
@@ -10178,6 +10278,28 @@ export default function App() {
           setDescription={setRequestFormDescription}
           isSubmitting={isSubmittingServiceRequest}
           onSubmit={handleServiceRequestSubmit}
+        />
+
+        {/* ADD CLIENT MODAL */}
+        <AddClientModal
+          isOpen={isAddClientModalOpen}
+          onClose={() => setIsAddClientModalOpen(false)}
+          form={newClientForm}
+          setForm={setNewClientForm}
+          onClientCreated={(newThread) => {
+            setChatThreadsList(prev => [newThread, ...prev]);
+            setActiveThreadId(newThread.id);
+          }}
+          triggerToast={triggerToast}
+        />
+
+        {/* QUOTATION PROPOSAL MODAL */}
+        <QuotationModal
+          isOpen={isQuotationModalOpen}
+          onClose={() => setIsQuotationModalOpen(false)}
+          form={quotationForm}
+          setForm={setQuotationForm}
+          onSubmit={handleDispatchCustomQuotation}
         />
 
       </main>
