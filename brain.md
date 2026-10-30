@@ -20,6 +20,7 @@
 - **Home page (`index.html`)**: Title `DigiWorku — India's Top Digital Workforce Platform` (50 chars), H1 distinct from title, 3× H2s + WebPage schema + BreadcrumbList schema in `<head>`.
 - **SEO/AEO/GEO Content Section in App.tsx**: Rich section rendered by React in the home tab containing: top summary paragraph, 4× H2 FAQ question-answer blocks ("What is DigiWorku?", "What services?", "How does it work?", "Why choose DigiWorku?"), bullet + numbered lists, and 4 internal navigation link cards to /services, /portfolio, /team, /reviews. Boosts word count from 140 to ~600+, fixes H2 count (was 0), and satisfies AEO question-style headings requirement.
 - **Dynamic title** (App.tsx): `DigiWorku — India's Digital Workforce & AI Ecosystem` (52 chars, ≤60).
+- **Google Analytics (GA4)**: `G-6VTRX6Q5HN` integrated via `gtag.js` in `<head>` of `index.html` and statically pre-rendered across all 19 public routes.
 
 ---
 
@@ -29,9 +30,9 @@ All 4 previously-missing security headers are now set on **every response** via:
   - `X-Content-Type-Options: nosniff`
   - `X-Frame-Options: SAMEORIGIN`
   - `Referrer-Policy: strict-origin-when-cross-origin`
-  - `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://fonts.gstatic.com; ...`
+  - `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://fonts.gstatic.com https://www.googletagmanager.com; connect-src ... https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; ...`
 - **`vercel.json`** headers block (applies on Vercel CDN for production):
-  - Same 4 headers applied via `"headers"` array on `"source": "/(.*)"`.
+  - Same 4 headers + updated CSP applied via `"headers"` array on `"source": "/(.*)"`.
 - **`vercel.json`** routing: Uses `cleanUrls: true` + **`rewrites`** (NOT `routes` — `routes` is the old API that ignores cleanUrls and static files). With `cleanUrls + rewrites`, Vercel serves each pre-rendered `dist/*/index.html` directly for crawlers, then falls back to SPA root `index.html` only for unmatched paths.
 - **Branding**: All occurrences of "Agency" replaced with **"Ecosystem"** across: `index.html` (H1 + keywords), `App.tsx` (dynamic title + hero H1), `manifest.json`, `llms.txt`.
 
@@ -303,6 +304,45 @@ These routes are STRICTLY admin-only. Non-authenticated visitors see the "Admin 
 | **Enhanced Touch Swipe Gesture** | Extended touch detection to `EDGE_ZONE = 48px`, `MIN_SWIPE_DISTANCE = 45px`, and `MAX_VERTICAL_DRIFT = 85px` for reliable swipe-right to open and swipe-left to close without scrolling conflicts. | `src/App.tsx` (lines ~521-560) |
 | **Vector App Icon & Logo** | Integrated the new vector squircle app icon (`DigiWorkuLogo`) into Header, Sidebar Brand, Chat Support, and Auth Modal without disturbing original layout or spacing. | `src/App.tsx` |
 
+---
 
+## 🛡️ 17. Admin Console Enterprise Hardening & Database Persistence (Oct 2026)
 
+| Audited Flaw / Component | Vulnerability / Deficiency | Production Engineering Remediation | Location |
+|--------------------------|----------------------------|-----------------------------------|----------|
+| **Client-Side Admin Bypass** | Storing `localStorage.setItem('digiworku-is-admin', 'true')` enabled full admin privilege escalation without cryptographic token verification. | Enforced mount-time JWT session check against `/api/admin-verify` with `Authorization: Bearer <token>`. Invalid or fabricated sessions are wiped immediately. | `src/App.tsx` (lines ~985-1020) |
+| **Kanban Columns Local Mutations** | Column state changes (`ON TRACK`, `IN REVIEW`, `STABLE`, `OFF TRACK`, deletes) only updated React in-memory array and were discarded upon page refresh. | Wired all 4 Kanban column drag/status badges, health scores, and project deletions to asynchronous Supabase `crm_projects` DB synchronization (`handleUpdateCrmProjectDB` and `handleDeleteCrmProjectDB`). | `src/App.tsx` (lines ~5450-5690) |
+| **Timeline View Persistence** | Milestone clicking, progress slider dragging, and status badge cycling in Timeline View only updated local React state. | Connected Timeline View slider `onChange`, milestone dot clicks, status toggles, and delete actions directly to `handleUpdateCrmProjectDB` and `handleDeleteCrmProjectDB`. | `src/App.tsx` (lines ~5715-5825) |
+| **Inquiries Data Leak to Public Portfolio** | Approving / converting an inquiry called `supabase.from('projects').insert(...)`, leaking private client names, briefs, and budgets onto the public website showcase. | Completely removed `projects` table insertion upon contract conversion. Converted leads are safely and exclusively routed to `crm_projects` and status updated in `inquiries`. | `src/App.tsx` (lines ~6095-6120) |
+| **Workforce Team Photo Persistence** | Editing team member photos via the inline camera popup updated local React state only; changes vanished on refresh. | Connected photo save handler to `supabase.from('team').update({ avatar_url: cleanUrl }).eq('id', member.id)`. | `src/App.tsx` (lines ~6370-6385) |
+| **Corporate Directory + Create Client** | "+ Create Client" button was an orphaned trigger without an active modal. | Created state `isAddClientModalOpen` and built high-fidelity `<AnimatePresence>` modal with inputs for Name, Company, Email, Phone, Project, Budget, creating live threads and syncing to state. | `src/App.tsx` (lines ~10830-10950) |
+| **Dynamic Quotation Proposal Builder** | Chat header quote button dispatched static hardcoded ₹4,50,000 text regardless of project parameters. | Built interactive Quotation Builder modal with inputs for Project Name, Scope, Budget, and Delivery Timeline, dispatching customized proposals to chat and persisting to Supabase `messages` with role `'admin'`. | `src/App.tsx` (lines ~10950-11050) |
+| **Fake Voice & Video Calling** | Call buttons merely triggered non-functional toast alerts. | Replaced fake toasts with native dialer integration (`window.open('tel:${phone}')`) and instant Google Meet room creation (`https://meet.google.com/new`), automatically posting the join invitation link into the client chat thread. | `src/App.tsx` (lines ~1550-1580) |
+| **Corporate Directory Direct Dialer** | Phone numbers in client cards were non-interactive plain text. | Wrapped all phone numbers in clickable `tel:` links and wired email clicks to copy addresses directly to the clipboard. | `src/App.tsx` (lines ~5210-5235) |
+| **Overview Table DB Sync** | Cycling status badges on the Overview table only updated local React state. | Wired status badge cycle button to `handleUpdateCrmProjectDB(project.id, { status: nextStatus })`. | `src/App.tsx` (lines ~4745-4770) |
+| **Inbound Leads Auto-Fetch & DB Sync** | Leads on Overview and Inquiries tabs did not fetch automatically on panel mode switch, and approval only modified local state. | Added auto-fetch `fetchInquiriesFromDB()` on admin panel mount; wired "Read" to update `inquiries.status = 'reviewed'` and "Approve" to `inquiries.status = 'converted'` in Supabase. | `src/App.tsx` (lines ~1040-1065, ~4800-4840) |
+| **Background Polling Storm** | Chat console hammered Supabase database with unthrottled 10-second polling intervals in the background. | Reduced aggressive polling to 45s intervals and added a window `focus` listener to instantly refresh when the administrator returns to the tab. | `src/App.tsx` (lines ~2120-2150) |
+| **Sidebar "+ POST NEW TASK" Dead Button** | Button triggered unreferenced `setIsNewProjectModalOpen(true)` resulting in a no-op. | Corrected trigger to `setIsAddProjectModalOpen(true)` seamlessly launching the pipeline creation modal. | `src/App.tsx` (lines ~3645-3655) |
+| **Admin Drawer Sign Out Button** | Profile drawer only rendered sign-out controls for client accounts; administrators had no way to exit admin session. | Added dedicated red "SIGN OUT OF ADMIN CONSOLE" button in Profile Drawer that safely purges admin tokens and switches panel back to client mode. | `src/App.tsx` (lines ~10270-10290) |
+| **Postgres CRM Projects Schema** | `crm_projects.id` was typed as strict `UUID` causing crashes when human-readable IDs (`#PJ-4821`) were inserted. | Updated schema to `TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text` to seamlessly support both UUIDs and human-readable project keys. | `supabase_projects_setup.sql` (line 258) |
 
+---
+
+## 🏗️ 18. Point 1: Production-Grade Modular Architecture & Serverless Parity (Oct 2026)
+
+| Component / Slice | Implementation Details & Production Readiness | Path |
+|---|---|---|
+| **Google Analytics (GA4)** | Configured official GA4 tag `G-6VTRX6Q5HN` via `gtag.js` in `<head>` of `index.html`. Pre-rendered across all 19 public routes. Configured CSP headers in Express and `vercel.json`. | `index.html`, `server.ts`, `vercel.json` |
+| **Vercel Serverless Function Parity** | Created Edge-compatible Vercel serverless handlers mirroring Express API routes to guarantee zero 404 errors on production CDN: JWT verification and Inquiry notification dispatch. | `api/admin-verify.ts`, `api/notify-inquiry.ts` |
+| **Core Domain Type Extraction** | Extracted domain interfaces (`ProjectItem`, `OfferingItem`, `ProcessStep`, `FeatureItem`, `FaqItem`, `ServiceItem`, `ChatMessage`, `CRMProject`, `CRMInquiry`, `ChatThread`, `TeamMember`, `ReviewItem`, `UserProfile`) into a unified types file. | `src/types/index.ts` |
+| **Modular Modals System** | Extracted inline bottom overlay modals out of monolithic `App.tsx` into standalone typed components with 100% exact design, animations, and zero UI regressions: | `src/components/modals/` |
+| ↳ `AddProjectModal` | Modal for creating pipeline projects with Supabase DB sync. | `src/components/modals/AddProjectModal.tsx` |
+| ↳ `AddMemberModal` | Modal for deploying workforce specialists with random avatar generator and Supabase DB sync. | `src/components/modals/AddMemberModal.tsx` |
+| ↳ `AutoReplyModal` | Modal for configuring automated chat assistant triggers (10s delay) with local persistence. | `src/components/modals/AutoReplyModal.tsx` |
+| ↳ `ServiceRequestModal` | Client modal for requesting customized proposals and scheduling project sprints. | `src/components/modals/ServiceRequestModal.tsx` |
+| ↳ `AddClientModal` | Modal for creating new client directory threads in CRM. | `src/components/modals/AddClientModal.tsx` |
+| ↳ `QuotationModal` | Interactive quotation builder modal for dispatching formal proposals. | `src/components/modals/QuotationModal.tsx` |
+| **Modular Slide-out Drawers** | Built isolated sliding drawer components for Notification Center and Profile/Operator Console: | `src/components/drawers/` |
+| ↳ `NotificationDrawer` | Slide-out drawer with broadcast push, unread filter, and notification clearing. | `src/components/drawers/NotificationDrawer.tsx` |
+| ↳ `ProfileDrawer` | Operator Command Console & Client profile manager with custom avatar uploads and Supabase persistence. | `src/components/drawers/ProfileDrawer.tsx` |
+| **Verification & Build** | Full compile check passed (`npx tsc --noEmit` exit 0). Production build and 19-route static pre-rendering passed with 0 errors (`dist/` bundle size reduced). | `scripts/prerender.js` |

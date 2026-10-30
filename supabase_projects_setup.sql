@@ -255,7 +255,7 @@ CREATE POLICY "Admin delete reviews" ON public.reviews
 -- 7. CRM CLIENT PROJECTS & KANBAN PIPELINE TABLE
 -- ──────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.crm_projects (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id           TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   name         TEXT NOT NULL,
   lead_name    TEXT,
   lead_avatar  TEXT,

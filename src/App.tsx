@@ -86,6 +86,11 @@ import { LegalPages, type LegalPageSlug } from './components/LegalPages';
 import { CaseStudies } from './components/CaseStudies';
 import { DigiWorkuLogo } from './components/brand/DigiWorkuLogo';
 import { supabase } from './supabase';
+import { AddProjectModal } from './components/modals/AddProjectModal';
+import { AddMemberModal } from './components/modals/AddMemberModal';
+import { AutoReplyModal } from './components/modals/AutoReplyModal';
+import { ServiceRequestModal } from './components/modals/ServiceRequestModal';
+
 // Helper to consistently get the unique user ID for chat, even for guests
 export const getChatUserId = (currentUser: any) => {
   if (currentUser?.email) return currentUser.email;
@@ -10124,520 +10129,56 @@ export default function App() {
         </AnimatePresence>
 
         {/* ADD PROJECT MODAL */}
-        <AnimatePresence>
-          {isAddProjectModalOpen && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsAddProjectModalOpen(false)}
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-              />
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-              >
-                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-                  <h3 className="font-black text-slate-800 dark:text-white flex items-center gap-2">
-                    <Folder className="w-4 h-4 text-emerald-500" />
-                    Add New Pipeline Project
-                  </h3>
-                  <button onClick={() => setIsAddProjectModalOpen(false)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer">
-                    <X className="w-4 h-4 text-slate-500" />
-                  </button>
-                </div>
-
-                <div className="p-6 space-y-4">
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">Project Name</label>
-                    <input
-                      type="text"
-                      value={newProjectForm.name}
-                      onChange={(e) => setNewProjectForm({ ...newProjectForm, name: e.target.value })}
-                      placeholder="e.g. Website Redesign"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-slate-800 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">Client / Lead Name</label>
-                    <input
-                      type="text"
-                      value={newProjectForm.client}
-                      onChange={(e) => setNewProjectForm({ ...newProjectForm, client: e.target.value })}
-                      placeholder="e.g. John Doe"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-slate-800 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">Budget (Optional)</label>
-                    <input
-                      type="text"
-                      value={newProjectForm.budget}
-                      onChange={(e) => setNewProjectForm({ ...newProjectForm, budget: e.target.value })}
-                      placeholder="e.g. ₹50,000"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-slate-800 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">Description</label>
-                    <textarea
-                      value={newProjectForm.desc}
-                      onChange={(e) => setNewProjectForm({ ...newProjectForm, desc: e.target.value })}
-                      placeholder="Project requirements..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-slate-800 dark:text-white h-24 resize-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
-                  <button
-                    onClick={() => setIsAddProjectModalOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!newProjectForm.name || !newProjectForm.client) return;
-
-                      const newProj: CRMProject = {
-                        id: `#PJ-${Math.floor(5000 + Math.random() * 999)}`,
-                        name: newProjectForm.name,
-                        leadName: newProjectForm.client,
-                        leadAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(newProjectForm.client)}&background=random`,
-                        status: 'ON TRACK',
-                        healthScore: 100,
-                        budget: newProjectForm.budget || 'TBD',
-                        description: newProjectForm.desc || 'New operational milestone.',
-                        progress: 0
-                      };
-
-                      setCrmProjectsList(prev => [newProj, ...prev]);
-                                        // Save to Supabase
-                                        supabase.from('crm_projects').insert({
-                                          id: newProj.id,
-                                          name: newProj.name,
-                                          lead_name: newProj.leadName || '',
-                                          lead_avatar: newProj.leadAvatar || null,
-                                          status: newProj.status,
-                                          health_score: newProj.healthScore,
-                                          budget: newProj.budget || '',
-                                          description: newProj.description || '',
-                                          progress: newProj.progress || 0
-                                        }).then(({ error }) => {
-                                          if (error) console.warn('CRM project insert error:', error.message);
-                                        });
-                      setIsAddProjectModalOpen(false);
-                      setNewProjectForm({ name: '', client: '', budget: '', desc: '' });
-                    }}
-                    className="flex-1 py-2.5 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors"
-                  >
-                    Create Project
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+        <AddProjectModal
+          isOpen={isAddProjectModalOpen}
+          onClose={() => setIsAddProjectModalOpen(false)}
+          form={newProjectForm}
+          setForm={setNewProjectForm}
+          onProjectCreated={(newProj) => setCrmProjectsList(prev => [newProj, ...prev])}
+        />
 
         {/* ADD MEMBER MODAL */}
-        <AnimatePresence>
-          {isAddMemberModalOpen && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsAddMemberModalOpen(false)}
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-              />
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-              >
-                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-                  <h3 className="font-black text-slate-800 dark:text-white flex items-center gap-2">
-                    <UserPlus className="w-4 h-4 text-emerald-500" />
-                    Add Digital Workforce Member
-                  </h3>
-                  <button onClick={() => setIsAddMemberModalOpen(false)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer">
-                    <X className="w-4 h-4 text-slate-500" />
-                  </button>
-                </div>
-
-                <div className="p-6 space-y-4">
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">Full Name</label>
-                    <input
-                      type="text"
-                      value={newMemberForm.name}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
-                      placeholder="e.g. Vikram Aditya"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-slate-800 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">Role / Specialization</label>
-                    <input
-                      type="text"
-                      value={newMemberForm.role}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, role: e.target.value })}
-                      placeholder="e.g. Next.js Developer"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-slate-800 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">Avatar Image URL (Optional)</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={newMemberForm.avatarUrl}
-                        onChange={(e) => setNewMemberForm({ ...newMemberForm, avatarUrl: e.target.value })}
-                        placeholder="https://images.unsplash.com/... or blank"
-                        className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-slate-800 dark:text-white"
-                      />
-                      <button
-                        onClick={() => {
-                          const name = newMemberForm.name.trim() || 'Team';
-                          const colors = ['00c853', '3b82f6', '8b5cf6', 'f59e0b', 'ef4444'];
-                          const color = colors[Math.floor(Math.random() * colors.length)];
-                          const generated = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${color}&color=fff&bold=true&size=256`;
-                          setNewMemberForm({ ...newMemberForm, avatarUrl: generated });
-                          triggerToast("🎨 Generated avatar from name!");
-                        }}
-                        className="px-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 text-xs font-black text-slate-700 dark:text-slate-300 transition-colors"
-                        title="Generate random profile image"
-                      >
-                        🎲 Random
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 mb-1.5 block">Shift Status</label>
-                    <select
-                      value={newMemberForm.status}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, status: e.target.value as 'ONLINE' | 'OFF SHIFT' })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-slate-800 dark:text-white"
-                    >
-                      <option value="ONLINE">ONLINE</option>
-                      <option value="OFF SHIFT">OFF SHIFT</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
-                  <button
-                    onClick={() => setIsAddMemberModalOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!newMemberForm.name || !newMemberForm.role) {
-                        triggerToast("⚠️ Name and Role are required fields.");
-                        return;
-                      }
-
-                      const finalAvatar = newMemberForm.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(newMemberForm.name)}&background=00c853&color=fff`;
-
-                      const newMember: TeamMember = {
-                        id: `team-${Date.now()}`,
-                        name: newMemberForm.name,
-                        role: newMemberForm.role,
-                        avatarUrl: finalAvatar,
-                        status: newMemberForm.status,
-                        blocked: false
-                      };
-
-                      setTeamMembers(prev => [...prev, newMember]);
-
-                      // Save to Supabase
-                      supabase.from('team').insert({
-                        id: newMember.id,
-                        name: newMember.name,
-                        role: newMember.role,
-                        avatar_url: newMember.avatarUrl,
-                        status: newMember.status,
-                        blocked: false
-                      }).then(({ error }) => {
-                        if (error) console.warn('Team insert error:', error.message);
-                      });
-
-                      setIsAddMemberModalOpen(false);
-                      setNewMemberForm({ name: '', role: '', avatarUrl: '', status: 'ONLINE' });
-                      triggerToast(`\ud83d\udc65 Team Joined: ${newMemberForm.name} is now in workforce database!`);
-                    }}
-                    className="flex-1 py-2.5 rounded-xl font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-colors"
-                  >
-                    Join Team
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+        <AddMemberModal
+          isOpen={isAddMemberModalOpen}
+          onClose={() => setIsAddMemberModalOpen(false)}
+          form={newMemberForm}
+          setForm={setNewMemberForm}
+          onMemberAdded={(newMember) => setTeamMembers(prev => [...prev, newMember])}
+          triggerToast={triggerToast}
+        />
 
         {/* AUTO-REPLY MANAGEMENT MODAL */}
-        <AnimatePresence>
-          {isAutoReplyModalOpen && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsAutoReplyModalOpen(false)}
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-              />
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-              >
-                <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-                  <h3 className="font-black text-slate-800 dark:text-white flex items-center gap-2 text-base">
-                    <Sparkles className="w-5 h-5 text-[#00c853]" />
-                    Auto-Reply Configuration (10s Delay)
-                  </h3>
-                  <button onClick={() => setIsAutoReplyModalOpen(false)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer">
-                    <X className="w-4 h-4 text-slate-500" />
-                  </button>
-                </div>
-
-                <div className="p-6 space-y-5">
-                  {/* Status Banner */}
-                  <div className={`p-4 rounded-2xl border flex items-center justify-between ${autoReplyEnabled ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/50' : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/50'}`}>
-                    <div className="flex items-center gap-3">
-                      <span className={`w-3 h-3 rounded-full ${autoReplyEnabled ? 'bg-[#00c853] animate-pulse' : 'bg-red-500'}`} />
-                      <div>
-                        <span className="block text-xs font-black text-slate-800 dark:text-white">
-                          Auto-Reply Status: {autoReplyEnabled ? 'ACTIVE' : 'DISABLED / REMOVED'}
-                        </span>
-                        <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-0.5">
-                          ⏱️ Response Delay: 10 Seconds
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        const nextState = !autoReplyEnabled;
-                        setAutoReplyEnabled(nextState);
-                        localStorage.setItem('digiworku-auto-reply-enabled', String(nextState));
-                        triggerToast(nextState ? "🟢 Auto-Reply enabled!" : "🗑️ Auto-Reply disabled & removed!");
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${autoReplyEnabled
-                        ? 'bg-red-500 text-white hover:bg-red-600'
-                        : 'bg-[#00c853] text-white hover:bg-emerald-600'
-                        }`}
-                    >
-                      {autoReplyEnabled ? 'Remove Auto-Reply' : 'Enable Auto-Reply'}
-                    </button>
-                  </div>
-
-                  {/* Message Textarea */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
-                      Auto-Reply Message Content
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={autoReplyText}
-                      onChange={(e) => setAutoReplyText(e.target.value)}
-                      placeholder="Enter the automated reply message..."
-                      disabled={!autoReplyEnabled}
-                      className="w-full p-3.5 text-xs font-medium rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:ring-2 focus:ring-[#00c853] outline-none disabled:opacity-50 transition-all leading-relaxed"
-                    />
-                    <span className="text-[10px] text-slate-400 font-semibold block">
-                      💡 Users sending a message will receive this text exactly 10 seconds after sending.
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex gap-3">
-                  <button
-                    onClick={() => {
-                      const defMsg = "Thank you for reaching out to DigiWorku! Our team has received your message and will update your project details shortly.";
-                      setAutoReplyText(defMsg);
-                      localStorage.setItem('digiworku-auto-reply-text', defMsg);
-                      triggerToast("↺ Reset to default message.");
-                    }}
-                    className="py-2.5 px-4 rounded-xl font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 text-xs transition-colors"
-                  >
-                    Reset Default
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      localStorage.setItem('digiworku-auto-reply-text', autoReplyText);
-                      localStorage.setItem('digiworku-auto-reply-enabled', String(autoReplyEnabled));
-                      setIsAutoReplyModalOpen(false);
-                      triggerToast("⚡ Auto-Reply settings saved successfully!");
-                    }}
-                    className="flex-1 py-2.5 rounded-xl font-black text-white bg-[#00c853] hover:bg-emerald-600 text-xs transition-colors shadow-md"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+        <AutoReplyModal
+          isOpen={isAutoReplyModalOpen}
+          onClose={() => setIsAutoReplyModalOpen(false)}
+          autoReplyEnabled={autoReplyEnabled}
+          setAutoReplyEnabled={setAutoReplyEnabled}
+          autoReplyText={autoReplyText}
+          setAutoReplyText={setAutoReplyText}
+          triggerToast={triggerToast}
+        />
 
         {/* Interactive Service Request / Booking Modal */}
-        <AnimatePresence>
-          {isServiceRequestModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className={`w-full max-w-lg p-6 sm:p-8 rounded-3xl border shadow-2xl relative ${darkMode ? 'bg-[#181818] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'}`}
-              >
-                <button
-                  onClick={() => setIsServiceRequestModalOpen(false)}
-                  className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-full transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-3 bg-[#e8fcf0] dark:bg-emerald-950/80 text-[#00c853] rounded-2xl">
-                    <Sparkles className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-extrabold tracking-tight font-display">Request Project Service</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Submit project requirements to launch a sprint with DigiWorku.</p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleServiceRequestSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                      Select Service Category
-                    </label>
-                    <select
-                      value={selectedRequestServiceTitle}
-                      onChange={(e) => {
-                        setSelectedRequestServiceTitle(e.target.value);
-                        const found = servicesList.find(s => s.title === e.target.value);
-                        if (found) setRequestFormBudget(found.price);
-                      }}
-                      className={`w-full p-3 rounded-xl border text-xs font-bold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'}`}
-                    >
-                      {servicesList.map(s => (
-                        <option key={s.id} value={s.title}>{s.title} ({s.price})</option>
-                      ))}
-                      <option value="Custom Software & AI Architecture">Custom Software & AI Architecture (Custom Quote)</option>
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                        Your Full Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Ramesh Singh"
-                        value={requestFormClientName}
-                        onChange={(e) => setRequestFormClientName(e.target.value)}
-                        className={`w-full p-3 rounded-xl border text-xs font-semibold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                        Corporate Email *
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="ramesh@company.com"
-                        value={requestFormEmail}
-                        onChange={(e) => setRequestFormEmail(e.target.value)}
-                        className={`w-full p-3 rounded-xl border text-xs font-semibold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                        Phone / WhatsApp Number
-                      </label>
-                      <input
-                        type="tel"
-                        placeholder="+91 98765 43210"
-                        value={requestFormPhone}
-                        onChange={(e) => setRequestFormPhone(e.target.value)}
-                        className={`w-full p-3 rounded-xl border text-xs font-semibold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                        Estimated Budget
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. ₹45,000"
-                        value={requestFormBudget}
-                        onChange={(e) => setRequestFormBudget(e.target.value)}
-                        className={`w-full p-3 rounded-xl border text-xs font-semibold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10.5px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                      Project Goals & Requirements
-                    </label>
-                    <textarea
-                      rows={3}
-                      placeholder="Describe your goals, tech preferences, or desired launch timeline..."
-                      value={requestFormDescription}
-                      onChange={(e) => setRequestFormDescription(e.target.value)}
-                      className={`w-full p-3 rounded-xl border text-xs font-semibold focus:outline-hidden focus:border-[#00c853] ${darkMode ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'}`}
-                    />
-                  </div>
-
-                  <div className="pt-2 flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setIsServiceRequestModalOpen(false)}
-                      className={`flex-1 py-3.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${darkMode ? 'border-slate-800 hover:bg-slate-800 text-slate-300' : 'border-slate-200 hover:bg-slate-100 text-slate-600'}`}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmittingServiceRequest}
-                      className="flex-1 py-3.5 rounded-xl text-xs font-extrabold tracking-wider uppercase text-white bg-[#00c853] hover:bg-[#00b047] active:scale-98 transition-all shadow-lg shadow-[#00c853]/20 cursor-pointer flex items-center justify-center gap-2"
-                    >
-                      {isSubmittingServiceRequest ? (
-                        <span>Submitting...</span>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4" />
-                          <span>Submit Inquiry</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+        <ServiceRequestModal
+          isOpen={isServiceRequestModalOpen}
+          onClose={() => setIsServiceRequestModalOpen(false)}
+          darkMode={darkMode}
+          servicesList={servicesList}
+          selectedServiceTitle={selectedRequestServiceTitle}
+          setSelectedServiceTitle={setSelectedRequestServiceTitle}
+          clientName={requestFormClientName}
+          setClientName={setRequestFormClientName}
+          email={requestFormEmail}
+          setEmail={setRequestFormEmail}
+          phone={requestFormPhone}
+          setPhone={setRequestFormPhone}
+          budget={requestFormBudget}
+          setBudget={setRequestFormBudget}
+          description={requestFormDescription}
+          setDescription={setRequestFormDescription}
+          isSubmitting={isSubmittingServiceRequest}
+          onSubmit={handleServiceRequestSubmit}
+        />
 
       </main>
 
