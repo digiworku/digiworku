@@ -3,6 +3,12 @@
   "name": "DigiWorku | Digital Workforce & AI Ecosystem Platform",
   "icons": [
     {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/favicon.png",
       "type": "image/png",
       "sizes": "512x512 192x192 64x64 32x32",

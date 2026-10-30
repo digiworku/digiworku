@@ -1,9 +1,12 @@
 // DigiWorku Service Worker — Cache & Offline Resilience
-const CACHE_NAME = 'digiworku-cache-v1';
+const CACHE_NAME = 'digiworku-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/favicon.svg',
+  '/logo.svg',
+  '/logo-dark.svg',
   '/logo.jpg',
   '/favicon.png',
   '/apple-touch-icon.png'

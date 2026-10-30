@@ -281,4 +281,28 @@ These routes are STRICTLY admin-only. Non-authenticated visitors see the "Admin 
 | **Legal Compliance (DPDP Act 2023)** | Missing designated Grievance Officer and DPDP statutory notices. | Added registered entity details, designated Grievance Officer (Vir, `grievance@digiworku.in`, New Delhi jurisdiction), and explicit DPDP consent checkboxes on all forms. | `LegalPages.tsx`, `InquiryModal.tsx`, `FreelancerModal.tsx` |
 | **TypeScript Strict Mode** | Codebase was non-strict. | Enabled `"strict": true` in `tsconfig.json`. Passed `tsc --noEmit` with 0 errors. | `tsconfig.json` |
 
+---
+
+## 🎨 15. Vector Brand Identity & App Icon System (Oct 2026)
+
+| Asset / Feature | Details & Specifications | Location |
+|-----------------|--------------------------|----------|
+| **Vector App Icon** | Scalable 512x512 SVG with deep forest green rounded squircle (`#003522` to `#002216`), clean white 'D' loop, turquoise/teal ribbon gradient fold, neon lime 45° capsule pill, and floating golden amber accent dot (`#ffba05`). | `public/favicon.svg` |
+| **Vector Full Logo** | Horizontal SVG logo containing the emblem mark + geometric "DigiWorku" wordmark with custom emerald green dot on first 'i' and amber dot on final 'u'. | `public/logo.svg`, `public/logo-dark.svg` |
+| **Vector Emblem Mark** | Standalone vector emblem mark without background or text, scaling seamlessly at any viewport size. | `public/logo-icon.svg` |
+| **React Vector Component** | `<DigiWorkuLogo />` component supporting `variant="full" | "icon" | "squircle" | "wordmark"`, automatic dark/light theme switching, and responsive sizing. | `src/components/brand/DigiWorkuLogo.tsx` |
+| **PWA & Touch Icons** | High-definition cropped raster icons (512x512 `favicon.png`, 180x180 `apple-touch-icon.png`, true multi-size `favicon.ico`) generated cleanly without outer white borders. | `public/favicon.png`, `public/apple-touch-icon.png`, `public/favicon.ico` |
+---
+
+## 📱 16. Restored Original UI Architecture & Mobile Swipe Gesture System (Oct 2026)
+
+| Feature | Implementation & Design | Location |
+|---------|-------------------------|----------|
+| **100% Original UI Restoration** | Restored the complete 10,639-line original UI structure, dense 58-particle background animations, complete sections, design aesthetic, and layouts from commit `7be4ac5`. | `src/App.tsx`, `AnimatedGridBackground.tsx` |
+| **Interactive Swipe-to-Open Handle** | Floating translucent emerald chevron tab on the left screen edge on mobile (`!isSidebarOpen`), providing an explicit visual affordance to swipe or tap to open the menu. | `src/App.tsx` (lines ~3485-3500) |
+| **Enhanced Touch Swipe Gesture** | Extended touch detection to `EDGE_ZONE = 48px`, `MIN_SWIPE_DISTANCE = 45px`, and `MAX_VERTICAL_DRIFT = 85px` for reliable swipe-right to open and swipe-left to close without scrolling conflicts. | `src/App.tsx` (lines ~521-560) |
+| **Vector App Icon & Logo** | Integrated the new vector squircle app icon (`DigiWorkuLogo`) into Header, Sidebar Brand, Chat Support, and Auth Modal without disturbing original layout or spacing. | `src/App.tsx` |
+
+
+
 

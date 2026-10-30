@@ -51,6 +51,7 @@ import type {
   ServiceItem,
   ProjectItem
 } from '../types/crm';
+import { DigiWorkuLogo } from '../components/brand/DigiWorkuLogo';
 
 export interface AdminPanelProps {
   isAdmin: boolean;
@@ -319,7 +320,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         {/* Sidebar Header */}
         <div className="p-5 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/logo.jpg" alt="DigiWorku" className="w-9 h-9 rounded-xl object-cover shadow-sm" />
+            <DigiWorkuLogo variant="squircle" height={38} className="rounded-xl shadow-sm" />
             <div>
               <div className="font-black text-base tracking-tight">
                 Digi<span className="text-[#00c853]">Worku</span>

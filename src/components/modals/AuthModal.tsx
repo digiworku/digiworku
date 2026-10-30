@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Lock, Shield, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import { DigiWorkuLogo } from '../brand/DigiWorkuLogo';
 import { AuthForm } from '../AuthForm';
 
 interface AuthModalProps {
@@ -76,10 +77,8 @@ export function AuthModal({
         >
           {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#00c853]/15 text-[#00c853] flex items-center justify-center font-bold">
-                {tab === 'admin' ? <Shield className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-              </div>
+            <div className="flex items-center gap-2.5">
+              <DigiWorkuLogo variant="squircle" height={32} />
               <h3 className="font-extrabold text-base">
                 {tab === 'admin' ? 'DigiWorku Admin Portal' : 'Client Account Access'}
               </h3>
